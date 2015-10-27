@@ -1,16 +1,22 @@
-#!/bin/bash
+#!/bin/bash 
+#$ -o /home/inutano/project/ER/log -S /bin/bash -j y -l mem_req=4G,s_vmem=4G -pe def_slot 4
 #
 # usage:
 #   quanto_core.sh <SRA Accession ID> <SRA Experiment ID>
 #
-set -e
+set -eu
 
 # node name to access to the sra file system
 node="sranode"
 
+# path to tools
+fastq_dump="/home/inutano/local/bin/fastq-dump"
+fastqc="/home/inutano/local/bin/fastqc --noextract --threads 4"
+
 # variables
 acc_id=${1}
 exp_id=${2}
+layout=${3}
 
 acc_id_head=`echo ${acc_id} | sed -e 's:...$::'`
 exp_id_head=`echo ${exp_id} | sed -e 's:...$::'`
@@ -22,7 +28,8 @@ get_filepath(){
   local dra_path="/usr/local/ftp/public/ddbj_database/dra"
   local fq_path="${dra_path}/fastq/${acc_id_head}/${acc_id}/${exp_id}"
   local fq_list=`ssh "${node}" ls -lk "${fq_path}"`
-  if [[ ! -z "${fq_list}" ]] ; then
+  # if [[ ! -z "${fq_list}" ]] ; then # escaped for testing
+  if [[ -z "${fq_list}" ]] ; then
     echo ${fq_path}
   else
     local sra_path="${dra_path}/sralite/ByExp/litesra/${exp_id_center}/${exp_id_head}/${exp_id}"
@@ -80,3 +87,63 @@ fi
 
 # retrieve files
 retrieve_files "${fpath}" "${workdir}"
+
+exec_qc(){
+  local layout=${1}
+  local fpath=${2}
+  local workdir=${3}
+  if [[ ${layout} = "SINGLE" ]] ; then
+    exec_qc_single "${fpath}" "${workdir}"
+  elif [[ ${layout} == "PAIRED" ]] ; then
+    exec_qc_paired "${fpath}" "${workdir}"
+  else
+    echo "error: read layout not defined. 'SINGLE' or 'PAIRED' should be provided"
+    exit
+  fi
+}
+
+exec_qc_single(){
+  local fpath=${1}
+  local workdir=${2}
+  local fname_out=`echo ${fpath} | sed -e 's:.sra$:_fastqc.zip:g'`
+  ${fastq_dump} --stdout ${fpath} |\
+  ${fastqc} --outdir "${workdir}" /dev/stdin
+  rename_stdin_fastqc_files "${workdir}" "${fname_out}"
+}
+
+exec_qc_paired(){
+  local fpath=${1}
+  local workdir=${2}
+  local fname_out_1=`echo ${fpath} | sed -e 's:.sra$:_1_fastqc.zip:g'`
+  local fname_out_2=`echo ${fpath} | sed -e 's:.sra$:_2_fastqc.zip:g'`
+  ${fastq_dump} --split-3 --stdout ${fpath} | awk 'NR%8 ~ /^(1|2|3|4)$/' | ${fastqc} --outdir "${workdir}" /dev/stdin
+  rename_stdin_fastqc_files "${workdir}" "${fname_out_1}"
+  ${fastq_dump} --split-3 --stdout ${fpath} | awk 'NR%8 ~ /^(5|6|7|0)$/' | ${fastqc} --outdir "${workdir}" /dev/stdin
+  rename_stdin_fastqc_files "${workdir}" "${fname_out_2}"
+}
+
+exec_qc_paired_disk(){
+  local fpath=${1}
+  local workdir=${2}
+  ${fastq_dump} --split-3 --outdir "${workdir}" ${fpath}
+  ls ${workdir}/*fastq |\
+  xargs ${fastqc} --outdir "${workdir}"
+  rm -f ${workdir}/*html
+}
+
+rename_stdin_fastqc_files(){
+  local workdir=${1}
+  local fname_out=${2}
+  mv "${workdir}/stdin_fastqc.zip" "${fname_out}"
+  #
+  # put something to extract qc stats
+  #
+  rm -f "${workdir}/stdin_fastqc.html"
+}
+
+# dump sra files and exec fastqc
+ls ${workdir}/**/*sra |\
+while read f ; do
+  run_dir=`echo ${f} | sed -e 's:/[^/]*sra$::g'`
+  exec_qc "${layout}" "${f}" "${run_dir}"
+done
