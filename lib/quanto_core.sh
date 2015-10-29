@@ -46,7 +46,8 @@ set_workdir_base(){ # sum of file size must be provided for the first argument
   local fsize=${1}
   local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
   local rate=`echo "scale=2; ${fsize} / ${ssd_available}" | bc`
-  if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then
+  if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then # escaped for testing on lustre
+  # if [[ -z "${ssd_available}" && ${rate} < 30 ]] ; then
     ssd_tmp="/ssd/inutano/fq_tmp"
     if [[ ! -e "${ssd_tmp}" ]] ; then
       mkdir -p "${ssd_tmp}"
@@ -111,15 +112,33 @@ exec_qc_single(){
   rename_stdin_fastqc_files "${workdir}" "${fname_out}"
 }
 
+exec_qc_single_disk(){
+  local fpath=${1}
+  local workdir=${2}
+  ${fastq_dump} --outdir "${workdir}" ${fpath}
+  ls ${workdir}/*fastq |\
+  xargs ${fastqc} --outdir "${workdir}"
+  rm -f ${workdir}/*html
+}
+
 exec_qc_paired(){
   local fpath=${1}
   local workdir=${2}
+  local wd_read1="${2}/read1"
+  local wd_read2="${2}/read2"
   local fname_out_1=`echo ${fpath} | sed -e 's:.sra$:_1_fastqc.zip:g'`
   local fname_out_2=`echo ${fpath} | sed -e 's:.sra$:_2_fastqc.zip:g'`
-  ${fastq_dump} --split-3 --stdout ${fpath} | awk 'NR%8 ~ /^(1|2|3|4)$/' | ${fastqc} --outdir "${workdir}" /dev/stdin
-  rename_stdin_fastqc_files "${workdir}" "${fname_out_1}"
-  ${fastq_dump} --split-3 --stdout ${fpath} | awk 'NR%8 ~ /^(5|6|7|0)$/' | ${fastqc} --outdir "${workdir}" /dev/stdin
-  rename_stdin_fastqc_files "${workdir}" "${fname_out_2}"
+  mkdir -p "${wd_read1}"
+  mkdir -p "${wd_read2}"
+  
+  ${fastq_dump} --split-3 --stdout ${fpath} |\
+  tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${fastqc} --outdir "${wd_read1}" /dev/stdin ) |\
+  awk 'NR%8 ~ /^(5|6|7|0)$/' | ${fastqc} --outdir "${wd_read2}" /dev/stdin
+  rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
+  rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
+  
+  rm -fr "${wd_read1}"
+  rm -fr "${wd_read2}"
 }
 
 exec_qc_paired_disk(){
@@ -140,6 +159,13 @@ rename_stdin_fastqc_files(){
   #
   rm -f "${workdir}/stdin_fastqc.html"
 }
+
+flush_workdir(){
+  local workdir=${1}
+  rm -fr ${workdir}/*sra
+  rm -fr ${workdir}/*fastq*
+}
+
 
 # dump sra files and exec fastqc
 ls ${workdir}/**/*sra |\
