@@ -37,6 +37,20 @@ get_filepath(){
   fi
 }
 
+get_filepath_ftp(){
+  local dra_path="/usr/local/ftp/public/ddbj_database/dra"
+  local fq_dir="fastq/${acc_id_head}/${acc_id}/${exp_id}"
+  local fq_path="${dra_path}/${fq_dir}"
+  local fq_list=`ssh "${node}" ls -lk "${fq_path}"`
+  # if [[ ! -z "${fq_list}" ]] ; then # escaped for testing
+  if [[ -z "${fq_list}" ]] ; then
+    echo "${fq_dir}"
+  else
+    local sra_path="sralite/ByExp/litesra/${exp_id_center}/${exp_id_head}/${exp_id}"
+    echo "${sra_path}"
+  fi
+}
+
 get_filesize(){
   local fpath=${1}
   ssh "${node}" ls -lkR "${fpath}" | awk '{ sum += $5 }END{ print sum }'
@@ -68,6 +82,13 @@ retrieve_files(){ # arguments: fpath, workdir
   rsync -avr -e ssh "${node}":"${path}"/ "${dir}"/
 }
 
+retrieve_files_ftp(){
+  local ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
+  local path=${1}
+  local dir=${2}
+  lftp -c "open ${ftp_base} && mirror ${path} ${dir}"
+}
+
 #
 # execute dump/fastqc
 #
@@ -87,7 +108,8 @@ if [[ ! -e "${workdir}" ]] ; then
 fi
 
 # retrieve files
-retrieve_files "${fpath}" "${workdir}"
+ftp_path=`get_filepath_ftp`
+retrieve_files_ftp "${ftp_path}" "${workdir}"
 
 exec_qc(){
   local layout=${1}
