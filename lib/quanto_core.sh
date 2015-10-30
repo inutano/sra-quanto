@@ -103,7 +103,7 @@ retrieve_files(){ # arguments: fpath, workdir
 retrieve_files_ftp(){
   local path=${1}
   local dir=${2}
-  lftp -c "open ${ftp_base} && mirror --parallel=4 ${path} ${dir}"
+  lftp -c "open ${ftp_base} && mirror ${path} ${dir}"
 }
 
 exec_qc(){
