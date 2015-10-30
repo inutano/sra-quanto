@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #$ -o /home/inutano/project/ER/log -S /bin/bash -j y -l mem_req=4G,s_vmem=4G -pe def_slot 4
 #
 # usage:
@@ -6,14 +6,18 @@
 #
 set -eu
 
-# node name to access to the sra file system
+#
+# Global variables
+#
+
+# Node name to access to the sra file system: sra disk attached hostname accessed via ssh
 node="sranode"
 
-# path to tools
+# Path to tools and arguments
 fastq_dump="/home/inutano/local/bin/fastq-dump"
 fastqc="/home/inutano/local/bin/fastqc --noextract --threads 4"
 
-# variables
+# Identifiers
 acc_id=${1}
 exp_id=${2}
 layout=${3}
@@ -22,46 +26,60 @@ acc_id_head=`echo ${acc_id} | sed -e 's:...$::'`
 exp_id_head=`echo ${exp_id} | sed -e 's:...$::'`
 exp_id_center=${exp_id:0:3}
 
-# functions
+# Path to sra disk filesystem
+dra_path="/usr/local/ftp/public/ddbj_database/dra"
+ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
+
+#
+# Functions
+#
+
+get_fq_path(){
+  local fq_path="fastq/${acc_id_head}/${acc_id}/${exp_id}"
+  local fq_list=`ssh "${node}" ls -lk "${dra_path}/${fq_path}"`
+  if [[ ! -z "${fq_list}" ]] ; then
+    echo "${fq_path}"
+  fi
+}
+
+get_sra_path(){
+  local sra_path="sralite/ByExp/litesra/${exp_id_center}/${exp_id_head}/${exp_id}"
+  echo "${sra_path}"
+}
 
 get_filepath(){
-  local dra_path="/usr/local/ftp/public/ddbj_database/dra"
-  local fq_path="${dra_path}/fastq/${acc_id_head}/${acc_id}/${exp_id}"
-  local fq_list=`ssh "${node}" ls -lk "${fq_path}"`
-  # if [[ ! -z "${fq_list}" ]] ; then # escaped for testing
-  if [[ -z "${fq_list}" ]] ; then
-    echo ${fq_path}
+  local fq_path=`get_fq_path`
+  # if [[ ! -z "${fq_path}" ]] ; then
+  if [[ -z "${fq_path}" ]] ; then # testing for sra file
+    echo "${dra_path}/${fq_path}"
   else
-    local sra_path="${dra_path}/sralite/ByExp/litesra/${exp_id_center}/${exp_id_head}/${exp_id}"
-    echo ${sra_path}
+    local sra_path=`get_sra_path`
+    echo "${dra_path}/${sra_path}"
   fi
 }
 
 get_filepath_ftp(){
-  local dra_path="/usr/local/ftp/public/ddbj_database/dra"
-  local fq_dir="fastq/${acc_id_head}/${acc_id}/${exp_id}"
-  local fq_path="${dra_path}/${fq_dir}"
-  local fq_list=`ssh "${node}" ls -lk "${fq_path}"`
-  # if [[ ! -z "${fq_list}" ]] ; then # escaped for testing
-  if [[ -z "${fq_list}" ]] ; then
-    echo "${fq_dir}"
+  local fq_path=`get_fq_path`
+  # if [[ ! -z "${fq_path}" ]] ; then
+  if [[ -z "${fq_path}" ]] ; then # testing for sra file
+    echo "${fq_path}"
   else
-    local sra_path="sralite/ByExp/litesra/${exp_id_center}/${exp_id_head}/${exp_id}"
+    local sra_path=`get_sra_path`
     echo "${sra_path}"
   fi
 }
 
 get_filesize(){
-  local fpath=${1}
-  ssh "${node}" ls -lkR "${fpath}" | awk '{ sum += $5 }END{ print sum }'
+  local fpath=`get_fq_path`
+  ssh "${node}" ls -lkR "${dra_path}/${fpath}" | awk '{ sum += $5 }END{ print sum }'
 }
 
 set_workdir_base(){ # sum of file size must be provided for the first argument
-  local fsize=${1}
+  local fsize=`get_filesize`
   local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
   local rate=`echo "scale=2; ${fsize} / ${ssd_available}" | bc`
-  if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then # escaped for testing on lustre
-  # if [[ -z "${ssd_available}" && ${rate} < 30 ]] ; then
+  if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then
+  # if [[ -z "${ssd_available}" && ${rate} < 30 ]] ; then # for testing on lustre
     ssd_tmp="/ssd/inutano/fq_tmp"
     if [[ ! -e "${ssd_tmp}" ]] ; then
       mkdir -p "${ssd_tmp}"
@@ -83,39 +101,16 @@ retrieve_files(){ # arguments: fpath, workdir
 }
 
 retrieve_files_ftp(){
-  local ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
   local path=${1}
   local dir=${2}
   lftp -c "open ${ftp_base} && mirror ${path} ${dir}"
 }
 
-#
-# execute dump/fastqc
-#
-
-fpath=`get_filepath`
-if [[ -z "${fpath}" ]] ; then
-  echo "error"  # error
-fi
-
-fsize=`get_filesize "${fpath}"`
-
-# setting working dir
-workdir_base=`set_workdir_base ${fsize}`
-workdir="${workdir_base}/${exp_id_head}/${exp_id}"
-if [[ ! -e "${workdir}" ]] ; then
-  mkdir -p "${workdir}"
-fi
-
-# retrieve files
-ftp_path=`get_filepath_ftp`
-retrieve_files_ftp "${ftp_path}" "${workdir}"
-
 exec_qc(){
   local layout=${1}
   local fpath=${2}
   local workdir=${3}
-  if [[ ${layout} = "SINGLE" ]] ; then
+  if [[ ${layout} == "SINGLE" ]] ; then
     exec_qc_single "${fpath}" "${workdir}"
   elif [[ ${layout} == "PAIRED" ]] ; then
     exec_qc_paired "${fpath}" "${workdir}"
@@ -188,6 +183,29 @@ flush_workdir(){
   rm -fr ${workdir}/*fastq*
 }
 
+#
+# execute dump/fastqc
+#
+
+fpath=`get_filepath`
+if [[ -z "${fpath}" ]] ; then
+  echo "error"  # error
+  exit
+fi
+
+fsize=`get_filesize`
+
+# setting working dir
+workdir_base=`set_workdir_base`
+workdir="${workdir_base}/${exp_id_head}/${exp_id}"
+if [[ ! -e "${workdir}" ]] ; then
+  mkdir -p "${workdir}"
+fi
+
+# retrieve files
+ftp_path=`get_filepath_ftp`
+retrieve_files_ftp "${ftp_path}" "${workdir}"
+exit
 
 # dump sra files and exec fastqc
 ls ${workdir}/**/*sra |\
