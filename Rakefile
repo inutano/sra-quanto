@@ -1,6 +1,7 @@
 # Rakefile for sra quanto by inutano@gmail.com
 
 PROJ_ROOT = File.expand_path(__dir__)
+NUM_OF_PARALLEL = 8
 
 Dir["#{PROJ_ROOT}/lib/tasks/**/*.rake"].each do |path|
   load path

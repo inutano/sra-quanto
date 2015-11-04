@@ -33,9 +33,9 @@ namespace :tables do
 
   file list_finished do
     p_dirs = ["DRR","ERR","SRR"].map{|d| 10.times.map{|n| File.join(fastqc_dir,d,d+n.to_s)}}.flatten
-    p2_dirs = Parallel.map(p_dirs, :in_threads => 8){|pd| Dir.glob(pd+"/*") }.flatten
-    p3_dirs = Parallel.map(p2_dirs, :in_threads => 8){|pd| Dir.glob(pd+"/*") }.flatten
-    p4_dirs = Parallel.map(p3_dirs, :in_threads => 8){|pd| Dir.glob(pd+"/*") }.flatten
+    p2_dirs = Parallel.map(p_dirs, :in_threads => NUM_OF_PARALLEL){|pd| Dir.glob(pd+"/*") }.flatten
+    p3_dirs = Parallel.map(p2_dirs, :in_threads => NUM_OF_PARALLEL){|pd| Dir.glob(pd+"/*") }.flatten
+    p4_dirs = Parallel.map(p3_dirs, :in_threads => NUM_OF_PARALLEL){|pd| Dir.glob(pd+"/*") }.flatten
     open(list_finished,"w"){|f| f.puts(p4_dirs) }
   end
   
