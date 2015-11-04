@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 gem 'rake'
 gem 'parallel'
-gem 'zip'
+gem 'rubyzip'
 
 group :development do
   gem 'pry'
