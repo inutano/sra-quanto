@@ -16,6 +16,7 @@ GEM
       pry (~> 0.10)
     rake (10.4.2)
     slop (3.6.0)
+    zip (2.0.2)
 
 PLATFORMS
   ruby
@@ -25,6 +26,7 @@ DEPENDENCIES
   pry
   pry-byebug
   rake
+  zip
 
 BUNDLED WITH
    1.10.6
