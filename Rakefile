@@ -2,6 +2,7 @@
 
 PROJ_ROOT = File.expand_path(__dir__)
 NUM_OF_PARALLEL = 8
+FASTQC_VERSION = "0.11.3"
 
 Dir["#{PROJ_ROOT}/lib/tasks/**/*.rake"].each do |path|
   load path

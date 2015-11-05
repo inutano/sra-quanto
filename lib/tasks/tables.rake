@@ -12,8 +12,8 @@ namespace :tables do
   # path to files
   fastqc_dir = ENV['fastqc_dir'] || File.join(workdir, "fastqc")
   sra_metadata = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
-  list_finished  = File.join(table_dir, "experiments.done.tab")
-  list_live      = File.join(table_dir, "experiments.live.tab")
+  list_finished  = File.join(table_dir, "runs.done.tab")
+  list_live      = File.join(table_dir, "runs.live.tab")
   list_available = File.join(table_dir, "experiments.available.tab")
   
   task :available => [
@@ -52,7 +52,7 @@ namespace :tables do
   end
   
   def parallel_parsezip(dirs)
-    versions = Parallel.map(dirs, :in_thread => NUM_OF_PARALLEL) do |pd|
+    versions = Parallel.map(dirs, :in_threads => NUM_OF_PARALLEL) do |pd|
       Dir.glob(pd+"/*zip").map do |zip|
         version = Zip::File.open(zip) do |zipfile|
           zipfile.glob("*/fastqc_data.txt").first.get_input_stream.read.split("\n").first.split("\t").last
@@ -72,11 +72,34 @@ namespace :tables do
     open(t.name,"w"){|f| f.puts(list_finished_versions) }
   end
   
-  file list_live do |t|
-    touch t.name
+  file list_live => sra_metadata do |t|
+    fpath = "#{sra_metadata}/SRA_Accessions"
+    # pattern = '$1 ~ /^.RR/ && $3 == "live" && $9 == "public"'
+    pattern = '$1 ~ /^DRR/ && $3 == "live" && $9 == "public"' # for test run
+    list = `cat #{fpath} | awk -F '\t' '#{pattern} {print $1 "\t" $2 "\t" $11}'`.split("\n")
+    live_with_layout = Parallel.map(list, :in_threads => NUM_OF_PARALLEL) do |run_acc_exp|
+      idset = run_acc_exp.split("\t")
+      acc = idset[1]
+      # parse metadata xml
+      layout = "paired"
+      (idset + [layout]).join("\t")
+    end
+    open(t.name, "w"){|f| f.puts(list) }
   end
   
-  file list_available do |t|
-    touch t.name
+  file list_available => [list_finished, list_live] do |t|
+    live = {}
+    open(list_live).each do |ln|
+      live[ln.split("\t").first] = ln.chomp
+    end
+    
+    done = open(list_finished).readlines.select{|ln| ln.chomp =~ /#{FASTQC_VERSION}$/ }
+    done_runid = Parallel.map(done, :in_threads => NUM_OF_PARALLEL) do |ln|
+      ln.split("\t")[0].split("/").last.split("_")[0]
+    end
+    
+    available_run = live.keys - done_runid
+    available = Parallel.map(available_run, :in_threads => NUM_OF_PARALLEL){|runid| live[runid] }
+    open(list_available,"w"){|f| f.puts(available) }
   end
 end
