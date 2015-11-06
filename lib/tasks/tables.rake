@@ -2,6 +2,7 @@
 
 require 'parallel'
 require 'zip'
+require 'ciika'
 
 namespace :tables do
   # setup working dir
@@ -79,9 +80,15 @@ namespace :tables do
     list = `cat #{fpath} | awk -F '\t' '#{pattern} {print $1 "\t" $2 "\t" $11}'`.split("\n")
     live_with_layout = Parallel.map(list, :in_threads => NUM_OF_PARALLEL) do |run_acc_exp|
       idset = run_acc_exp.split("\t")
-      acc = idset[1]
-      # parse metadata xml
-      layout = "paired"
+      acc_id = idset[1]
+      exp_id = idset[2]
+      exp_xml_path = File.join(sra_metadata, acc_id.sub(/...$/,""), acc_id, acc_id + ".experiment.xml")
+      layout = if File.exist?(exp_xml_path)
+                 data = Ciika::SRA::Experiment.new(exp_xml_path).parse
+                 data.select{|h| h[:accession] == exp_id }.first[:library_layout]
+               else
+                 "UNDEFINED"
+               end
       (idset + [layout]).join("\t")
     end
     open(t.name, "w"){|f| f.puts(list) }
