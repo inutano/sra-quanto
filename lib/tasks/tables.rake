@@ -15,6 +15,7 @@ namespace :tables do
   sra_metadata = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
   list_finished  = File.join(table_dir, "runs.done.tab")
   list_live      = File.join(table_dir, "runs.live.tab")
+  list_layout    = File.join(table_dir, "experiments.layout.tab")
   list_available = File.join(table_dir, "experiments.available.tab")
   
   task :available => [
@@ -22,6 +23,7 @@ namespace :tables do
     :fix_metadata_dir,
     list_finished,
     list_live,
+    list_layout,
     list_available
   ]
   
@@ -76,22 +78,22 @@ namespace :tables do
   file list_live => sra_metadata do |t|
     fpath = "#{sra_metadata}/SRA_Accessions"
     # pattern = '$1 ~ /^.RR/ && $3 == "live" && $9 == "public"'
-    pattern = '$1 ~ /^DRR/ && $3 == "live" && $9 == "public"' # for test run
+    pattern = '$1 ~ /^DRR04/ && $3 == "live" && $9 == "public"' # for test run
     list = `cat #{fpath} | awk -F '\t' '#{pattern} {print $1 "\t" $2 "\t" $11}'`.split("\n")
-    live_with_layout = Parallel.map(list, :in_threads => NUM_OF_PARALLEL) do |run_acc_exp|
-      idset = run_acc_exp.split("\t")
-      acc_id = idset[1]
-      exp_id = idset[2]
-      exp_xml_path = File.join(sra_metadata, acc_id.sub(/...$/,""), acc_id, acc_id + ".experiment.xml")
-      layout = if File.exist?(exp_xml_path)
-                 data = Ciika::SRA::Experiment.new(exp_xml_path).parse
-                 data.select{|h| h[:accession] == exp_id }.first[:library_layout]
-               else
-                 "UNDEFINED"
-               end
-      (idset + [layout]).join("\t")
-    end
     open(t.name, "w"){|f| f.puts(list) }
+  end
+  
+  file list_layout => [list_live, sra_metadata] do |t|
+    list_acc = `cat #{list_live} | awk -F '\t' '{ print $2 }' | sort -u`.split("\n")
+    list_xml = Parallel.map(list_acc, :in_threads => NUM_OF_PARALLEL) do |acc_id|
+      exp_xml_path = File.join(sra_metadata, acc_id.sub(/...$/,""), acc_id, acc_id + ".experiment.xml")
+      exp_xml_path if File.exist?(exp_xml_path)
+    end
+    acc_layout = Parallel.map(list_xml.compact, :in_threads => NUM_OF_PARALLEL) do |xml|
+      Ciika::SRA::Experiment.new(xml).parse.map{|a| [a[:accession], a[:library_description][:library_layout]] }
+    end
+    out = acc_layout.flatten(1).map{|a| a.join("\t") }
+    open(t.name, "w"){|f| f.puts(out) }
   end
   
   file list_available => [list_finished, list_live] do |t|
