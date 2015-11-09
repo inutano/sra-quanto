@@ -96,10 +96,16 @@ namespace :tables do
     open(t.name, "w"){|f| f.puts(out) }
   end
   
-  file list_available => [list_finished, list_live] do |t|
+  file list_available => [list_finished, list_live, list_layout] do |t|
     live = {}
     open(list_live).each do |ln|
       live[ln.split("\t").first] = ln.chomp
+    end
+    
+    layout = {}
+    open(list_layout).each do |ln|
+      l = ln.split("\t")
+      layout[l.first] = l.last
     end
     
     done = open(list_finished).readlines.select{|ln| ln.chomp =~ /#{FASTQC_VERSION}$/ }
@@ -108,7 +114,12 @@ namespace :tables do
     end
     
     available_run = live.keys - done_runid
-    available = Parallel.map(available_run, :in_threads => NUM_OF_PARALLEL){|runid| live[runid] }
+    available = Parallel.map(available_run, :in_threads => NUM_OF_PARALLEL) do |runid|
+      set = live[runid].split("\t")
+      acc_id = set[1]
+      exp_id = set[2]
+      [exp_id, acc_id, layout[exp_id]].join("\t")
+    end
     open(list_available,"w"){|f| f.puts(available) }
   end
 end
