@@ -55,8 +55,7 @@ get_sra_path(){
 
 get_filepath(){
   local fq_path=`get_fq_path`
-  # if [[ ! -z "${fq_path}" ]] ; then
-  if [[ -z "${fq_path}" ]] ; then # testing for sra file
+  if [[ ! -z "${fq_path}" ]] ; then
     echo "${dra_path}/${fq_path}"
   else
     local sra_path=`get_sra_path`
@@ -66,8 +65,7 @@ get_filepath(){
 
 get_filepath_ftp(){
   local fq_path=`get_fq_path`
-  # if [[ ! -z "${fq_path}" ]] ; then
-  if [[ -z "${fq_path}" ]] ; then # testing for sra file
+  if [[ ! -z "${fq_path}" ]] ; then
     echo "${fq_path}"
   else
     local sra_path=`get_sra_path`
@@ -85,7 +83,6 @@ set_workdir_base(){ # sum of file size must be provided for the first argument
   local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
   local rate=`echo "scale=2; ${fsize} / ${ssd_available}" | bc`
   if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then
-  # if [[ -z "${ssd_available}" && ${rate} < 30 ]] ; then # for testing on lustre
     ssd_tmp="/ssd/inutano/fq_tmp"
     if [[ ! -e "${ssd_tmp}" ]] ; then
       mkdir -p "${ssd_tmp}"
@@ -122,7 +119,7 @@ establish_ftp_connection(){
 
 get_result_fname(){
   local filepath=${1} # /path/to/id.fastq.gz or /path/to/id.sra
-  local fileid=`echo "${filepath}" | awk -F '/' '{ print $NF }' | sed -e 's:\.fastq.+$::g'` -e 's:\.sra$::g'`
+  local fileid=`echo "${filepath}" | awk -F '/' '{ print $NF }' | sed -e 's:\.fastq.+$::g' -e 's:\.sra$::g'`
   local id=`echo "${fileid}" | sed -e 's:_.$::g'`
   echo "${fastqc_result_dir}/${id:0:3}/${id:0:4}/`echo ${id} | sed -e 's:...$::g'`/${id}/${fileid}_fastqc.zip"
 }
@@ -237,3 +234,4 @@ while read f ; do
   exec_qc "${layout}" "${f}" "${run_dir}"
 done
 
+# exec fastqc directly against compressed fastqc files
