@@ -15,9 +15,11 @@ namespace :fastqc do
   logdir     = File.join(PROJ_ROOT, "log", date)
   logfile    = File.join(logdir, "exec.log")
   logdir_job = File.join(logdir, "job")
+  logdir_ftp = File.join(logdir, "ftp")
 
   directory logdir
   directory logdir_job
+  directory logdir_ftp
   
   file logfile => logdir do |t|
     touch t.name
@@ -27,7 +29,7 @@ namespace :fastqc do
     open(logfile, "a"){|f| f.puts(m) }
   end
   
-  task :exec => [list_available, logfile, logdir_job] do
+  task :exec => [list_available, logfile, logdir_job, logdir_ftp] do
     logwrite(logfile, "Start FastQC execution: #{Time.now}")
     list = open(list_available).read.split("\n")
     logwrite(logfile, "Number of target experiments: #{list.size}")
@@ -37,7 +39,7 @@ namespace :fastqc do
       acc_id = item[1]
       layout = item[2]
       logfile_job = File.join(logdir_job, exp_id + ".log")
-      sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir}"
+      sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp}"
       sleep 1
     end
   end

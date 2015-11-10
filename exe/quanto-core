@@ -33,6 +33,9 @@ ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
 # Path to directory to save results
 fastqc_result_dir=${4}
 
+# Path to ftp connection log directory
+ftp_connection_log_dir=${5}
+
 #
 # Functions
 #
@@ -106,7 +109,15 @@ retrieve_files(){ # arguments: fpath, workdir
 retrieve_files_ftp(){
   local path=${1}
   local dir=${2}
+  establish_ftp_connection
   lftp -c "open ${ftp_base} && mirror ${path} ${dir}"
+}
+
+establish_ftp_connection(){
+  while [ `ls "${ftp_connection_log_dir}" | wc -l` > 49 ] ; do
+    sleep 5
+  done
+  touch "${ftp_connection_log_dir}/${exp_id}"
 }
 
 get_result_fname(){
@@ -225,3 +236,4 @@ while read f ; do
   run_dir=`echo ${f} | sed -e 's:/[^/]*sra$::g'`
   exec_qc "${layout}" "${f}" "${run_dir}"
 done
+
