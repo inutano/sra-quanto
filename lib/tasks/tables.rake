@@ -120,6 +120,6 @@ namespace :tables do
       exp_id = set[2]
       [exp_id, acc_id, layout[exp_id]].join("\t")
     end
-    open(list_available,"w"){|f| f.puts(available) }
+    open(list_available,"w"){|f| f.puts(available.uniq) }
   end
 end
