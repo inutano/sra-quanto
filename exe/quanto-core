@@ -212,7 +212,7 @@ rename_stdin_fastqc_files(){
 
 get_result_fname(){
   local filepath=${1} # /path/to/id.fastq.gz or /path/to/id.sra or /path/to/id_fastqc.zip
-  local fileid=`echo "${filepath}" | awk -F '/' '{ print $NF }' | sed -e 's:\.fastq.+$::g' -e 's:\.sra$::g'` -e 's:_fastqc.zip$::g'
+  local fileid=`echo "${filepath}" | awk -F '/' '{ print $NF }' | sed -e 's:\.fastq.+$::g' -e 's:\.sra$::g' -e 's:_fastqc.zip$::g'`
   local result_dir=`get_result_dir ${filepath}`
   echo "${result_dir}/${fileid}_fastqc.zip"
 }
@@ -297,3 +297,5 @@ fi
 flush_workdir ${workdir}
 echo `date` "Finished FastQC."
 
+## trap
+trap "rm -fr ${workdir}" EXIT
