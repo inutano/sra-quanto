@@ -30,6 +30,9 @@ exp_id_center=${exp_id:0:3}
 dra_path="/usr/local/ftp/public/ddbj_database/dra"
 ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
 
+# Path to directory to save results
+fastqc_result_dir=${4}
+
 #
 # Functions
 #
@@ -106,6 +109,13 @@ retrieve_files_ftp(){
   lftp -c "open ${ftp_base} && mirror ${path} ${dir}"
 }
 
+get_result_fname(){
+  local filepath=${1} # /path/to/id.fastq.gz or /path/to/id.sra
+  local fileid=`echo "${filepath}" | awk -F '/' '{ print $NF }' | sed -e 's:\.fastq.+$::g'` -e 's:\.sra$::g'`
+  local id=`echo "${fileid}" | sed -e 's:_.$::g'`
+  echo "${fastqc_result_dir}/${id:0:3}/${id:0:4}/`echo ${id} | sed -e 's:...$::g'`/${id}/${fileid}_fastqc.zip"
+}
+
 exec_qc(){
   local layout=${1}
   local fpath=${2}
@@ -123,13 +133,13 @@ exec_qc(){
 exec_qc_single(){
   local fpath=${1}
   local workdir=${2}
-  local fname_out=`echo ${fpath} | sed -e 's:.sra$:_fastqc.zip:g'`
+  local fname_out=`get_result_fname ${fpath}`
   ${fastq_dump} --stdout ${fpath} |\
   ${fastqc} --outdir "${workdir}" /dev/stdin
   rename_stdin_fastqc_files "${workdir}" "${fname_out}"
 }
 
-exec_qc_single_disk(){
+exec_qc_single_disk(){ ## DEPRECATED
   local fpath=${1}
   local workdir=${2}
   ${fastq_dump} --outdir "${workdir}" ${fpath}
@@ -143,14 +153,17 @@ exec_qc_paired(){
   local workdir=${2}
   local wd_read1="${2}/read1"
   local wd_read2="${2}/read2"
-  local fname_out_1=`echo ${fpath} | sed -e 's:.sra$:_1_fastqc.zip:g'`
-  local fname_out_2=`echo ${fpath} | sed -e 's:.sra$:_2_fastqc.zip:g'`
+  local fname_out=`get_result_fname ${fpath}`
+  local fname_out_1=`echo ${fname_out} | sed -e 's:_fastqc:_1_fastqc:g'`
+  local fname_out_2=`echo ${fname_out} | sed -e 's:_fastqc:_2_fastqc:g'`
+  
   mkdir -p "${wd_read1}"
   mkdir -p "${wd_read2}"
   
   ${fastq_dump} --split-3 --stdout ${fpath} |\
   tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${fastqc} --outdir "${wd_read1}" /dev/stdin ) |\
   awk 'NR%8 ~ /^(5|6|7|0)$/' | ${fastqc} --outdir "${wd_read2}" /dev/stdin
+  
   rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
   rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
   
@@ -158,7 +171,7 @@ exec_qc_paired(){
   rm -fr "${wd_read2}"
 }
 
-exec_qc_paired_disk(){
+exec_qc_paired_disk(){ ## DEPRECATED
   local fpath=${1}
   local workdir=${2}
   ${fastq_dump} --split-3 --outdir "${workdir}" ${fpath}
@@ -205,7 +218,6 @@ fi
 # retrieve files
 ftp_path=`get_filepath_ftp`
 retrieve_files_ftp "${ftp_path}" "${workdir}"
-exit
 
 # dump sra files and exec fastqc
 ls ${workdir}/**/*sra |\
