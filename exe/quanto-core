@@ -116,6 +116,7 @@ retrieve_files_ftp(){
   local dir=${2}
   establish_ftp_connection
   lftp -c "open ${ftp_base} && mirror ${path} ${dir}"
+  close_ftp_connection
 }
 
 establish_ftp_connection(){
@@ -123,6 +124,10 @@ establish_ftp_connection(){
     sleep 5
   done
   touch "${ftp_connection_log_dir}/${exp_id}"
+}
+
+close_ftp_connection(){
+  rm "${ftp_connection_log_dir}/${exp_id}"
 }
 
 ## Execute FastQC
