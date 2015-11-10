@@ -8,10 +8,15 @@ namespace :fastqc do
   workdir = ENV['workdir'] || PROJ_ROOT
   table_dir = File.join(workdir, "tables")
   list_available = File.join(table_dir, "experiments.available.tab")
-  logdir = File.join(PROJ_ROOT, "log")
-  logfile = File.join(logdir, "#{Time.now.strftime("%Y%m%d-%H%M")}.log")
-  
+
+  # logging
+  date       = Time.now.strftime("%Y%m%d-%H%M")
+  logdir     = File.join(PROJ_ROOT, "log", date)
+  logfile    = File.join(logdir, "exec.log")
+  logdir_job = File.join(logdir, "job")
+
   directory logdir
+  directory logdir_job
   
   file logfile => logdir do |t|
     touch t.name
@@ -21,7 +26,7 @@ namespace :fastqc do
     open(logfile, "a"){|f| f.puts(m) }
   end
   
-  task :exec => [list_available, logfile] do
+  task :exec => [list_available, logfile, logdir_job] do
     logwrite(logfile, "Start FastQC execution: #{Time.now}")
     list = open(list_available).read.split("\n")
     logwrite(logfile, "Number of target experiments: #{list.size}")
@@ -30,7 +35,9 @@ namespace :fastqc do
       exp_id = item[0]
       acc_id = item[1]
       layout = item[2]
-      sh "#{QSUB} -N #{exp_id} -o #{logfile} #{core} #{acc_id} #{exp_id} #{layout}"
+      logfile_job = File.join(logdir_job, exp_id + ".log")
+      sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout}"
+      sleep 1
     end
   end
 end
