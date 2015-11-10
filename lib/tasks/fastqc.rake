@@ -40,7 +40,7 @@ namespace :fastqc do
       layout = item[2]
       logfile_job = File.join(logdir_job, exp_id + ".log")
       sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp}"
-      sleep 1
+      sleep 2
     end
   end
 end
