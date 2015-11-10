@@ -252,8 +252,6 @@ fi
 
 echo `date` "Set working directory to: ${workdir}, start downloading data.."
 
-flush_workdir ${workdir} # testing
-
 # retrieve files
 ftp_path=`get_filepath_ftp`
 retrieve_files_ftp "${ftp_path}" "${workdir}"
@@ -291,4 +289,6 @@ if [[ ! -z "${fq_filelist}" ]] ; then
   done
 fi
 
+flush_workdir ${workdir}
 echo `date` "Finished FastQC."
+
