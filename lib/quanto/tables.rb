@@ -14,7 +14,16 @@ module Quanto
 				end
 			end
 
-			def download_sra_metadata
+			def download_sra_metadata(dest_dir)
+				sra_ftp_base = "ftp.ncbi.nlm.nih.gov/sra/reports/Metadata"
+				# filename
+				ym = Time.now.strftime("%Y%m")
+		    tarball = "NCBI_SRA_Metadata_Full_#{ym}01.tar.gz"
+				dest_file = File.join(dest_dir, tarball)
+				# download via ftp
+		    sh "lftp -c \"open #{sra_ftp_base} && pget -n 8 -o #{dest_dir} #{tarball}\""
+		    sh "tar zxf #{dest_file}"
+				rm_f dest_file
 			end
 
 			def fix_sra_metadata_directory
