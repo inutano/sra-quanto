@@ -26,7 +26,14 @@ module Quanto
 				rm_f dest_file
 			end
 
-			def fix_sra_metadata_directory
+			def fix_sra_metadata_directory(metadata_parent_dir)
+				cd metadata_parent_dir
+		    acc_dirs = Dir.entries(metadata_parent_dir).select{|f| f =~ /^.RA\d{6,7}$/ }
+		    acc_dirs.group_by{|id| id.sub(/...$/,"") }.each_pair do |pid, ids|
+		      moveto = File.join(sra_metadata, pid)
+		      mkdir moveto
+		      mv ids, moveto
+		    end
 			end
 
 			def create_list_finished
