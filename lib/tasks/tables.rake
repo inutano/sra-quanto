@@ -108,7 +108,11 @@ namespace :tables do
       layout[l.first] = l.last
     end
     
-    done = open(list_finished).readlines.select{|ln| ln.chomp =~ /#{FASTQC_VERSION}$/ }
+    done = open(list_finished).readlines
+    if ENV['versionup']
+      done = done.select{|ln| ln.chomp =~ /#{FASTQC_VERSION}$/ }
+    end
+    
     done_runid = Parallel.map(done, :in_threads => NUM_OF_PARALLEL) do |ln|
       ln.split("\t")[0].split("/").last.split("_")[0]
     end
