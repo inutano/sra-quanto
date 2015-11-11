@@ -283,13 +283,7 @@ if [[ ! -z "${fq_filelist}" ]] ; then
     if [ ! -e "${dir}" ] ; then
       mkdir -p "${dir}"
     fi
-    existing=`ls ${dir}/*zip` &&:
-    if [ ! -z "${existing}" ] ; then
-      echo "${existing}" | while read f ; do
-        mv ${f} `echo "${f}.backup"`
-      done
-    fi
-    mv ${f} ${dir}
+    mv --force ${f} ${dir}
     echo `date` "Result saved to ${dir}"
   done
 fi
