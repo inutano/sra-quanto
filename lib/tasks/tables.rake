@@ -78,7 +78,7 @@ namespace :tables do
   file list_live => sra_metadata do |t|
     fpath = "#{sra_metadata}/SRA_Accessions"
     # pattern = '$1 ~ /^.RR/ && $3 == "live" && $9 == "public"'
-    pattern = '$1 ~ /^DRR04/ && $3 == "live" && $9 == "public"' # for test run
+    pattern = '$1 ~ /^DRR/ && $3 == "live" && $9 == "public"' # for test run
     list = `cat #{fpath} | awk -F '\t' '#{pattern} {print $1 "\t" $2 "\t" $11}'`.split("\n")
     open(t.name, "w"){|f| f.puts(list) }
   end
