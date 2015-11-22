@@ -18,23 +18,28 @@ module Quanto
       end
     end
 
-    def create_list_available(list_live, list_layout, list_finished)
-      live = get_live_list_hash(list_live)
-      layout = get_layout_list_hash(list_layout)
-      done = filter_by_version(open(list_finished).read, FASTQC_VERSION)
+    def initialize(sra_available, fastqc_finished)
+      @sra_available = sra_available
+      @fastqc_finished = fastqc_finished
+      @nop = Quanto::Records.num_of_parallels
+    end
 
-      done_runid = Parallel.map(done, :in_threads => Quanto::Records.num_of_parallels) do |ln|
-        ln.split("\t")[0].split("/").last.split("_")[0]
+    def available
+      finished = runids_finished
+      available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
+        run_id = record[0]
+        experiment_record = [record[2], record[1], record[3]]
+        experiment_record if !finished.include?(run_id)
       end
+      available_record.uniq.compact
+    end
 
-      available_run = live.keys - done_runid
-      available = Parallel.map(available_run, :in_threads => Quanto::Records.num_of_parallels) do |runid|
-        set = live[runid].split("\t")
-        acc_id = set[1]
-        exp_id = set[2]
-        [exp_id, acc_id, layout[exp_id]].join("\t")
+    def runids_finished
+      runids = Parallel.map(@fastqc_finished, :in_threads => @nop) do |record|
+        fastqc_path = record.split("\t")[0]
+        fastqc_path.split("/").last.split("_")[0]
       end
-      open(list_available,"w"){|f| f.puts(available.uniq) }
+      runids.uniq
     end
   end
 end
