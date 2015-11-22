@@ -1,7 +1,9 @@
 # -*- encoding: utf-8 -*-
 
 require 'quanto/fastqc'
-require 'quanto/tables'
+require 'quanto/records/fastqc'
+require 'quanto/records/sra'
+require 'quanto/records'
 
 module Quanto
 	# something goes here
