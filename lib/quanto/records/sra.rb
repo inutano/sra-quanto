@@ -61,11 +61,11 @@ module Quanto
       end
 
       def live_idsets
-        list_live('$1 "\t" $2 "\t" $11')
+        list_live('$1 "\t" $2 "\t" $11') # run id, submission id, experiment id
       end
 
       def live_accid
-        list_live('$2')
+        list_live('$2') # submission id
       end
 
       def list_live(fields)
