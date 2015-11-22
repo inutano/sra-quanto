@@ -44,7 +44,7 @@ module Quanto
       # Get a list of public/accesiible SRA entries with read layout
       def available
         layout_hash = read_layout
-        Parallel.map(live_idsets, :in_threads => @nop) do |idset|
+        Parallel.map(public_idsets, :in_threads => @nop) do |idset|
           exp_id = idset[2]
           layout = layout_hash[exp_id]
           read_layout = layout ? layout : "UNDEFINED"
@@ -56,23 +56,23 @@ module Quanto
         "#{@sra_metadata_dir}/SRA_Accessions"
       end
 
-      def awk_live_run_pattern
+      def awk_public_run_pattern
         '$1 ~ /^.RR/ && $3 == "live" && $9 == "public"'
       end
 
-      def live_idsets
-        list_live('$1 "\t" $2 "\t" $11') # run id, submission id, experiment id
+      def public_idsets
+        list_public('$1 "\t" $2 "\t" $11') # run id, submission id, experiment id
       end
 
-      def live_accid
-        list_live('$2') # submission id
+      def public_accid
+        list_public('$2') # submission id
       end
 
-      def list_live(fields)
+      def list_public(fields)
         cat = "cat #{sra_accessions_path}"
-        awk = "awk -F '\t' '#{awk_live_run_pattern} {print #{fields} }'"
+        awk = "awk -F '\t' '#{awk_public_run_pattern} {print #{fields} }'"
         out = `#{cat} | #{awk}`.split("\n")
-        Parallel.map(live_accid, :in_threads => @nop){|l| l.split("\t") }
+        Parallel.map(public_accid, :in_threads => @nop){|l| l.split("\t") }
       end
 
       # create hash for read layout reference
@@ -86,17 +86,17 @@ module Quanto
         hash
       end
 
-      def live_exp_with_read_layout
-        Parallel.map(live_xml, :in_threads => @nop) do |xml|
+      def public_exp_with_read_layout
+        Parallel.map(public_xml, :in_threads => @nop) do |xml|
           extract_layout(xml)
         end
       end
 
-      def live_xml
-        list_live_xml = Parallel.map(live_accid, :in_threads => @nop) do |acc_id|
+      def public_xml
+        list_public_xml = Parallel.map(public_accid, :in_threads => @nop) do |acc_id|
           exp_xml_path(acc_id)
         end
-        list_live_xml.compact
+        list_public_xml.compact
       end
 
       def exp_xml_path(acc_id)
