@@ -28,7 +28,7 @@ module Quanto
       finished = runids_finished
       available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
         run_id = record[0]
-        experiment_record = [record[2], record[1], record[3]]
+        experiment_record = [record[2], record[1], record[3], record[4]]
         experiment_record if !finished.include?(run_id)
       end
       available_record.uniq.compact
