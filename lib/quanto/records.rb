@@ -20,7 +20,7 @@ module Quanto
       @sra_available = sra_available
       @fastqc_finished = fastqc_finished
       @nop = Quanto::Records.num_of_parallels
-      @date_mode = PUBLISHED || :before
+      @date_mode = RECORDS_PUBLISHED || :before
       @date_base = BASE_DATE ? DateTime.parse(BASE_DATE) : Time.now
     end
 
