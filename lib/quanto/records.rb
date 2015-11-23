@@ -24,14 +24,37 @@ module Quanto
       @nop = Quanto::Records.num_of_parallels
     end
 
+    def published_before(date)
+      finished = runids_finished
+      available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
+        run_id = record[0]
+        is_older = DateTime.parse(record[3]) < DateTime.parse(date)
+        experiment_record if !finished.include?(run_id) && is_older
+      end
+      available_record.compact.uniq
+    end
+
+    def published_after(date)
+      finished = runids_finished
+      available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
+        run_id = record[0]
+        is_newer = DateTime.parse(record[3]) > DateTime.parse(date)
+        experiment_record if !finished.include?(run_id) && is_newer
+      end
+      available_record.compact.uniq
+    end
+
     def available
       finished = runids_finished
       available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
         run_id = record[0]
-        experiment_record = [record[2], record[1], record[3], record[4]]
         experiment_record if !finished.include?(run_id)
       end
-      available_record.uniq.compact
+      available_record.compact.uniq
+    end
+
+    def experiment_record(record)
+      [record[2], record[1], record[3], record[4]]
     end
 
     def runids_finished
