@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-require 'rake'
 require 'parallel'
-require 'zip'
-require 'ciika'
+require 'time'
 
 module Quanto
   class Records
