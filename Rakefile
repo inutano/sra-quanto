@@ -21,13 +21,13 @@ Dir["#{PROJ_ROOT}/lib/tasks/**/*.rake"].each do |path|
 end
 
 namespace :quanto do
-  desc "Create items not yet done, dirs can be specified for fastqc_dir, sra_metadata_dir, workdir"
-  task :init do
+  desc "Create lists of available items, fastqc_dir, sra_metadata_dir, workdir can be specified"
+  task :available do
     Rake::Task["tables:available"].invoke
   end
 
-  desc "Run fastqc for all items not yet calculated"
-  task :exec do
+  desc "Run fastqc for available items"
+  task :execute do
     Rake::Task["fastqc:exec"].invoke
   end
 end
