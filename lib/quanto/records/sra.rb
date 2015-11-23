@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+require 'rake'
 require 'parallel'
 require 'ciika'
 
@@ -12,7 +13,9 @@ module Quanto
           dest_file = File.join(dest_dir, sra_metadata_tarball_fname)
           sh "lftp -c \"open #{sra_ftp_base_url} && pget -n 8 -o #{dest_dir} #{tarball}\""
           sh "tar zxf #{dest_file}"
-          fix_sra_metadata_directory(dest_file.sub(/.tar.gz/,""))
+          downloaded = dest_file.sub(/.tar.gz/,"")
+          fix_sra_metadata_directory(downloaded)
+          mv downloaded, File.join(dest_dir, "sra_metadata")
           rm_f dest_file
         end
 
