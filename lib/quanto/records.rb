@@ -24,33 +24,39 @@ module Quanto
       @nop = Quanto::Records.num_of_parallels
     end
 
-    def published_before(date)
-      finished = runids_finished
+    def published_before(base_date)
+      available(mode: :before, base_date: base_date)
+    end
+
+    def published_after(base_date)
+      available(mode: :after, base_date: base_date)
+    end
+
+    def available(mode: :before, base_date: Time.now)
+      finished_set = runids_finished
       available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
-        run_id = record[0]
-        is_older = DateTime.parse(record[3]) < DateTime.parse(date)
-        experiment_record if !finished.include?(run_id) && is_older
+        validate_record(record, finished_set, mode, base_date)
       end
       available_record.compact.uniq
     end
 
-    def published_after(date)
-      finished = runids_finished
-      available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
-        run_id = record[0]
-        is_newer = DateTime.parse(record[3]) > DateTime.parse(date)
-        experiment_record if !finished.include?(run_id) && is_newer
-      end
-      available_record.compact.uniq
+    def validate_record(record, finished_set, date_mode, base_date)
+      validated = is_finished?(record, finished_set) && valid_date?(date_mode, base_date, record)
+      experiment_record(record) if validated
     end
 
-    def available
-      finished = runids_finished
-      available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
-        run_id = record[0]
-        experiment_record if !finished.include?(run_id)
+    def is_finished?(record, finished_set)
+      !finished_set.include?(record[0])
+    end
+
+    def valid_date?(mode, base_date, record)
+      date = DateTime.parse(record[3])
+      case mode
+      when :before
+        base_date > date
+      when :after
+        base_date < date
       end
-      available_record.compact.uniq
     end
 
     def experiment_record(record)
