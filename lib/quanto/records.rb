@@ -16,35 +16,18 @@ module Quanto
         # ["DRR","ERR","SRR"] # complete list
         ["DRR"]
       end
-
-      def date_mode
-        PUBLISHED || :before
-      end
-
-      def date_base
-        BASE_DATE ? DateTime.parse(BASE_DATE) : Time.now
-      end
     end
 
     def initialize(sra_available, fastqc_finished)
       @sra_available = sra_available
       @fastqc_finished = fastqc_finished
-    end
-
-    def num_of_parallels
-      Quanto::Records.num_of_parallels
-    end
-
-    def date_mode
-      Quanto::Records.date_mode
-    end
-
-    def date_base
-      Quanto::Records.date_base
+      @nop = Quanto::Records.num_of_parallels
+      @date_mode = PUBLISHED || :before
+      @date_base = BASE_DATE ? DateTime.parse(BASE_DATE) : Time.now
     end
 
     def runids_finished
-      runids = Parallel.map(@fastqc_finished, :in_threads => num_of_parallels) do |record|
+      runids = Parallel.map(@fastqc_finished, :in_threads => @nop) do |record|
         fastqc_path = record.split("\t")[0]
         fastqc_path.split("/").last.split("_")[0]
       end
@@ -53,14 +36,14 @@ module Quanto
 
     def available
       finished_set = runids_finished
-      available_record = Parallel.map(@sra_available, :in_threads => num_of_parallels) do |record|
-        validate_record(record, finished_set, date_mode, date_base)
+      available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
+        validate_record(record, finished_set, @date_mode, @date_base)
       end
       available_record.compact.uniq
     end
 
-    def validate_record(record, finished_set, date_mode, date_base)
-      validated = is_finished?(record, finished_set) && valid_date?(date_mode, date_base, record)
+    def validate_record(record, finished_set, @date_mode, @date_base)
+      validated = is_finished?(record, finished_set) && valid_date?(@date_mode, @date_base, record)
       experiment_record(record) if validated
     end
 
@@ -68,13 +51,13 @@ module Quanto
       !finished_set.include?(record[0])
     end
 
-    def valid_date?(mode, date_base, record)
+    def valid_date?(mode, @date_base, record)
       date = DateTime.parse(record[3])
       case mode
       when :before
-        date_base > date
+        @date_base > date
       when :after
-        date_base < date
+        @date_base < date
       end
     end
 
