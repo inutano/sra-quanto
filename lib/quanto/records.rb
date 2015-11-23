@@ -16,10 +16,11 @@ module Quanto
       end
     end
 
-    def initialize(sra_available, fastqc_finished)
-      @sra_available = sra_available
+    def initialize(fastqc_finished, sra_available)
       @fastqc_finished = fastqc_finished
-      @nop = Quanto::Records.num_of_parallels
+      @sra_available   = sra_available
+
+      @nop       = Quanto::Records.num_of_parallels
       @date_mode = RECORDS_PUBLISHED || :before
       @date_base = BASE_DATE ? DateTime.parse(BASE_DATE) : Time.now
     end
