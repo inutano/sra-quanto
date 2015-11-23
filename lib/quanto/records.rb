@@ -16,32 +16,51 @@ module Quanto
         # ["DRR","ERR","SRR"] # complete list
         ["DRR"]
       end
+
+      def date_mode
+        PUBLISHED || :before
+      end
+
+      def date_base
+        BASE_DATE ? DateTime.parse(BASE_DATE) : Time.now
+      end
     end
 
     def initialize(sra_available, fastqc_finished)
       @sra_available = sra_available
       @fastqc_finished = fastqc_finished
-      @nop = Quanto::Records.num_of_parallels
     end
 
-    def published_before(base_date)
-      available(mode: :before, base_date: base_date)
+    def num_of_parallels
+      Quanto::Records.num_of_parallels
     end
 
-    def published_after(base_date)
-      available(mode: :after, base_date: base_date)
+    def date_mode
+      Quanto::Records.date_mode
     end
 
-    def available(mode: :before, base_date: Time.now)
+    def date_base
+      Quanto::Records.date_base
+    end
+
+    def runids_finished
+      runids = Parallel.map(@fastqc_finished, :in_threads => num_of_parallels) do |record|
+        fastqc_path = record.split("\t")[0]
+        fastqc_path.split("/").last.split("_")[0]
+      end
+      runids.uniq
+    end
+
+    def available
       finished_set = runids_finished
-      available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
-        validate_record(record, finished_set, mode, base_date)
+      available_record = Parallel.map(@sra_available, :in_threads => num_of_parallels) do |record|
+        validate_record(record, finished_set, date_mode, date_base)
       end
       available_record.compact.uniq
     end
 
-    def validate_record(record, finished_set, date_mode, base_date)
-      validated = is_finished?(record, finished_set) && valid_date?(date_mode, base_date, record)
+    def validate_record(record, finished_set, date_mode, date_base)
+      validated = is_finished?(record, finished_set) && valid_date?(date_mode, date_base, record)
       experiment_record(record) if validated
     end
 
@@ -49,26 +68,18 @@ module Quanto
       !finished_set.include?(record[0])
     end
 
-    def valid_date?(mode, base_date, record)
+    def valid_date?(mode, date_base, record)
       date = DateTime.parse(record[3])
       case mode
       when :before
-        base_date > date
+        date_base > date
       when :after
-        base_date < date
+        date_base < date
       end
     end
 
     def experiment_record(record)
       [record[2], record[1], record[3], record[4]]
-    end
-
-    def runids_finished
-      runids = Parallel.map(@fastqc_finished, :in_threads => @nop) do |record|
-        fastqc_path = record.split("\t")[0]
-        fastqc_path.split("/").last.split("_")[0]
-      end
-      runids.uniq
     end
   end
 end
