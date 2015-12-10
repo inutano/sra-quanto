@@ -16,8 +16,8 @@ namespace :tables do
   # base task
   task :available => [
     sra_metadata,
-    list_finished,
-    list_public,
+    list_fastqc_finished,
+    list_public_sra,
     list_available
   ]
 
@@ -25,19 +25,19 @@ namespace :tables do
     Quanto::Records::SRA.download_sra_metadata(table_dir)
   end
 
-  file list_finished do |t|
+  file list_fastqc_finished do |t|
     fastqc_records = Quanto::Records::FastQC.new(fastqc_dir)
     Quanto::Records::IO.write(fastqc_records.finished, t.name)
   end
 
-  file list_public => sra_metadata do |t|
+  file list_public_sra => sra_metadata do |t|
     sra_records = Quanto::Records::SRA.new(sra_metadata)
     Quanto::Records::IO.write(sra_records.available, t.name)
   end
 
-  file list_available => [list_finished, list_public] do |t|
-    records_finished = Quanto::Records::IO.read(list_finished)
-    records_public   = Quanto::Records::IO.read(list_public)
+  file list_available => [list_fastqc_finished, list_public_sra] do |t|
+    records_finished = Quanto::Records::IO.read(list_fastqc_finished)
+    records_public   = Quanto::Records::IO.read(list_public_sra)
     quanto_records   = Quanto::Records.new(records_finished, records_public)
     Quanto::Records::IO.write(quanto_records.available, t.name)
   end
