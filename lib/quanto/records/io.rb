@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+require 'parallel'
+
 module Quanto
   class Records
     class IO
