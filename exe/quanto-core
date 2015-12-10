@@ -115,19 +115,23 @@ retrieve_files_ftp(){
   local path=${1}
   local dir=${2}
   establish_ftp_connection
-  lftp -c "open ${ftp_base} && mirror ${path} ${dir}"
+  lftp -c "open ${ftp_base} && !rm ${ftp_connection_log_dir}/${exp_id}.waiting && mirror ${path} ${dir}"
   close_ftp_connection
 }
 
 establish_ftp_connection(){
-  while [ `ls "${ftp_connection_log_dir}" | wc -l` -gt 49 ] ; do
-    sleep 5
+  touch "${ftp_connection_log_dir}/${exp_id}.waiting"
+  while [ `ls "${ftp_connection_log_dir}" | grep "connected" | wc -l` -gt 16 ] ; do
+    sleep 1
   done
-  touch "${ftp_connection_log_dir}/${exp_id}"
+  while [ `ls -t "${ftp_connection_log_dir}" | tail -n 1` -eq "${exp_id}.waiting" ] ; do
+    sleep 1
+  done
+  touch "${ftp_connection_log_dir}/${exp_id}.connected"
 }
 
 close_ftp_connection(){
-  rm "${ftp_connection_log_dir}/${exp_id}"
+  rm -f "${ftp_connection_log_dir}/${exp_id}.connected"
 }
 
 ## Execute FastQC
@@ -173,20 +177,20 @@ exec_qc_paired(){
   local fname_out=`get_result_fname ${fpath}`
   local fname_out_1=`echo ${fname_out} | sed -e 's:_fastqc:_1_fastqc:g'`
   local fname_out_2=`echo ${fname_out} | sed -e 's:_fastqc:_2_fastqc:g'`
-  
+
   echo `date` "Result saved to ${fname_out_1}"
   echo `date` "Result saved to ${fname_out_2}"
-  
+
   mkdir -p "${wd_read1}"
   mkdir -p "${wd_read2}"
-  
+
   ${fastq_dump} --split-3 --stdout ${fpath} |\
   tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${fastqc} --outdir "${wd_read1}" /dev/stdin ) |\
   awk 'NR%8 ~ /^(5|6|7|0)$/' | ${fastqc} --outdir "${wd_read2}" /dev/stdin
-  
+
   rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
   rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
-  
+
   rm -fr "${wd_read1}"
   rm -fr "${wd_read2}"
 }
