@@ -117,16 +117,20 @@ retrieve_files_ftp(){
   establish_ftp_connection
   lftp -c "open ${ftp_base} && (!rm ${ftp_connection_log_dir}/${exp_id}.waiting) && mirror ${path} ${dir}"
   close_ftp_connection
+  echo "${exp_id} is finishing process.."
+  exit
 }
 
 establish_ftp_connection(){
   touch "${ftp_connection_log_dir}/${exp_id}.waiting"
-  while [ `ls "${ftp_connection_log_dir}" | grep "connected" | wc -l` -gt 16 ] ; do
-    sleep 1
+  while [ `ls "${ftp_connection_log_dir}" | grep "connected" | wc -l` -gt 4 ] ; do
+    echo "too many connections! ${exp_id} is waiting.."
+    sleep 3
   done
   while [ `ls -t "${ftp_connection_log_dir}" | tail -n 1` != "${exp_id}.waiting" ] ; do
     sleep 1
   done
+  echo "${exp_id} is going to connect!"
   touch "${ftp_connection_log_dir}/${exp_id}.connected"
 }
 
