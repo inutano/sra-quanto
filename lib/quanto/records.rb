@@ -35,13 +35,13 @@ module Quanto
     def available
       finished_set = runids_finished
       available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
-        validate_record(record, finished_set, @date_mode, @date_base)
+        validate_record(record, finished_set)
       end
       available_record.compact.uniq
     end
 
-    def validate_record(record, finished_set, @date_mode, @date_base)
-      validated = is_finished?(record, finished_set) && valid_date?(@date_mode, @date_base, record)
+    def validate_record(record, finished_set)
+      validated = is_finished?(record, finished_set) && valid_date?(record)
       experiment_record(record) if validated
     end
 
@@ -49,9 +49,9 @@ module Quanto
       !finished_set.include?(record[0])
     end
 
-    def valid_date?(mode, @date_base, record)
+    def valid_date?(record)
       date = DateTime.parse(record[3])
-      case mode
+      case @date_mode
       when :before
         @date_base > date
       when :after
