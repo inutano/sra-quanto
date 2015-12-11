@@ -39,13 +39,12 @@ module Quanto
 
       def initialize(sra_metadata_dir)
         @sra_metadata_dir = sra_metadata_dir
-        @nop = Quanto::Records.num_of_parallels
       end
 
       # Get a list of public/accesiible SRA entries with read layout
       def available
         layout_hash = read_layout
-        Parallel.map(public_idsets, :in_threads => @nop) do |idset|
+        Parallel.map(public_idsets, :in_threads => @@num_of_parallels) do |idset|
           exp_id = idset[2]
           layout = layout_hash[exp_id]
           read_layout = layout ? layout : "UNDEFINED"
@@ -74,7 +73,7 @@ module Quanto
         cat = "cat #{sra_accessions_path}"
         awk = "awk -F '\t' '#{awk_public_run_pattern} {print #{fields} }'"
         out = `#{cat} | #{awk}`.split("\n")
-        Parallel.map(public_accid, :in_threads => @nop){|l| l.split("\t") }
+        Parallel.map(public_accid, :in_threads => @@num_of_parallels){|l| l.split("\t") }
       end
 
       # create hash for read layout reference
@@ -89,13 +88,13 @@ module Quanto
       end
 
       def public_exp_with_read_layout
-        Parallel.map(public_xml, :in_threads => @nop) do |xml|
+        Parallel.map(public_xml, :in_threads => @@num_of_parallels) do |xml|
           extract_layout(xml)
         end
       end
 
       def public_xml
-        list_public_xml = Parallel.map(public_accid, :in_threads => @nop) do |acc_id|
+        list_public_xml = Parallel.map(public_accid, :in_threads => @@num_of_parallels) do |acc_id|
           exp_xml_path(acc_id)
         end
         list_public_xml.compact

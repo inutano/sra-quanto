@@ -3,24 +3,25 @@ require 'time'
 
 module Quanto
   class Records
-    class << self
-      def num_of_parallels
-        NUM_OF_PARALLELS || 4
-      end
+    @@num_of_parallels = 4
 
-      def target_archives
-        # ["DRR","ERR","SRR"] # complete list
-        ["DRR"]
-      end
+    def self.num_of_parallels(nop)
+      @@num_of_parallels = nop
     end
 
     def initialize(fastqc_finished, sra_available)
       @fastqc_finished = fastqc_finished
       @sra_available   = sra_available
+      @nop = @@num_of_parallels
+    end
+    attr_accessor :date_mode, :date_base
 
-      @nop       = Quanto::Records.num_of_parallels
-      @date_mode = RECORDS_PUBLISHED || :before
-      @date_base = BASE_DATE ? DateTime.parse(BASE_DATE) : Time.now
+    def date_mode
+      @date_mode || :before
+    end
+
+    def date_base
+      @date_base ? DateTime.parse(@date_base) : Time.now
     end
 
     def runids_finished
@@ -51,11 +52,11 @@ module Quanto
 
     def valid_date?(record)
       date = DateTime.parse(record[3])
-      case @date_mode
+      case date_mode
       when :before
-        @date_base > date
+        date_base > date
       when :after
-        @date_base < date
+        date_base < date
       end
     end
 

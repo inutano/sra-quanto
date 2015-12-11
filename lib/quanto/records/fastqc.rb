@@ -6,7 +6,6 @@ module Quanto
     class FastQC
       def initialize(fastqc_dir)
         @fastqc_dir = fastqc_dir
-        @nop = Quanto::Records.num_of_parallels
       end
 
       def finished
@@ -31,20 +30,20 @@ module Quanto
       end
 
       def p_glob(dirs)
-        kids = Parallel.map(dirs, :in_threads => @nop) do |pd|
+        kids = Parallel.map(dirs, :in_threads => @@num_of_parallels) do |pd|
           Dir.glob(pd+"/*")
         end
         kids.flatten
       end
 
       def fastqc_zipfiles(run_dirs)
-        Parallel.map(run_dirs, :in_threads => @nop) do |pd|
+        Parallel.map(run_dirs, :in_threads => @@num_of_parallels) do |pd|
           Dir.glob(pd+"/*zip")
         end
       end
 
       def fastqc_versions(zipfiles)
-        Parallel.map(zipfiles, :in_threads => @nop) do |zipfile|
+        Parallel.map(zipfiles, :in_threads => @@num_of_parallels) do |zipfile|
           [zipfile, extract_version(zipfile)]
         end
       end
