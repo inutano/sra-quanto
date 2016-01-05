@@ -156,6 +156,7 @@ exec_qc_single(){
   local fname_out=`get_result_fname ${fpath}`
   ${fastq_dump} --stdout ${fpath} |\
   ${fastqc} --outdir "${workdir}" /dev/stdin
+  mkdir -p "${fname_out}"
   rename_stdin_fastqc_files "${workdir}" "${fname_out}"
   echo "Result saved to ${fname_out}"
 }
@@ -187,6 +188,9 @@ exec_qc_paired(){
   ${fastq_dump} --split-3 --stdout ${fpath} |\
   tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${fastqc} --outdir "${wd_read1}" /dev/stdin ) |\
   awk 'NR%8 ~ /^(5|6|7|0)$/' | ${fastqc} --outdir "${wd_read2}" /dev/stdin
+
+  mkdir -p "${fname_out_1}"
+  mkdir -p "${fname_out_2}"
 
   rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
   rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
