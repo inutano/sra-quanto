@@ -78,7 +78,7 @@ get_filepath_ftp(){
 ## Get filesize
 
 get_filesize(){
-  local fpath=`get_fq_path`
+  local fpath=`get_filepath`
   ssh "${node}" ls -lkR "${dra_path}/${fpath}" | awk '{ sum += $5 }END{ print sum }'
 }
 
