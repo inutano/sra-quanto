@@ -22,8 +22,8 @@ acc_id=${1}
 exp_id=${2}
 layout=${3}
 
-acc_id_head=`echo ${acc_id} | sed -e 's:...$::'`
-exp_id_head=`echo ${exp_id} | sed -e 's:...$::'`
+acc_id_head=`echo ${acc_id:0:6}`
+exp_id_head=`echo ${exp_id:0:6}`
 exp_id_center=${exp_id:0:3}
 
 # Path to sra disk filesystem
