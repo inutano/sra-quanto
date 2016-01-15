@@ -41,20 +41,30 @@ get_submission_id(){
 }
 
 update_accession_table(){
-  # Create directory for SRA Accessiosn table
-  local latest_dir="/home/`id -nu`/.dra/latest"
+  local homedir="/home/`id -nu`"
+  # Create directory for SRA Accession table
+  local latest_dir="${homedir}/.dra/latest"
   mkdir -p "${latest_dir}"
 
-  # Move old accesison table
-  local accessions="/home/`id -nu`/.dra/latest/SRA_Accessions.tab"
+  # define required tables
+  local accessions="${latest_dir}/SRA_Accessions.tab"
+  local fastqlist="${latest_dir}/fastqlist"
+  local sralist="${latest_dir}/sralist"
+
+  # Move old accesison tables
   if [[ -e "${accessions}" ]] ; then
-    backup_dir="/home/`id -nu`/.dra/"`date "+%Y%m%d"`
+    backup_dir="${homedir}/.dra/"`date "+%Y%m%d"`
     mkdir -p "${backup_dir}"
     mv "${accessions}" "${backup_dir}"
+    mv "${fastqlist}" "${backup_dir}"
+    mv "${sralist}" "${backup_dir}"
   fi
 
   # retrieve from NCBI ftp
   `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Accessions.tab"`
+
+  # retrieve from DDBJ ftp
+  `lftp -c "open ftp.ddbj.nig.ac.jp:ddbj_database/dra/meta/list && pget -O ${latest_dir} -n 8 fastqlist && pget -O ${latest_dir} -n 8 sralist"`
 }
 
 awk_extract_submission_id(){
