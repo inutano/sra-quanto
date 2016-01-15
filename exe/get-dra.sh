@@ -24,7 +24,7 @@ get_submission_id(){
   local exp_id=${1}
 
   # retrieve accession table if local file is not found
-  if [[ ! -e "/home/`id -nu`/.dra/latest/SRA_Accessions" ]] ; then
+  if [[ ! -e "/home/`id -nu`/.dra/latest/SRA_Accessions.tab" ]] ; then
     update_accession_table
   fi
 
