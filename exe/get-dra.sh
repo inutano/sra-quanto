@@ -90,7 +90,7 @@ get_fq_path(){
   local dra_path="/usr/local/ftp/public/ddbj_database/dra"
 
   # check if file is available
-  local fq_list=`ssh "${node}" ls -lk "${dra_path}/${fq_path}"`
+  local fq_list=`ssh t347 ls -lk "${dra_path}/${fq_path}"`
   if [[ ! -z "${fq_list}" ]] ; then
     echo "${fq_path}"
   fi
@@ -106,6 +106,7 @@ retrieve(){
   local exp_id=${1}
   local path=${2}
   local outdir=${3}
+  local ftp_connection_log_dir="/home/`id -nu`/.dra/ftp/"
 
   # put a file in connection dir to avoid making multiple ftp connections
   queuing_connection "${exp_id}" "${path}"
