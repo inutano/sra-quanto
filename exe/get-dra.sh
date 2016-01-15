@@ -156,6 +156,34 @@ leave_from_queue(){
   rm -f "${ftp_connection_log_dir}/${exp_id}.connected"
 }
 
+validate(){
+  local outdir=${1}
+  local files=`ls ${outdir}`
+  ls "${outdir}" | while read fname ; do
+    local fpath="${outdir}/${fname}"
+    local md5=`md5sum "${fpath}" | awk '{ print $1 }'`
+
+    local listdir="/home/`id -nu`/.dra/latest"
+
+    # in case of fastq file
+    if [[ "${fname}" =~ fastq ]] ; then
+      local listpath="${listdir}/fastqlist"
+    fi
+
+    # in case of sra compressed file
+    if [[ "${fname}" =~ sra$ ]] ; then
+      local listpath="${listdir}/sralist"
+    fi
+
+    correct=`cat "${listpath}" | grep "${fname}" | cut -f 2`
+    if [[ "${correct}" = "${md5}" ]] ; then
+      echo "=> downloaded: ${fname}"
+    else
+      echo "=> wrong md5 checksum, file can be corrupt: ${fname}"
+    fi
+  done
+}
+
 #
 # variables
 #
@@ -177,3 +205,6 @@ fpath=`get_filepath "${experiment_id}"`
 
 # Get data via ftp
 retrieve "${experiment_id}" "${fpath}" "${output_directory}"
+
+# Validate data
+validate "${output_directory}"
