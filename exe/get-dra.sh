@@ -4,7 +4,7 @@
 # usable only in DDBJ supercomputer system
 #
 # usage:
-#   get-dra <SRA Experiment ID>
+#   get-dra <SRA Experiment ID> <Output directory>
 #
 set -eu
 
@@ -102,13 +102,54 @@ get_sra_path(){
   echo "${sra_path}"
 }
 
-retrieve(){}
+retrieve(){
+  local exp_id=${1}
+  local path=${2}
+  local outdir=${3}
+
+  # put a file in connection dir to avoid making multiple ftp connections
+  queuing_connection "${exp_id}" "${path}"
+
+  # connect to ftp server and change status from waiting to connected, then mirror files
+  local ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
+  lftp -c "open ${ftp_base} && (!mv ${ftp_connection_log_dir}/${exp_id}.waiting ${ftp_connection_log_dir}/${exp_id}.connected) && mirror ${path} ${outdir}"
+
+  # remove file from connection dir
+  leave_from_queue
+}
+
+queuing_connection(){
+  local exp_id=${1}
+  local fpath=${2}
+
+  # initialize connection log dir
+  local ftp_connection_log_dir="~/.dra/ftp/"
+  mkdir -p "${ftp_connection_log_dir}"
+
+  # put a file path in connection directory
+  echo "${fpath}" > "${ftp_connection_log_dir}/${exp_id}.waiting"
+
+  # avoid making too many connections (default limit is 16)
+  local max_ftp_connection=16
+  while [ `ls "${ftp_connection_log_dir}" | grep "connected" | wc -l` -gt "${max_ftp_connection}" ] ; do
+    sleep 1
+  done
+
+  # waint until this item is oldest one in waiting queue
+  while [ `ls -t "${ftp_connection_log_dir}" | grep "waiting" | tail -n 1` != "${exp_id}.waiting" ] ; do
+    sleep 1
+  done
+}
+
+leave_from_queue(){
+  rm -f "${ftp_connection_log_dir}/${exp_id}.connected"
+}
 
 #
 # variables
 #
-
 experiment_id=${1}
+output_directory=${2}
 
 #
 # execute
@@ -121,7 +162,7 @@ connect_dra
 submission_id=`get_submission_id "${experiment_id}"`
 
 # Get filepath to available sequence data
-fpath=`get_filepath ${experiment_id}"`
+fpath=`get_filepath "${experiment_id}"`
 
 # Get data via ftp
-retrieve "${fpath}"
+retrieve "${experiment_id}" "${fpath}" "${output_directory}"
