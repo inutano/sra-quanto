@@ -24,7 +24,7 @@ get_submission_id(){
   local exp_id=${1}
 
   # retrieve accession table if local file is not found
-  if [[ ! -e "/home/$USERNAME/.dra/latest/SRA_Accessions" ]] ; then
+  if [[ ! -e "/home/`id -nu`/.dra/latest/SRA_Accessions" ]] ; then
     update_accession_table
   fi
 
@@ -42,13 +42,13 @@ get_submission_id(){
 
 update_accession_table(){
   # Create directory for SRA Accessiosn table
-  local latest_dir="/home/$USERNAME/.dra/latest"
+  local latest_dir="/home/`id -nu`/.dra/latest"
   mkdir -p "${latest_dir}"
 
   # Move old accesison table
-  local accessions="/home/$USERNAME/.dra/latest/SRA_Accessions.tab"
+  local accessions="/home/`id -nu`/.dra/latest/SRA_Accessions.tab"
   if [[ -e "${accessions}" ]] ; then
-    backup_dir="/home/$USERNAME/.dra/"`date "+%Y%m%d"`
+    backup_dir="/home/`id -nu`/.dra/"`date "+%Y%m%d"`
     mkdir -p "${backup_dir}"
     mv "${accessions}" "${backup_dir}"
   fi
@@ -58,7 +58,7 @@ update_accession_table(){
 }
 
 awk_extract_submission_id(){
-  cat "/home/$USERNAME/.dra/latest/SRA_Accessions.tab" | awk -F '\t' --assign id="${exp_id}" '$1 == id { print $2 }'
+  cat "/home/`id -nu`/.dra/latest/SRA_Accessions.tab" | awk -F '\t' --assign id="${exp_id}" '$1 == id { print $2 }'
 }
 
 get_filepath(){
@@ -123,7 +123,7 @@ queuing_connection(){
   local fpath=${2}
 
   # initialize connection log dir
-  local ftp_connection_log_dir="/home/$USERNAME/.dra/ftp/"
+  local ftp_connection_log_dir="/home/`id -nu`/.dra/ftp/"
   mkdir -p "${ftp_connection_log_dir}"
 
   # put a file path in connection directory
