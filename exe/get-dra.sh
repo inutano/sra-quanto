@@ -64,7 +64,7 @@ update_accession_table(){
   `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Accessions.tab"`
 
   # retrieve from DDBJ ftp
-  `lftp -c "open ftp.ddbj.nig.ac.jp:ddbj_database/dra/meta/list && pget -O ${latest_dir} -n 8 fastqlist && pget -O ${latest_dir} -n 8 sralist"`
+  `lftp -c "open ftp.ddbj.nig.ac.jp/ddbj_database/dra/meta/list && get -O ${latest_dir} fastqlist && get -O ${latest_dir} sralist"`
 }
 
 awk_extract_submission_id(){
