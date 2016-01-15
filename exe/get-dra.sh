@@ -54,7 +54,7 @@ update_accession_table(){
   fi
 
   # retrieve from NCBI ftp
-  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir}" -n 8 SRA_Accessions.tab`
+  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Accessions.tab"`
 }
 
 awk_extract_submission_id(){
