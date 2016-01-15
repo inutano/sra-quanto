@@ -13,7 +13,7 @@ set -eu
 #
 
 connect_dra(){
-  files_in_dra=`ssh t347 ls /usr/local/ftp/public/ddbj_database/dra`
+  files_in_dra=`ssh t347 ls /usr/local/ftp/public/ddbj_database/dra` &&:
   if [[ -z "${files_in_dra}" ]] ; then
     echo "Cannot connect to DRA node: check your ssh configuration"
     exit 1
