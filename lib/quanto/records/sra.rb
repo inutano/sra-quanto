@@ -7,6 +7,11 @@ module Quanto
     class SRA
       class << self
         include RakeFileUtils
+
+        def set_number_of_parallels(nop)
+          @@num_of_parallels = nop
+        end
+
         # Download metadata reference tables
         def download_sra_metadata(dest_dir)
           dest_file = File.join(dest_dir, sra_metadata_tarball_fname)

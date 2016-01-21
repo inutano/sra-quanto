@@ -4,6 +4,10 @@ require 'zip'
 module Quanto
   class Records
     class FastQC
+      def set_number_of_parallels(nop)
+        @@num_of_parallels = nop
+      end
+
       def initialize(fastqc_dir)
         @fastqc_dir = fastqc_dir
       end

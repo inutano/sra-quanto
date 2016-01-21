@@ -5,6 +5,10 @@ module Quanto
   class Records
     class Summary
       class << self
+        def set_number_of_parallels(nop)
+          @@num_of_parallels = nop
+        end
+
         def summarize(list_fastqc_finished)
           summary = {}
           zip_path_list = open(list_fastqc_finished).readlines

@@ -20,6 +20,7 @@ namespace :result do
   ]
 
   file quanto_summary_json => [list_fastqc_finished] do |t|
+    Quanto::Records::Summary.set_number_of_parallels(NUM_OF_PARALLEL)
     summary = Quanto::Records::Summary.summarize(list_fastqc_finished)
     Quanto::Records::IO.write(summary, t.name)
   end
