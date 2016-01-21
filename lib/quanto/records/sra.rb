@@ -16,7 +16,7 @@ module Quanto
         def download_sra_metadata(dest_dir)
           dest_file = File.join(dest_dir, sra_metadata_tarball_fname)
           sh "lftp -c \"open #{sra_ftp_base_url} && pget -n 8 -O #{dest_dir} #{sra_metadata_tarball_fname}\""
-          sh "tar zxf #{dest_file}"
+          sh "cd #{dest_dir} && tar zxf #{dest_file}"
           downloaded = dest_file.sub(/.tar.gz/,"")
           fix_sra_metadata_directory(downloaded)
           mv downloaded, File.join(dest_dir, "sra_metadata")
