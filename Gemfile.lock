@@ -1,6 +1,9 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    bio-fastqc (0.2.1)
+      rubyzip (~> 1.1, >= 1.1.0)
+      thor (~> 0.19.1)
     byebug (8.0.0)
     ciika (0.1.0)
       nokogiri
@@ -27,6 +30,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bio-fastqc
   ciika
   parallel
   pry

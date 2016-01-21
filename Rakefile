@@ -34,4 +34,9 @@ namespace :quanto do
   task :execute do
     Rake::Task["fastqc:exec"].invoke
   end
+
+  desc "Summarize fastqc data, required update of tables by rake quanto:available before summarize"
+  task :summarize do
+    Rake::Task["result:summarize"].invoke
+  end
 end

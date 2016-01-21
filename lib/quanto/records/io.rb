@@ -1,4 +1,5 @@
 require 'parallel'
+require 'json'
 
 module Quanto
   class Records
@@ -21,6 +22,12 @@ module Quanto
         def records_to_tsv(records)
           Parallel.map(records, :in_threads => @@num_of_parallels) do |record|
             record.join("\t")
+          end
+        end
+
+        def write_json(object, fname)
+          open(fname,"w") do |file|
+            file.puts(JSON.dump(object))
           end
         end
       end
