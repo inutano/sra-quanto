@@ -5,6 +5,10 @@ module Quanto
   class Records
     class IO
       class << self
+        def set_number_of_parallels(nop)
+          @@num_of_parallels = nop
+        end
+
         def read(fname)
           cont = open(fname).readlines
           Parallel.map(cont, :in_threads => @@num_of_parallels) do |ln|
