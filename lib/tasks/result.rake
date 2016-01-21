@@ -6,10 +6,7 @@ require 'json'
 
 namespace :result do
   # setup working dir
-  workdir    = ENV['workdir'] || PROJ_ROOT
-  fastqc_dir = ENV['fastqc_dir'] || File.join(workdir, "fastqc")
-
-  # collect paths to zipped fastqc result
+  workdir              = ENV['workdir'] || PROJ_ROOT
   table_dir            = File.join(workdir, "tables")
   list_fastqc_finished = File.join(table_dir, "runs.done.tab")
   quanto_summary_json  = File.join(table_dir, "quanto.summary.json")
