@@ -3,7 +3,7 @@ require 'time'
 
 module Quanto
   class Records
-    def set_number_of_parallels(nop)
+    def self.set_number_of_parallels(nop)
       @@num_of_parallels = nop
     end
 
