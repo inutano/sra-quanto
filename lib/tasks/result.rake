@@ -23,9 +23,4 @@ namespace :result do
     summary = Quanto::Records::Summary.summarize(list_fastqc_finished)
     Quanto::Records::IO.write(summary, t.name)
   end
-
-  # extract fastqc result and convert to json format
-  # merge all json and save to file
-  task :summarize => [list_fastqc_finished] do
-  end
 end
