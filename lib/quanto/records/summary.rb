@@ -26,7 +26,7 @@ module Quanto
         def create_json(path_list, outdir)
           Parallel.each(path_list, :in_threads => @@num_of_parallels) do |path|
             # extract file id
-            fileid   = path.split("/").last
+            fileid = path2fileid(path)
 
             # next if already exist
             file_out = summary_file(outdir, fileid)
@@ -39,16 +39,22 @@ module Quanto
           end
         end
 
+        def path2fileid(path)
+          path.split("/").last
+        end
+
         def summary_file(outdir, fileid)
-          # returns path like /path/to/out_dir/DRR/DRR0/DRR000/DRR000001/DRR000001_fastqc.json
+          # create directory
           id = fileid.sub(/_.+$/,"")
           center = id.slice(0,3)
           prefix = id.slice(0,4)
           index  = id.sub(/...$/,"")
-          json   = fileid.sub(".zip",".json")
-          dir = File.join(outdir, center, prefix, index, id, json)
+          dir    = File.join(outdir, center, prefix, index, id)
           FileUtils.mkdir_p(dir)
-          dir
+
+          # returns path like /path/to/out_dir/DRR/DRR0/DRR000/DRR000001/DRR000001_fastqc.json
+          json   = fileid.sub(".zip",".json")
+          File.join(dir, json)
         end
 
         def summarize_fastqc(fastqc_zip_path)
@@ -57,8 +63,11 @@ module Quanto
         end
 
         def create_list(path_list, outdir)
+          list = path_list.map do |path|
+            fileid = path2fileid(path)
+            summary_file(outdir, fileid)
+          end
           fname_out = File.join(outdir, "summary_list")
-          list = path_list.map{|path| path.sub(/.zip$/,".json") }
           open(fname_out, "w"){|file| file.puts(list) }
         end
       end
