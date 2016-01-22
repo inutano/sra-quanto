@@ -14,9 +14,15 @@ module Quanto
         def summarize(list_fastqc_finished, outdir)
           zip_path_list = open(list_fastqc_finished).readlines
           Parallel.each(zip_path_list, :in_threads => @@num_of_parallels) do |line|
+            # extract file id
             zip_path = line.split("\t").first
             fileid   = zip_path.split("/").last
+
+            # next if already exist
             file_out = summary_file(outdir, fileid)
+            next if File.exist?(file_out)
+
+            # save summary
             open(file_out, "w") do |file|
               file.puts(JSON.dump({fileid => summarize_fastqc(zip_path)}))
             end
