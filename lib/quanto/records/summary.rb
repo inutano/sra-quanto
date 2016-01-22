@@ -57,7 +57,7 @@ module Quanto
         end
 
         def create_list(path_list, outdir)
-          fname_out = File.join(out_dir, "summary_list")
+          fname_out = File.join(outdir, "summary_list")
           list = path_list.map{|path| path.sub(/.zip$/,".json") }
           open(fname_out, "w"){|file| file.puts(list) }
         end
