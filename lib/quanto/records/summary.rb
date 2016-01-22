@@ -12,11 +12,21 @@ module Quanto
         end
 
         def summarize(list_fastqc_finished, outdir)
-          zip_path_list = open(list_fastqc_finished).readlines
-          Parallel.each(zip_path_list, :in_threads => @@num_of_parallels) do |line|
+          path_list = zip_path_list(list_fastqc_finished)
+          create_json(path_list, outdir)
+          create_list(path_list, outdir)
+        end
+
+        def zip_path_list(list_fastqc_finished)
+          open(list_fastqc_finished).readlines.map do |line|
+            line.split("\t").first
+          end
+        end
+
+        def create_json(path_list, outdir)
+          Parallel.each(path_list, :in_threads => @@num_of_parallels) do |path|
             # extract file id
-            zip_path = line.split("\t").first
-            fileid   = zip_path.split("/").last
+            fileid   = path.split("/").last
 
             # next if already exist
             file_out = summary_file(outdir, fileid)
@@ -24,7 +34,7 @@ module Quanto
 
             # save summary
             open(file_out, "w") do |file|
-              file.puts(JSON.dump({fileid => summarize_fastqc(zip_path)}))
+              file.puts(JSON.dump({fileid => summarize_fastqc(path)}))
             end
           end
         end
@@ -44,6 +54,12 @@ module Quanto
         def summarize_fastqc(fastqc_zip_path)
           data = Bio::FastQC::Data.read(fastqc_zip_path)
           Bio::FastQC::Parser.new(data).summary
+        end
+
+        def create_list(path_list, outdir)
+          fname_out = File.join(out_dir, "summary_list")
+          list = path_list.map{|path| path.sub(/.zip$/,".json") }
+          open(fname_out, "w"){|file| file.puts(list) }
         end
       end
     end
