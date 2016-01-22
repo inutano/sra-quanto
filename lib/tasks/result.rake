@@ -9,7 +9,6 @@ namespace :result do
   workdir              = ENV['workdir'] || PROJ_ROOT
   table_dir            = File.join(workdir, "tables")
   list_fastqc_finished = File.join(table_dir, "runs.done.tab")
-  quanto_summary_json  = File.join(table_dir, "quanto.summary.json")
   summary_outdir       = ENV['summary_outdir'] || File.join(table_dir, "summary")
 
   # create directory if it does not exist
@@ -18,11 +17,7 @@ namespace :result do
   # set number of parallels
   Quanto::Records::Summary.set_number_of_parallels(NUM_OF_PARALLEL)
 
-  task :summarize => [
-    quanto_summary_json,
-  ]
-
-  file quanto_summary_json => [summary_outdir] do |t|
+  task :summarize => [summary_outdir] do |t|
     Quanto::Records::Summary.summarize(list_fastqc_finished, summary_outdir)
   end
 end
