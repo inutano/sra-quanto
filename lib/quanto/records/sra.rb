@@ -28,7 +28,7 @@ module Quanto
             end
             # fix and move
             fix_sra_metadata_directory(unpacked_metadata)
-            sh "mv #{unpacked_metadata}, #{metadata_dest_path} && rm -f #{tarball_downloaded}"
+            sh "mv #{unpacked_metadata} #{metadata_dest_path} && rm -f #{tarball_downloaded}"
           end
         end
 
