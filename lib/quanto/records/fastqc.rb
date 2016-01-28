@@ -42,9 +42,10 @@ module Quanto
       end
 
       def fastqc_zipfiles(run_dirs)
-        Parallel.map(run_dirs, :in_threads => @@num_of_parallels) do |pd|
+        zipfiles = Parallel.map(run_dirs, :in_threads => @@num_of_parallels) do |pd|
           Dir.glob(pd+"/*zip")
         end
+        zipfiles.flatten
       end
 
       def fastqc_versions(zipfiles)
