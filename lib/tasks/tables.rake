@@ -2,11 +2,16 @@
 
 namespace :tables do
   # setup working dir
-  workdir   = ENV['workdir'] || PROJ_ROOT
-  table_dir = File.join(workdir, "tables")
+  workdir      = ENV['workdir'] || PROJ_ROOT
+  table_dir    = File.join(workdir, "tables")
+  fastqc_dir   = ENV['fastqc_dir'] || File.join(workdir, "fastqc")
+  sra_metadata = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
+
+  # create directories if missing
+  directory workdir
   directory table_dir
-  fastqc_dir     = ENV['fastqc_dir'] || File.join(workdir, "fastqc")
-  sra_metadata   = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
+  directory fastqc_dir
+  directory sra_metadata
 
   # path to list
   list_fastqc_finished = File.join(table_dir, "runs.done.tab")
@@ -21,13 +26,13 @@ namespace :tables do
 
   # base task
   task :available => [
-    sra_metadata,
+    :get_sra_metadata,
     list_fastqc_finished,
     list_public_sra,
     list_available
   ]
 
-  file sra_metadata do |t|
+  task :get_sra_metadata => sra_matadata do |t|
     Quanto::Records::SRA.download_sra_metadata(table_dir)
   end
 
