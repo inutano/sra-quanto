@@ -15,7 +15,7 @@ module Quanto
         # Download metadata reference tables
         def download_sra_metadata(dest_dir)
           tarball_downloaded = File.join(dest_dir, sra_metadata_tarball_fname)
-          unpacked_metadata  = tarball_dest_path.sub(/.tar.gz/,"")
+          unpacked_metadata  = tarball_downloaded.sub(/.tar.gz/,"")
           metadata_dest_path = File.join(dest_dir, "sra_metadata")
 
           if !File.exist?(metadata_dest_path)
