@@ -31,7 +31,7 @@ module Quanto
         depth.times.each do |t|
           dirs = p_glob(dirs)
         end
-        dir
+        dirs
       end
 
       def p_glob(dirs)
