@@ -26,9 +26,10 @@ module Quanto
         deep_p_glob(@fastqc_dir, 3)
       end
 
-      def deep_p_glob(dir, depth)
+      def deep_p_glob(base_dir, depth)
+        dirs = [base_dir]
         depth.times.each do |t|
-          dir = p_glob(dir)
+          dirs = p_glob(dirs)
         end
         dir
       end
