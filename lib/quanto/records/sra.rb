@@ -53,7 +53,7 @@ module Quanto
           cd metadata_parent_dir
           pdir = get_accession_directories(metadata_parent_dir)
           pdir.group_by{|id| id.sub(/...$/,"") }.each_pair do |pid, ids|
-            moveto = File.join(sra_metadata, pid)
+            moveto = File.join(metadata_parent_dir, pid)
             mkdir moveto
             mv ids, moveto
           end
