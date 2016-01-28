@@ -14,13 +14,28 @@ module Quanto
 
         # Download metadata reference tables
         def download_sra_metadata(dest_dir)
-          dest_file = File.join(dest_dir, sra_metadata_tarball_fname)
+          tarball_downloaded = File.join(dest_dir, sra_metadata_tarball_fname)
+          unpacked_metadata  = tarball_dest_path.sub(/.tar.gz/,"")
+          metadata_dest_path = File.join(dest_dir, "sra_metadata")
+
+          if !File.exist?(metadata_dest_path)
+            download_metadata_via_ftp(dest_dir)
+            extract_metadata(dest_dir, tarball_downloaded)
+          end
+
+          if File.exist?(unpacked_metadata)
+            fix_sra_metadata_directory(unpacked_metadata)
+            sh "mv #{unpacked_metadata}, #{metadata_dest_path}"
+            sh "rm -f #{unpacked_metadata}"
+          end
+        end
+
+        def download_metadata_via_ftp(dest_dir)
           sh "lftp -c \"open #{sra_ftp_base_url} && pget -n 8 -O #{dest_dir} #{sra_metadata_tarball_fname}\""
+        end
+
+        def extract_metadata(dest_dir, tarball_downloaded)
           sh "cd #{dest_dir} && tar zxf #{dest_file}"
-          downloaded = dest_file.sub(/.tar.gz/,"")
-          fix_sra_metadata_directory(downloaded)
-          mv downloaded, File.join(dest_dir, "sra_metadata")
-          rm_f dest_file
         end
 
         def sra_ftp_base_url
@@ -40,6 +55,10 @@ module Quanto
             mkdir moveto
             mv ids, moveto
           end
+        end
+
+        def get_accession_directories(metadata_parent_dir)
+          Dir.entries(metadata_parent_dir).select{|f| f =~ /^.RA\d{6,7}$/ }
         end
       end
 
