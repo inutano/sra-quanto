@@ -28,7 +28,7 @@ module Quanto
 
       def deep_p_glob(dir, depth)
         depth.times.each do |t|
-          dir = parallel_glob(dir)
+          dir = p_glob(dir)
         end
         dir
       end
