@@ -18,15 +18,17 @@ module Quanto
           unpacked_metadata  = tarball_downloaded.sub(/.tar.gz/,"")
           metadata_dest_path = File.join(dest_dir, "sra_metadata")
 
-          if !File.exist?(metadata_dest_path)
-            download_metadata_via_ftp(dest_dir)
-            extract_metadata(dest_dir, tarball_downloaded)
-          end
-
-          if File.exist?(unpacked_metadata)
+          if !File.exist?(metadata_dest_path) # not yet done
+            if !File.exist?(unpacked_metadata) # not yet downloaded nor unpacked
+              if !File.exist?(tarball_downloaded) # download unless not yet done
+                download_metadata_via_ftp(dest_dir)
+              end
+              # extract
+              extract_metadata(dest_dir, tarball_downloaded)
+            end
+            # fix and move
             fix_sra_metadata_directory(unpacked_metadata)
-            sh "mv #{unpacked_metadata}, #{metadata_dest_path}"
-            sh "rm -f #{unpacked_metadata}"
+            sh "mv #{unpacked_metadata}, #{metadata_dest_path} && rm -f #{tarball_downloaded}"
           end
         end
 
@@ -35,7 +37,7 @@ module Quanto
         end
 
         def extract_metadata(dest_dir, tarball_downloaded)
-          sh "cd #{dest_dir} && tar zxf #{dest_file}"
+          sh "cd #{dest_dir} && tar zxf #{tarball_downloaded}"
         end
 
         def sra_ftp_base_url
