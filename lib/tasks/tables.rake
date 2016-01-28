@@ -11,7 +11,6 @@ namespace :tables do
   directory workdir
   directory table_dir
   directory fastqc_dir
-  directory sra_metadata
 
   # path to list
   list_fastqc_finished = File.join(table_dir, "runs.done.tab")
@@ -32,7 +31,7 @@ namespace :tables do
     list_available
   ]
 
-  task :get_sra_metadata => sra_matadata do |t|
+  task :get_sra_metadata do |t|
     Quanto::Records::SRA.download_sra_metadata(table_dir)
   end
 
