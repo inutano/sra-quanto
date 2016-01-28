@@ -106,7 +106,7 @@ module Quanto
       # create hash for read layout reference
       def read_layout
         hash = {}
-        list_exp_with_read_layout.each do |id_layout|
+        public_exp_with_read_layout.each do |id_layout|
           id = id_layout[0]
           layout = id_layout[1]
           hash[id] = layout
