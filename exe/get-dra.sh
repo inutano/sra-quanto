@@ -201,7 +201,7 @@ validate(){
           echo "Skipped: ${fname}"
         else
           local validate_cmd=`which vdb-validate | xargs ls -l | awk '{ print $NF }'`
-          `${validate_cmd} ${outdir}/${fname} 2>&1 | tail -1`
+          ${validate_cmd} ${outdir}/${fname} 2>&1 | tail -1
         fi
         ;;
     esac
