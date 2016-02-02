@@ -216,6 +216,7 @@ output_directory=${2}
 #
 # execute
 #
+echo "=> Start downloading data for ${experiment_id}"
 
 # Verify connection to DRA node
 echo "=> Verifying connection to DRA.."
@@ -236,3 +237,5 @@ retrieve "${experiment_id}" "${fpath}" "${output_directory}"
 # Validate data
 echo "=> Varidating downloaded data.."
 validate "${output_directory}"
+
+echo "=> Finished downloading data for ${experiment_id}"
