@@ -191,7 +191,7 @@ validate(){
     fi
 
     correct=`cat "${listpath}" | grep "${fname}" | cut -f 2`
-    echo "=> md5 checksum from archived file list: ${md5}"
+    echo "=> md5 checksum from archived file list: ${correct}"
 
     if [[ "${correct}" = "${md5}" ]] ; then
       echo "=> downloaded: ${fname}"
