@@ -175,29 +175,35 @@ validate(){
   local files=`ls ${outdir}`
   ls "${outdir}" | while read fname ; do
     local fpath="${outdir}/${fname}"
-    local md5=`md5sum "${fpath}" | awk '{ print $1 }'`
-    echo "=> md5 checksum for downloaded data: ${md5}"
 
-    local listdir="/home/`id -nu`/.dra/latest"
+    case "${fname}" in
+      # in case of fastq file
+      *fastq* )
+        echo "Evaluate ${fname}"
+        local md5=`md5sum "${fpath}" | awk '{ print $1 }'`
+        local correct=`cat "/home/`id -nu`/.dra/latest/fastqlist" | grep "${fname}" | cut -f 2`
 
-    # in case of fastq file
-    if [[ "${fname}" =~ fastq ]] ; then
-      local listpath="${listdir}/fastqlist"
-    fi
+        echo "=> md5 checksum for downloaded data: ${md5}"
+        echo "=> md5 checksum from archived file list: ${correct}"
 
-    # in case of sra compressed file
-    if [[ "${fname}" =~ sra$ ]] ; then
-      local listpath="${listdir}/sralist"
-    fi
-
-    correct=`cat "${listpath}" | grep "${fname}" | cut -f 2`
-    echo "=> md5 checksum from archived file list: ${correct}"
-
-    if [[ "${correct}" = "${md5}" ]] ; then
-      echo "=> downloaded: ${fname}"
-    else
-      echo "=> wrong md5 checksum, file can be corrupt: ${fname}"
-    fi
+        if [[ "${correct}" = "${md5}" ]] ; then
+          echo "=> downloaded correctly: ${fname}"
+        else
+          echo "=> wrong md5 checksum, file can be corrupt: ${fname}"
+        fi
+        ;;
+      # in case of sra format file
+      *sra )
+        echo "Evaluate ${fname}"
+        local vdb_validate=`which vdb-validate`
+        if [[ -z "${vdb_validate}" ]] ; then
+          echo "vdb-validate command not found; you'll need sra-toolkit"
+          echo "Skipped: ${fname}"
+        else
+          `vdb-validate ${outdir}/${fname} 2>&1 | tail -1`
+        fi
+        ;;
+    esac
   done
 }
 
