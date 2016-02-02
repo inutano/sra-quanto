@@ -212,21 +212,21 @@ output_directory=${2}
 #
 
 # Verify connection to DRA node
-echo "Verifying connection to DRA.."
+echo "=> Verifying connection to DRA.."
 connect_dra
 
 # Get Submission ID from Accessions table
-echo "Converting IDs.."
+echo "=> Converting IDs.."
 submission_id=`get_submission_id "${experiment_id}"`
 
 # Get filepath to available sequence data
-echo "Looking for file location.."
+echo "=> Looking for file location.."
 fpath=`get_filepath "${experiment_id}"`
 
 # Get data via ftp
-echo "Downloading data.."
+echo "=> Downloading data.."
 retrieve "${experiment_id}" "${fpath}" "${output_directory}"
 
 # Validate data
-echo "Varidating downloaded data.."
+echo "=> Varidating downloaded data.."
 validate "${output_directory}"
