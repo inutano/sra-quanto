@@ -179,7 +179,7 @@ validate(){
     case "${fname}" in
       # in case of fastq file
       *fastq* )
-        echo "Evaluate ${fname}"
+        echo "=> Evaluate ${fname}"
         local md5=`md5sum "${fpath}" | awk '{ print $1 }'`
         local correct=`cat "/home/`id -nu`/.dra/latest/fastqlist" | grep "${fname}" | cut -f 2`
 
@@ -194,7 +194,7 @@ validate(){
         ;;
       # in case of sra format file
       *sra )
-        echo "Evaluate ${fname}"
+        echo "=> Evaluate ${fname}"
         local vdb_validate=`which vdb-validate`
         if [[ -z "${vdb_validate}" ]] ; then
           echo "vdb-validate command not found; you'll need sra-toolkit"
