@@ -200,7 +200,8 @@ validate(){
           echo "vdb-validate command not found; you'll need sra-toolkit"
           echo "Skipped: ${fname}"
         else
-          `vdb-validate ${outdir}/${fname} 2>&1 | tail -1`
+          local validate_cmd=`which vdb-validate | xargs ls -l | awk '{ print $NF }'`
+          `${validate_cmd} ${outdir}/${fname} 2>&1 | tail -1`
         fi
         ;;
     esac
