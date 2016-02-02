@@ -100,7 +100,7 @@ get_fq_path(){
   local dra_path="/usr/local/ftp/public/ddbj_database/dra"
 
   # check if file is available
-  local fq_list=`ssh t347 ls -lk "${dra_path}/${fq_path}"`
+  local fq_list=`ssh t347 ls -lk "${dra_path}/${fq_path}" 2> /dev/null`
   if [[ ! -z "${fq_list}" ]] ; then
     echo "${fq_path}"
   fi
