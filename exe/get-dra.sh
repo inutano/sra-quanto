@@ -116,7 +116,7 @@ retrieve(){
   local exp_id=${1}
   local path=${2}
   local outdir=${3}
-  local ftp_connection_log_dir="/home/`id -nu`/.dra/ftp/"
+  local ftp_connection_log_dir="/home/`id -nu`/.dra/ftp"
 
   # put a file in connection dir to avoid making multiple ftp connections
   queuing_connection "${exp_id}" "${path}"
