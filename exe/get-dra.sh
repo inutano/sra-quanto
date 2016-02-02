@@ -135,7 +135,7 @@ retrieve(){
 get_file_out(){
   local outdir=${1}
   # search directories
-  ls -F outdir | grep '/' | while read dir; do
+  ls -F "${outdir}" | grep '/' | while read dir; do
     ls "${outdir}/${dir}" | while read file; do
       mv "${outdir}/${dir}/${file}" "${outdir}"
     done
