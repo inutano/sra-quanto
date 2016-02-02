@@ -176,6 +176,7 @@ validate(){
   ls "${outdir}" | while read fname ; do
     local fpath="${outdir}/${fname}"
     local md5=`md5sum "${fpath}" | awk '{ print $1 }'`
+    echo "=> md5 checksum for downloaded data: ${md5}"
 
     local listdir="/home/`id -nu`/.dra/latest"
 
@@ -190,6 +191,8 @@ validate(){
     fi
 
     correct=`cat "${listpath}" | grep "${fname}" | cut -f 2`
+    echo "=> md5 checksum from archived file list: ${md5}"
+
     if [[ "${correct}" = "${md5}" ]] ; then
       echo "=> downloaded: ${fname}"
     else
