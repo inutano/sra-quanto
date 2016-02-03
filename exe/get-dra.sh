@@ -288,10 +288,10 @@ fpath=`get_filepath "${experiment_id}"`
 
 # Get data via ftp
 echo "=> Downloading data.."
-retrieve "${experiment_id}" "${fpath}" "${output_directory}"
+retrieve "${experiment_id}" "${fpath}" "${experiment_dir}"
 
 # Validate data
 echo "=> Varidating downloaded data.."
-validate "${output_directory}"
+validate "${experiment_dir}"
 
 echo "=> Finished downloading data for ${experiment_id} `date`"
