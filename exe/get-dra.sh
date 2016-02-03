@@ -61,6 +61,7 @@ get_experiment_id(){
         update_accession_table
       fi
       cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'
+      ;;
     *RX* )
       echo "${query_id}"
       ;;
