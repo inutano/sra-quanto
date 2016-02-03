@@ -20,7 +20,7 @@ connect_dra(){
   fi
 }
 
-runid2expid(){
+get_experiment_id(){
   local query_id=${1}
   case "${query_id}" in
     *RX* )
@@ -33,6 +33,23 @@ runid2expid(){
         update_accession_table
       fi
       cat "${accessions}" | awk -F '\t' --assign id="${query_id}" '$1 == id { print $11 }'
+      ;;
+  esac
+}
+
+get_run_id(){
+  local query_id=${1}
+  case "${query_id}" in
+    *RX* )
+      local run_members="/home/`id -nu`/.dra/latest/SRA_Run_Members.tab"
+      # retrieve accession table if local file is not found
+      if [[ ! -e "${run_members}" ]] ; then
+        update_accession_table
+      fi
+      cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 == id { print $3 }'
+      ;;
+    *RR* )
+      echo "${query_id}"
       ;;
   esac
 }
@@ -77,8 +94,11 @@ update_accession_table(){
     mv "${sralist}" "${backup_dir}"
   fi
 
-  # retrieve from NCBI ftp
+  # retrieve accessions from NCBI ftp
   `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Accessions.tab"`
+
+  # retrieve run members from NCBI ftp
+  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Run_Members.tab"`
 
   # retrieve from DDBJ ftp
   `lftp -c "open ftp.ddbj.nig.ac.jp/ddbj_database/dra/meta/list && get -O ${latest_dir} fastqlist && get -O ${latest_dir} sralist"`
@@ -241,12 +261,10 @@ echo "=> Start downloading data for ${query_id} `date`"
 echo "=> Verifying connection to DRA.."
 connect_dra
 
-# Convert Run ID to Experiment ID
-experiment_id=`runid2expid "${query_id}"`
-echo "=> Experiment ID: ${experiment_id}"
-
-# Get Submission ID from Accessions table
+# Get Experiment ID, Run ID, Submission ID from Accessions table
 echo "=> Converting IDs.."
+experiment_id=`get_experiment_id "${query_id}"`
+run_id=`get_run_id "${query_id}"`
 submission_id=`get_submission_id "${experiment_id}"`
 
 # Get filepath to available sequence data
