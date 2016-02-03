@@ -198,7 +198,8 @@ validate(){
       *fastq* )
         echo "=> Evaluate ${fname}"
         local md5=`md5sum "${fpath}" | awk '{ print $1 }'`
-        local correct=`cat "/home/`id -nu`/.dra/latest/fastqlist" | grep "${fname}" | cut -f 2`
+        local fastqlist="/home/`id -nu`/.dra/latest/fastqlist"
+        local correct=`cat ${fastqlist} | grep "${fname}" | cut -f 2`
 
         echo "=> md5 checksum for downloaded data: ${md5}"
         echo "=> md5 checksum from archived file list: ${correct}"
