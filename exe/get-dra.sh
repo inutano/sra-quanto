@@ -12,6 +12,23 @@ set -eu
 # functions
 #
 
+get_dra_dir(){
+  local dra_dir="/home/`id -nu`/.dra"
+  echo "${dra_dir}"
+}
+
+get_metadata_dir(){
+  local dra_dir=`get_dra_dir`
+  local metadata_dir="${dra_dir}/metadata"
+  echo "${metadata_dir}"
+}
+
+get_ftp_connection_log_dir(){
+  local dra_dir=`get_dra_dir`
+  local ftp_connection_log_dir="${dra_dir}/ftp"
+  echo "${ftp_connection_log_dir}"
+}
+
 set_experiment_dir(){
   local outdir=${1}
   local expid=${2}
@@ -38,7 +55,8 @@ get_experiment_id(){
   case "${query_id}" in
     *RR* )
       # retrieve accession table if local file is not found
-      local run_members="/home/`id -nu`/.dra/latest/SRA_Run_Members.tab"
+      local metadata_dir=`get_metadata_dir`
+      local run_members="${metadata_dir}/latest/SRA_Run_Members.tab"
       if [[ ! -e "${run_members}" ]] ; then
         update_accession_table
       fi
@@ -53,7 +71,8 @@ get_submission_id(){
   local exp_id=${1}
 
   # retrieve accession table if local file is not found
-  if [[ ! -e "/home/`id -nu`/.dra/latest/SRA_Accessions.tab" ]] ; then
+  local metadata_dir=`get_metadata_dir`
+  if [[ ! -e "${metadata_dir}/latest/SRA_Accessions.tab" ]] ; then
     update_accession_table
   fi
 
@@ -70,7 +89,7 @@ get_submission_id(){
 }
 
 update_accession_table(){
-  local metadata_dir="/home/`id -nu`/.dra/metadata"
+  local metadata_dir=`get_metadata_dir`
   # Create directory for SRA Accession table
   local latest_dir="${metadata_dir}/latest"
   mkdir -p "${latest_dir}"
@@ -99,7 +118,8 @@ update_accession_table(){
 }
 
 awk_extract_submission_id(){
-  cat "/home/`id -nu`/.dra/latest/SRA_Accessions.tab" | awk -F '\t' --assign id="${exp_id}" '$1 == id { print $2 }'
+  local metadata_dir=`get_metadata_dir`
+  cat "${metadata_dir}/latest/SRA_Accessions.tab" | awk -F '\t' --assign id="${exp_id}" '$1 == id { print $2 }'
 }
 
 get_filepath(){
@@ -147,7 +167,7 @@ retrieve(){
   local exp_id=${1}
   local path=${2}
   local outdir=${3}
-  local ftp_connection_log_dir="/home/`id -nu`/.dra/ftp"
+  local ftp_connection_log_dir=`get_ftp_connection_log_dir`
 
   # put a file in connection dir to avoid making multiple ftp connections
   queuing_connection "${exp_id}" "${path}"
@@ -178,7 +198,7 @@ queuing_connection(){
   local fpath=${2}
 
   # initialize connection log dir
-  local ftp_connection_log_dir="/home/`id -nu`/.dra/ftp/"
+  local ftp_connection_log_dir=`get_ftp_connection_log_dir`
   mkdir -p "${ftp_connection_log_dir}"
 
   # put a file path in connection directory
@@ -211,7 +231,8 @@ validate(){
       *fastq* )
         echo "=> Evaluate ${fname}"
         local md5=`md5sum "${fpath}" | awk '{ print $1 }'`
-        local fastqlist="/home/`id -nu`/.dra/latest/fastqlist"
+        local metadata_dir=`get_metadata_dir`
+        local fastqlist="${metadata_dir}/latest/fastqlist"
         local correct=`cat ${fastqlist} | grep "${fname}" | cut -f 2`
 
         echo "=> md5 checksum for downloaded data: ${md5}"
