@@ -33,6 +33,22 @@ connect_dra(){
   fi
 }
 
+get_experiment_id(){
+  local query_id=${1}
+  case "${query_id}" in
+    *RR* )
+      # retrieve accession table if local file is not found
+      local run_members="/home/`id -nu`/.dra/latest/SRA_Run_Members.tab"
+      if [[ ! -e "${run_members}" ]] ; then
+        update_accession_table
+      fi
+      cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'
+    *RX* )
+      echo "${query_id}"
+      ;;
+  esac
+}
+
 get_submission_id(){
   local exp_id=${1}
 
@@ -226,13 +242,14 @@ validate(){
 #
 # variables
 #
-experiment_id=${1}
+query_id=${1}
 output_directory=${2}
 
 #
 # execute
 #
 echo "=> Start downloading data for ${experiment_id} `date`"
+experiment_id=`get_experiment_id "${query_id}"`
 experiment_dir=`set_experiment_dir "${output_directory}" "${experiment_id}"`
 
 # Verify connection to DRA node
