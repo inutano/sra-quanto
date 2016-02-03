@@ -110,13 +110,14 @@ awk_extract_submission_id(){
 
 get_filepath(){
   local exp_id=${1}
+  local run_id=${2}
 
   # try to get path to fastq file
   local fpath=`get_fq_path "${exp_id}"`
 
   # get path to sra file if fastq file not found
   if [[ -z "${fpath}" ]] ; then
-    local fpath=`get_sra_path "${exp_id}"`
+    local fpath=`get_sra_path "${exp_id}" "${run_id}"`
   fi
 
   # return filepath
@@ -145,7 +146,8 @@ get_fq_path(){
 
 get_sra_path(){
   local exp_id=${1}
-  local sra_path="sralite/ByExp/litesra/${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
+  local run_id=${2}
+  local sra_path="sralite/ByExp/litesra/${exp_id:0:3}/${exp_id:0:6}/${exp_id}/${run_id}"
   echo "${sra_path}"
 }
 
@@ -269,7 +271,7 @@ submission_id=`get_submission_id "${experiment_id}"`
 
 # Get filepath to available sequence data
 echo "=> Looking for file location.."
-fpath=`get_filepath "${experiment_id}"`
+fpath=`get_filepath "${experiment_id}" "${run_id}"`
 
 # Get data via ftp
 echo "=> Downloading data.."
