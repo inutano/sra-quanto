@@ -292,6 +292,6 @@ retrieve "${experiment_id}" "${fpath}" "${output_directory}"
 
 # Validate data
 echo "=> Varidating downloaded data.."
-validate "${experiment_dir}"
+validate "${output_directory}"
 
-echo "=> Finished downloading data for ${output_directory} `date`"
+echo "=> Finished downloading data for ${query_id} `date`"
