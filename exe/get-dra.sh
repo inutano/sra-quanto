@@ -20,40 +20,6 @@ connect_dra(){
   fi
 }
 
-get_experiment_id(){
-  local query_id=${1}
-  case "${query_id}" in
-    *RX* )
-      echo "${query_id}"
-      ;;
-    *RR* )
-      local accessions="/home/`id -nu`/.dra/latest/SRA_Accessions.tab"
-      # retrieve accession table if local file is not found
-      if [[ ! -e "${accessions}" ]] ; then
-        update_accession_table
-      fi
-      cat "${accessions}" | awk -F '\t' --assign id="${query_id}" '$1 == id { print $11 }'
-      ;;
-  esac
-}
-
-get_run_id(){
-  local query_id=${1}
-  case "${query_id}" in
-    *RX* )
-      local run_members="/home/`id -nu`/.dra/latest/SRA_Run_Members.tab"
-      # retrieve accession table if local file is not found
-      if [[ ! -e "${run_members}" ]] ; then
-        update_accession_table
-      fi
-      cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 == id { print $3 }'
-      ;;
-    *RR* )
-      echo "${query_id}"
-      ;;
-  esac
-}
-
 get_submission_id(){
   local exp_id=${1}
 
@@ -236,13 +202,13 @@ validate(){
 #
 # variables
 #
-query_id=${1}
+experiment_id=${1}
 output_directory=${2}
 
 #
 # execute
 #
-echo "=> Start downloading data for ${query_id} `date`"
+echo "=> Start downloading data for ${experiment_id} `date`"
 
 # Verify connection to DRA node
 echo "=> Verifying connection to DRA.."
@@ -250,8 +216,8 @@ connect_dra
 
 # Get Experiment ID, Run ID, Submission ID from Accessions table
 echo "=> Converting IDs.."
-experiment_id=`get_experiment_id "${query_id}"`
-run_id=`get_run_id "${query_id}"`
+experiment_id=`get_experiment_id "${experiment_id}"`
+run_id=`get_run_id "${experiment_id}"`
 submission_id=`get_submission_id "${experiment_id}"`
 
 # Get filepath to available sequence data
@@ -266,4 +232,4 @@ retrieve "${experiment_id}" "${fpath}" "${output_directory}"
 echo "=> Varidating downloaded data.."
 validate "${output_directory}"
 
-echo "=> Finished downloading data for ${query_id} `date`"
+echo "=> Finished downloading data for ${experiment_id} `date`"
