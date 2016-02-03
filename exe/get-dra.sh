@@ -32,7 +32,7 @@ get_ftp_connection_log_dir(){
 set_experiment_dir(){
   local outdir=${1}
   local expid=${2}
-  local expdir="${outdir}/${expdir}"
+  local expdir="${outdir}/${expid}"
   if [[ -e "${expdir}" ]] ; then
     echo "==== Error! directory ${expdir} already exists"
     exit 1
