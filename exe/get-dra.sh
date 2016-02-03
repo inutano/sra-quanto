@@ -270,7 +270,7 @@ output_directory=${2}
 #
 # execute
 #
-echo "=> Start downloading data for ${experiment_id} `date`"
+echo "=> Start downloading data for ${query_id} `date`"
 experiment_id=`get_experiment_id "${query_id}"`
 experiment_dir=`set_experiment_dir "${output_directory}" "${experiment_id}"`
 
