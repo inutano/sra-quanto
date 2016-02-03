@@ -54,7 +54,7 @@ get_experiment_id(){
       local run_members="${metadata_dir}/latest/SRA_Run_Members.tab"
       retrieve_accession_table
 
-      local exp_id = `cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'`
+      local exp_id=`cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'`
       case "${exp_id}" in
         *RX* )
           echo "${exp_id}"
