@@ -29,17 +29,17 @@ get_ftp_connection_log_dir(){
   echo "${ftp_connection_log_dir}"
 }
 
-set_experiment_dir(){
-  local outdir=${1}
-  local expid=${2}
-  local expdir="${outdir}/${expid}"
-  if [[ -e "${expdir}" ]] ; then
-    echo "==== Error! directory ${expdir} already exists"
+set_output_directory(){
+  local outdir_path=${1}
+  local query_id=${2}
+  local outdir="${outdir_path}/${query_id}"
+  if [[ -e "${outdir}" ]] ; then
+    echo "==== Error! directory ${outdir} already exists"
     exit 1
   else
-    mkdir -p "${expdir}"
+    mkdir -p "${outdir}"
   fi
-  echo "${expdir}"
+  echo "${outdir}"
 }
 
 connect_dra(){
@@ -265,14 +265,13 @@ validate(){
 # variables
 #
 query_id=${1}
-output_directory=${2}
+output_directory_path=${2}
 
 #
 # execute
 #
 echo "=> Start downloading data for ${query_id} `date`"
-experiment_id=`get_experiment_id "${query_id}"`
-experiment_dir=`set_experiment_dir "${output_directory}" "${experiment_id}"`
+output_directory=`set_output_directory "${output_directory_path}" "${query_id}"`
 
 # Verify connection to DRA node
 echo "=> Verifying connection to DRA.."
@@ -280,6 +279,7 @@ connect_dra
 
 # Get Experiment ID, Run ID, Submission ID from Accessions table
 echo "=> Converting IDs.."
+experiment_id=`get_experiment_id "${query_id}"`
 submission_id=`get_submission_id "${experiment_id}"`
 
 # Get filepath to available sequence data
@@ -288,10 +288,10 @@ fpath=`get_filepath "${experiment_id}"`
 
 # Get data via ftp
 echo "=> Downloading data.."
-retrieve "${experiment_id}" "${fpath}" "${experiment_dir}"
+retrieve "${experiment_id}" "${fpath}" "${output_directory}"
 
 # Validate data
 echo "=> Varidating downloaded data.."
 validate "${experiment_dir}"
 
-echo "=> Finished downloading data for ${experiment_id} `date`"
+echo "=> Finished downloading data for ${output_directory} `date`"
