@@ -33,19 +33,14 @@ set_output_directory(){
   local outdir_path=${1}
   local query_id=${2}
   local outdir="${outdir_path}/${query_id}"
-  if [[ -e "${outdir}" ]] ; then
-    echo "==== Error! directory ${outdir} already exists"
-    exit 1
-  else
-    mkdir -p "${outdir}"
-  fi
+  mkdir -p "${outdir}"
   echo "${outdir}"
 }
 
 connect_dra(){
   files_in_dra=`ssh t347 ls /usr/local/ftp/public/ddbj_database/dra 2> /dev/null` &&:
   if [[ -z "${files_in_dra}" ]] ; then
-    echo "Cannot connect to DRA node: check your ssh configuration"
+    echo "==== Error! cannot connect to DRA node: check your ssh configuration ===="
     exit 1
   fi
 }
@@ -64,8 +59,10 @@ get_experiment_id(){
       case "${exp_id}" in
         *RX* )
           echo "${exp_id}"
+          ;;
         * )
           exit 1
+          ;;
       esac
       ;;
     *RX* )
