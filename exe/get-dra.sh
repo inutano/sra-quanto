@@ -52,9 +52,8 @@ get_experiment_id(){
       # retrieve accession table if local file is not found
       local metadata_dir=`get_metadata_dir`
       local run_members="${metadata_dir}/latest/SRA_Run_Members.tab"
-      if [[ ! -e "${run_members}" ]] ; then
-        update_accession_table
-      fi
+      update_accession_table
+
       local exp_id = `cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'`
       case "${exp_id}" in
         *RX* )
@@ -75,17 +74,14 @@ get_submission_id(){
   local exp_id=${1}
 
   # retrieve accession table if local file is not found
-  local metadata_dir=`get_metadata_dir`
-  if [[ ! -e "${metadata_dir}/latest/SRA_Accessions.tab" ]] ; then
-    update_accession_table
-  fi
+  update_accession_table
 
   # extract id
   local sub_id=`awk_extract_submission_id`
 
   # id cannot be found if accession tabel is old: update and try again
   if [[ -z "${sub_id}" ]] ; then
-    update_accession_table
+    update_accession_table "--force"
     local sub_id=`awk_extract_submission_id`
   fi
 
@@ -93,32 +89,33 @@ get_submission_id(){
 }
 
 update_accession_table(){
+  local option=${1}
   local metadata_dir=`get_metadata_dir`
-  # Create directory for SRA Accession table
   local latest_dir="${metadata_dir}/latest"
-  mkdir -p "${latest_dir}"
-
-  # define required tables
-  local accessions="${latest_dir}/SRA_Accessions.tab"
-  local run_members="${latest_dir}/SRA_Run_Members.tab"
-  local fastqlist="${latest_dir}/fastqlist"
-  local sralist="${latest_dir}/sralist"
-
-  # Move old accesison tables
-  if [[ -e "${accessions}" ]] ; then
-    backup_dir="${metadata_dir}/"`date "+%Y%m%d"`
-    mkdir -p "${backup_dir}"
-    mv "${accessions}" "${backup_dir}"
-    mv "${run_members}" "${backup_dir}"
-    mv "${fastqlist}" "${backup_dir}"
-    mv "${sralist}" "${backup_dir}"
+  if [[ ! -e  "${latest_dir}" || "${option}" == "--force" ]] ; then
+    retrieve_accession_table
   fi
+}
+
+retrieve_accession_table(){
+  # Create directory for SRA Accession table
+  local metadata_dir=`get_metadata_dir`
+  local backup_dir="${metadata_dir}/"`date "+%Y%m%d"`
+  mkdir -p "${backup_dir}"
 
   # retrieve accessions and run members table from NCBI ftp
-  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Accessions.tab && pget -O ${latest_dir} -n 8 SRA_Run_Members.tab"`
+  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${backup_dir} -n 8 SRA_Accessions.tab && pget -O ${backup_dir} -n 8 SRA_Run_Members.tab"`
 
   # retrieve from DDBJ ftp
-  `lftp -c "open ftp.ddbj.nig.ac.jp/ddbj_database/dra/meta/list && get -O ${latest_dir} fastqlist && get -O ${latest_dir} sralist"`
+  `lftp -c "open ftp.ddbj.nig.ac.jp/ddbj_database/dra/meta/list && get -O ${backup_dir} fastqlist && get -O ${backup_dir} sralist"`
+
+  # erase current latest data dir and symlinks, then create new links
+  local latest_dir="${metadata_dir}/latest"
+  rm -fr "${latest_dir}" && mkdir -p "${latest_dir}"
+  ln -s "${backup_dir}/SRA_Accessions.tab" "${latest_dir}/SRA_Accessions.tab"
+  ln -s "${backup_dir}/SRA_Run_Members.tab" "${latest_dir}/SRA_Run_Members.tab"
+  ln -s "${backup_dir}/fastqlist" "${latest_dir}/fastqlist"
+  ln -s "${backup_dir}/sralist" "${latest_dir}/sralist"
 }
 
 awk_extract_submission_id(){
