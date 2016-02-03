@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# get-dra.sh ver 0.1.1 by inutano@gmail.com
+# get-dra.sh ver 0.1.2 by inutano@gmail.com
 # usable only in DDBJ supercomputer system
 #
 # usage:
-#   get-dra <SRA Experiment ID> <Output directory>
+#   get-dra.sh <SRA Experiment ID or SRA Run ID> <Output directory>
 #
 set -eu
 
@@ -18,6 +18,23 @@ connect_dra(){
     echo "Cannot connect to DRA node: check your ssh configuration"
     exit 1
   fi
+}
+
+runid2expid(){
+  local query_id=${1}
+  case query_id in
+    *RX* )
+      echo "${query_id}"
+      ;;
+    *RR* )
+      local accessions="/home/`id -nu`/.dra/latest/SRA_Accessions.tab"
+      # retrieve accession table if local file is not found
+      if [[ ! -e "${accessions}" ]] ; then
+        update_accession_table
+      fi
+      cat "${accesisons}" | awk -F '\t' --assign id="${query_id}" '$1 == id { print $11 }'
+      ;;
+  esac
 }
 
 get_submission_id(){
@@ -211,17 +228,21 @@ validate(){
 #
 # variables
 #
-experiment_id=${1}
+query_id=${1}
 output_directory=${2}
 
 #
 # execute
 #
-echo "=> Start downloading data for ${experiment_id}"
+echo "=> Start downloading data for ${query_id} `date`"
 
 # Verify connection to DRA node
 echo "=> Verifying connection to DRA.."
 connect_dra
+
+# Convert Run ID to Experiment ID
+experiment_id=`runid2expid "${query_id}"`
+echo "=> Experiment ID: ${experiment_id}"
 
 # Get Submission ID from Accessions table
 echo "=> Converting IDs.."
@@ -239,4 +260,4 @@ retrieve "${experiment_id}" "${fpath}" "${output_directory}"
 echo "=> Varidating downloaded data.."
 validate "${output_directory}"
 
-echo "=> Finished downloading data for ${experiment_id}"
+echo "=> Finished downloading data for ${query_id} `date`"
