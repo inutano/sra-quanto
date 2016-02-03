@@ -22,7 +22,7 @@ connect_dra(){
 
 runid2expid(){
   local query_id=${1}
-  case query_id in
+  case "${query_id}" in
     *RX* )
       echo "${query_id}"
       ;;
