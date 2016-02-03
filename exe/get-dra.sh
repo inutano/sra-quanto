@@ -12,6 +12,19 @@ set -eu
 # functions
 #
 
+set_experiment_dir(){
+  local outdir=${1}
+  local expid=${2}
+  local expdir="${outdir}/${expdir}"
+  if [[ -e "${expdir}" ]] ; then
+    echo "==== Error! directory ${expdir} already exists"
+    exit 1
+  else
+    mkdir -p "${expdir}"
+  fi
+  echo "${expdir}"
+}
+
 connect_dra(){
   files_in_dra=`ssh t347 ls /usr/local/ftp/public/ddbj_database/dra 2> /dev/null` &&:
   if [[ -z "${files_in_dra}" ]] ; then
@@ -127,8 +140,21 @@ retrieve(){
   local ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
   lftp -c "open ${ftp_base} && (!mv ${ftp_connection_log_dir}/${exp_id}.waiting ${ftp_connection_log_dir}/${exp_id}.connected) && mirror ${path} ${outdir}"
 
+  # put out sra files
+  srafile_out "${outdir}"
+
   # remove file from connection dir
   leave_from_queue
+}
+
+srafile_out(){
+  local outdir=${1}
+  ls -F "${outdir}" | grep '/' | grep 'RR' | while read dir; do
+    ls "${outdir}/${dir}" | while read file do
+      mv "${outdir}/${dir}/${file}" "${outdir}"
+    done
+    rm -fr "${outdir}/${dir}"
+  done
 }
 
 queuing_connection(){
@@ -207,6 +233,7 @@ output_directory=${2}
 # execute
 #
 echo "=> Start downloading data for ${experiment_id} `date`"
+experiment_dir=`set_experiment_dir "${output_directory}" "${experiment_id}"`
 
 # Verify connection to DRA node
 echo "=> Verifying connection to DRA.."
