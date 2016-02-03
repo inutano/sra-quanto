@@ -60,7 +60,13 @@ get_experiment_id(){
       if [[ ! -e "${run_members}" ]] ; then
         update_accession_table
       fi
-      cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'
+      local exp_id = `cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'`
+      case "${exp_id}" in
+        *RX* )
+          echo "${exp_id}"
+        * )
+          exit 1
+      esac
       ;;
     *RX* )
       echo "${query_id}"
