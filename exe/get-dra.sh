@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# get-dra.sh ver 0.1.0 by inutano@gmail.com
+# get-dra.sh ver 0.1.1 by inutano@gmail.com
 # usable only in DDBJ supercomputer system
 #
 # usage:
