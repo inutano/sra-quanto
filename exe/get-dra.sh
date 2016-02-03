@@ -52,7 +52,7 @@ get_experiment_id(){
       # retrieve accession table if local file is not found
       local metadata_dir=`get_metadata_dir`
       local run_members="${metadata_dir}/latest/SRA_Run_Members.tab"
-      update_accession_table
+      retrieve_accession_table
 
       local exp_id = `cat "${run_members}" | awk -F '\t' --assign id="${query_id}" '$1 ~ id { print $3 }'`
       case "${exp_id}" in
@@ -74,30 +74,29 @@ get_submission_id(){
   local exp_id=${1}
 
   # retrieve accession table if local file is not found
-  update_accession_table
+  retrieve_accession_table
 
   # extract id
   local sub_id=`awk_extract_submission_id`
 
   # id cannot be found if accession tabel is old: update and try again
   if [[ -z "${sub_id}" ]] ; then
-    update_accession_table "--force"
+    update_accession_table
     local sub_id=`awk_extract_submission_id`
   fi
 
   echo "${sub_id}"
 }
 
-update_accession_table(){
-  local option=${1}
+retrieve_accession_table(){
   local metadata_dir=`get_metadata_dir`
   local latest_dir="${metadata_dir}/latest"
-  if [[ ! -e  "${latest_dir}" || "${option}" == "--force" ]] ; then
-    retrieve_accession_table
+  if [[ ! -e  "${latest_dir}" ]] ; then
+    update_accession_table
   fi
 }
 
-retrieve_accession_table(){
+update_accession_table(){
   # Create directory for SRA Accession table
   local metadata_dir=`get_metadata_dir`
   local backup_dir="${metadata_dir}/"`date "+%Y%m%d"`
