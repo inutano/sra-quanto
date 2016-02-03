@@ -32,7 +32,7 @@ runid2expid(){
       if [[ ! -e "${accessions}" ]] ; then
         update_accession_table
       fi
-      cat "${accesisons}" | awk -F '\t' --assign id="${query_id}" '$1 == id { print $11 }'
+      cat "${accessions}" | awk -F '\t' --assign id="${query_id}" '$1 == id { print $11 }'
       ;;
   esac
 }
