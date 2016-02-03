@@ -224,7 +224,7 @@ leave_from_queue(){
 validate(){
   local outdir=${1}
   local files=`ls ${outdir}`
-  ls "${outdir}" | while read fname ; do
+  ls "${outdir}" | grep '.sra$' | while read fname ; do
     local fpath="${outdir}/${fname}"
 
     case "${fname}" in
