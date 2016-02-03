@@ -164,22 +164,8 @@ retrieve(){
   local ftp_base="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
   lftp -c "open ${ftp_base} && (!mv ${ftp_connection_log_dir}/${exp_id}.waiting ${ftp_connection_log_dir}/${exp_id}.connected) && mirror ${path} ${outdir}"
 
-  # get downloaded files out from directory
-  get_file_out "${outdir}"
-
   # remove file from connection dir
   leave_from_queue
-}
-
-get_file_out(){
-  local outdir=${1}
-  # search directories
-  ls -F "${outdir}" | grep '/' | while read dir; do
-    ls "${outdir}/${dir}" | while read file; do
-      mv "${outdir}/${dir}/${file}" "${outdir}"
-    done
-    rm -fr "${outdir}/${dir}"
-  done
 }
 
 queuing_connection(){
