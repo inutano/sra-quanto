@@ -75,30 +75,29 @@ get_submission_id(){
 }
 
 update_accession_table(){
-  local homedir="/home/`id -nu`"
+  local metadata_dir="/home/`id -nu`/.dra/metadata"
   # Create directory for SRA Accession table
-  local latest_dir="${homedir}/.dra/latest"
+  local latest_dir="${metadata_dir}/latest"
   mkdir -p "${latest_dir}"
 
   # define required tables
   local accessions="${latest_dir}/SRA_Accessions.tab"
+  local run_members="${latest_dir}/SRA_Run_Members.tab"
   local fastqlist="${latest_dir}/fastqlist"
   local sralist="${latest_dir}/sralist"
 
   # Move old accesison tables
   if [[ -e "${accessions}" ]] ; then
-    backup_dir="${homedir}/.dra/"`date "+%Y%m%d"`
+    backup_dir="${metadata_dir}/"`date "+%Y%m%d"`
     mkdir -p "${backup_dir}"
     mv "${accessions}" "${backup_dir}"
+    mv "${run_members}" "${backup_dir}"
     mv "${fastqlist}" "${backup_dir}"
     mv "${sralist}" "${backup_dir}"
   fi
 
-  # retrieve accessions from NCBI ftp
-  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Accessions.tab"`
-
-  # retrieve run members from NCBI ftp
-  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Run_Members.tab"`
+  # retrieve accessions and run members table from NCBI ftp
+  `lftp -c "open ftp.ncbi.nlm.nih.gov:/sra/reports/Metadata && pget -O ${latest_dir} -n 8 SRA_Accessions.tab && pget -O ${latest_dir} -n 8 SRA_Run_Members.tab"`
 
   # retrieve from DDBJ ftp
   `lftp -c "open ftp.ddbj.nig.ac.jp/ddbj_database/dra/meta/list && get -O ${latest_dir} fastqlist && get -O ${latest_dir} sralist"`
