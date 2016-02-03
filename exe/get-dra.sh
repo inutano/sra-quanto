@@ -187,7 +187,7 @@ retrieve(){
 srafile_out(){
   local outdir=${1}
   ls -F "${outdir}" | grep '/' | grep 'RR' | while read dir; do
-    ls "${outdir}/${dir}" | while read file do
+    ls "${outdir}/${dir}" | while read file; do
       mv "${outdir}/${dir}/${file}" "${outdir}"
     done
     rm -fr "${outdir}/${dir}"
