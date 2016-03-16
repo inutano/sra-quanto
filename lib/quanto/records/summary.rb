@@ -75,7 +75,7 @@ module Quanto
           relpath = outdir.sub(/^.+summary\//,"")
           list = path_list.map do |path|
             fileid = path2fileid(path)
-            summary_file(relpath, fileid)
+            summary_file(relpath, fileid, "json")
           end
           fname_out = File.join(outdir, "summary_list")
           open(fname_out, "w"){|file| file.puts(list) }
