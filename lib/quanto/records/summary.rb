@@ -13,7 +13,7 @@ module Quanto
 
         def summarize(list_fastqc_finished, outdir)
           path_list = zip_path_list(list_fastqc_finished)
-          create_json(path_list, outdir)
+          create_summary(path_list, outdir)
           create_list(path_list, outdir)
         end
 
@@ -23,18 +23,27 @@ module Quanto
           end
         end
 
-        def create_json(path_list, outdir)
+        def create_summary(path_list, outdir)
           Parallel.each(path_list, :in_threads => @@num_of_parallels) do |path|
             # extract file id
             fileid = path2fileid(path)
 
-            # next if already exist
-            file_out = summary_file(outdir, fileid)
-            next if File.exist?(file_out)
+            # generate summary of fastqc data
+            summary = summarize_fastqc(path)
 
-            # save summary
-            open(file_out, "w") do |file|
-              file.puts(JSON.dump({fileid => summarize_fastqc(path)}))
+            # save summary files
+            ["json", "jsonld", "ttl"].each do |format|
+              save_summary(fileid, summary, format)
+            end
+          end
+        end
+
+        def save_summary(fileid, summary, format) # json, jsonld, ttl
+          output_path = summary_file(outdir, fileid, format)
+          if !File.exist?
+            open(output_path, "w") do |file|
+              data = Bio::FastQC::Converter.new(summary, fileid).send("to_#{format}".to_sym)
+              file.puts(data)
             end
           end
         end
@@ -43,7 +52,7 @@ module Quanto
           path.split("/").last
         end
 
-        def summary_file(outdir, fileid)
+        def summary_file(outdir, fileid, ext)
           # create directory
           id = fileid.sub(/_.+$/,"")
           center = id.slice(0,3)
@@ -53,8 +62,8 @@ module Quanto
           FileUtils.mkdir_p(dir)
 
           # returns path like /path/to/out_dir/DRR/DRR0/DRR000/DRR000001/DRR000001_fastqc.json
-          json   = fileid.sub(".zip",".json")
-          File.join(dir, json)
+          summary_file_name = fileid.sub(".zip",".#{ext}")
+          File.join(dir, summary_file_name)
         end
 
         def summarize_fastqc(fastqc_zip_path)

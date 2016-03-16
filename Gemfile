@@ -4,7 +4,7 @@ gem 'rake'
 gem 'parallel'
 gem 'rubyzip'
 gem 'ciika'
-gem 'bio-fastqc'
+gem 'bio-fastqc', '0.4.0'
 
 group :development do
   gem 'pry'
