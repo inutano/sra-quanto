@@ -40,7 +40,7 @@ module Quanto
 
         def save_summary(outdir, fileid, summary, format) # json, jsonld, ttl
           output_path = summary_file(outdir, fileid, format)
-          if !File.exist?
+          if !File.exist?(output_path)
             open(output_path, "w") do |file|
               data = Bio::FastQC::Converter.new(summary, fileid).send("to_#{format}".to_sym)
               file.puts(data)
