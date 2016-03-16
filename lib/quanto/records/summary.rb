@@ -33,12 +33,12 @@ module Quanto
 
             # save summary files
             ["json", "jsonld", "ttl"].each do |format|
-              save_summary(fileid, summary, format)
+              save_summary(outdir, fileid, summary, format)
             end
           end
         end
 
-        def save_summary(fileid, summary, format) # json, jsonld, ttl
+        def save_summary(outdir, fileid, summary, format) # json, jsonld, ttl
           output_path = summary_file(outdir, fileid, format)
           if !File.exist?
             open(output_path, "w") do |file|
