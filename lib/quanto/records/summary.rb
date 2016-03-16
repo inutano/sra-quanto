@@ -42,7 +42,7 @@ module Quanto
           output_path = summary_file(outdir, fileid, format)
           if !File.exist?(output_path)
             open(output_path, "w") do |file|
-              data = Bio::FastQC::Converter.new(summary, fileid).send("to_#{format}".to_sym)
+              data = Bio::FastQC::Converter.new(summary, id: fileid).send("to_#{format}".to_sym)
               file.puts(data)
             end
           end
