@@ -25,17 +25,36 @@ module Quanto
           end
         end
 
+        def list_not_yet_summarized(path_list, outdir)
+          p_mes = "Initializing item list"
+          list = Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |path|
+            path if !summary_exist?(path, outdir)
+          end
+          list.compact
+        end
+
+        def summary_exist?(path, outdir)
+          fileid  = path2fileid(path)
+          json    = summary_file_path(outdir, fileid, "json")
+          tsv     = summary_file_path(outdir, fileid, "tsv")
+          ttl     = summary_file_path(outdir, fileid, "ttl")
+          File.exist?(json) && File.exist?(tsv) && File.exist?(ttl)
+        end
+
         def create_summary(path_list, outdir)
           p_mes = "Creating summary files"
-          Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |path|
+          list = list_not_yet_summarized(path_list, outdir)
+          Parallel.map(list, :in_threads => @@nop, :progress => p_mes) do |path|
             fileid  = path2fileid(path)
-            dir     = summary_file_dir(outdir, fileid)
-            FileUtils.mkdir_p(dir)
-            summary = summarize_fastqc(path)
-            write_summary_file(summary, fileid, dir, "json")
-            write_summary_file(summary, fileid, dir, "tsv")
-            write_summary_file(summary, fileid, dir, "ttl")
-            nil
+            if !summary_exist?(outdir, fileid)
+              dir     = summary_file_dir(outdir, fileid)
+              FileUtils.mkdir_p(dir)
+              summary = summarize_fastqc(path)
+              write_summary_file(summary, fileid, dir, "json")
+              write_summary_file(summary, fileid, dir, "tsv")
+              write_summary_file(summary, fileid, dir, "ttl")
+              nil
+            end
           end
         end
 
