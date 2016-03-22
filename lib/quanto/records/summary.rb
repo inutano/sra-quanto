@@ -1,4 +1,5 @@
 require 'parallel'
+require 'ruby-progressbar'
 require 'bio-fastqc'
 require 'fileutils'
 require 'json'
@@ -24,7 +25,9 @@ module Quanto
         end
 
         def create_summary(path_list, outdir)
-          Parallel.each(path_list, :in_threads => @@num_of_parallels) do |path|
+          puts "Set number of parallel: #{@@num_of_parallels} threads."
+          p_mes = "Creating FastQC summary files"
+          Parallel.each(path_list, :in_threads => @@num_of_parallels, :progress => p_mes) do |path|
             # extract file id
             fileid = path2fileid(path)
 
@@ -34,7 +37,9 @@ module Quanto
             # save summary files
             ["json", "jsonld", "ttl", "tsv"].each do |format|
               output_path = summary_file(outdir, fileid, format)
-              Bio::FastQC::IO.new(summary, id: fileid).write(output_path, format)
+              if !File.exist?(ouput_path)
+                Bio::FastQC::IO.new(summary, id: fileid).write(output_path, format)
+              end
             end
           end
         end

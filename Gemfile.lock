@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    bio-fastqc (0.5.0)
+    bio-fastqc (0.5.2)
       json-ld (~> 1.99)
       rdf-turtle (~> 1.99)
       rubyzip (~> 1.1, >= 1.1.0)
@@ -37,6 +37,7 @@ GEM
     rdf-turtle (1.99.0)
       ebnf (~> 1.0)
       rdf (~> 1.99)
+    ruby-progressbar (1.7.5)
     rubyzip (1.1.7)
     slop (3.6.0)
     sxp (0.1.5)
@@ -46,12 +47,13 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bio-fastqc (= 0.5.0)
+  bio-fastqc (= 0.5.2)
   ciika
   parallel
   pry
   pry-byebug
   rake
+  ruby-progressbar
   rubyzip
 
 BUNDLED WITH
