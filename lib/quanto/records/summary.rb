@@ -46,15 +46,13 @@ module Quanto
           list = list_not_yet_summarized(path_list, outdir)
           Parallel.map(list, :in_threads => @@nop, :progress => p_mes) do |path|
             fileid  = path2fileid(path)
-            if !summary_exist?(outdir, fileid)
-              dir     = summary_file_dir(outdir, fileid)
-              FileUtils.mkdir_p(dir)
-              summary = summarize_fastqc(path)
-              write_summary_file(summary, fileid, dir, "json")
-              write_summary_file(summary, fileid, dir, "tsv")
-              write_summary_file(summary, fileid, dir, "ttl")
-              nil
-            end
+            dir     = summary_file_dir(outdir, fileid)
+            FileUtils.mkdir_p(dir)
+            summary = summarize_fastqc(path)
+            write_summary_file(summary, fileid, dir, "json")
+            write_summary_file(summary, fileid, dir, "tsv")
+            write_summary_file(summary, fileid, dir, "ttl")
+            nil
           end
         end
 
