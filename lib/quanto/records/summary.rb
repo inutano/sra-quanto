@@ -69,6 +69,8 @@ module Quanto
             summary_file(relpath, fileid, "json")
           end
           fname_out = File.join(outdir, "summary_list")
+          backup = fname_out + "." + Time.now.strftime("%Y%m%d")
+          FileUtils.mv(fname_out, backup) if File.exist?(fname_out)
           open(fname_out, "w"){|file| file.puts(list) }
         end
       end
