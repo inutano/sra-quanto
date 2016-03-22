@@ -55,7 +55,7 @@ module Quanto
 
         def create_summary(process_list, outdir)
           p_mes = "Creating summary files"
-          Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |items|
+          Parallel.map(process_list, :in_threads => @@nop, :progress => p_mes) do |items|
             path   = items[0]
             fileid = items[1]
             dir    = items[2]
@@ -100,9 +100,9 @@ module Quanto
             summary_file_path(outdir, fileid, "json").sub(/^.+summary\//,"")
           end
           list_file_path = File.join(outdir, "summary_list")
-          backup = fname_out + "." + Time.now.strftime("%Y%m%d")
-          FileUtils.mv(fname_out, backup) if File.exist?(fname_out)
-          open(fname_out, "w"){|file| file.puts(list) }
+          backup = list_file_path + "." + Time.now.strftime("%Y%m%d")
+          FileUtils.mv(list_file_path, backup) if File.exist?(list_file_path)
+          open(list_file_path, "w"){|file| file.puts(list) }
         end
       end
     end
