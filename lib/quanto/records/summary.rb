@@ -14,8 +14,10 @@ module Quanto
         end
 
         def summarize(list_fastqc_finished, outdir)
-          path_list = zip_path_list(list_fastqc_finished)
-          create_summary(path_list, outdir)
+          path_list_full = zip_path_list(list_fastqc_finished)
+          path_list = list_not_yet_summarized(path_list, outdir)
+          process_list = summary_process_list(path_list, outdir)
+          create_summary(process_list, outdir)
           create_list(path_list, outdir)
         end
 
@@ -41,17 +43,27 @@ module Quanto
           File.exist?(json) && File.exist?(tsv) && File.exist?(ttl)
         end
 
-        def create_summary(path_list, outdir)
-          p_mes = "Creating summary files"
-          list = list_not_yet_summarized(path_list, outdir)
-          Parallel.map(list, :in_threads => @@nop, :progress => p_mes) do |path|
-            fileid  = path2fileid(path)
-            dir     = summary_file_dir(outdir, fileid)
+        def summary_process_list(path_list, outdir)
+          p_mes = "Creating destination directories"
+          Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |path|
+            fileid = path2fileid(path)
+            dir    = summary_file_dir(outdir, fileid)
             FileUtils.mkdir_p(dir)
+            [path, fileid, dir]
+          end
+        end
+
+        def create_summary(process_list, outdir)
+          p_mes = "Creating summary files"
+          Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |items|
+            path   = items[0]
+            fileid = items[1]
+            dir    = items[2]
             summary = summarize_fastqc(path)
-            write_summary_file(summary, fileid, dir, "json")
-            write_summary_file(summary, fileid, dir, "tsv")
-            write_summary_file(summary, fileid, dir, "ttl")
+            io = Bio::FastQC::IO.new(summary, id: fileid)
+            io.write(File.join(dir, fileid + ".json"), "json")
+            io.write(File.join(dir, fileid + ".tsv"), "tsv")
+            io.write(File.join(dir, fileid + ".ttl"), "ttl")
             nil
           end
         end
@@ -79,10 +91,6 @@ module Quanto
         def summarize_fastqc(fastqc_zip_path)
           data = Bio::FastQC::Data.read(fastqc_zip_path)
           Bio::FastQC::Parser.new(data).summary
-        end
-
-        def write_summary_file(summary, fileid, dir, format)
-          Bio::FastQC::IO.new(summary, id: fileid).write(File.join(dir, fileid+"."+format), format)
         end
 
         def create_list(path_list, outdir)
