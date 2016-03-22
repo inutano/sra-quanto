@@ -37,7 +37,7 @@ module Quanto
             # save summary files
             ["json", "jsonld", "ttl", "tsv"].each do |format|
               output_path = summary_file(outdir, fileid, format)
-              if !File.exist?(ouput_path)
+              if !File.exist?(output_path)
                 Bio::FastQC::IO.new(summary, id: fileid).write(output_path, format)
               end
             end
