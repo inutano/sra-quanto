@@ -32,7 +32,7 @@ module Quanto
             summary = summarize_fastqc(path)
 
             # save summary files
-            ["json", "jsonld", "ttl"].each do |format|
+            ["json", "jsonld", "ttl", "tsv"].each do |format|
               save_summary(outdir, fileid, summary, format)
             end
           end
