@@ -15,7 +15,7 @@ module Quanto
 
         def summarize(list_fastqc_finished, outdir)
           path_list_full = zip_path_list(list_fastqc_finished)
-          path_list = list_not_yet_summarized(path_list, outdir)
+          path_list = list_not_yet_summarized(path_list_full, outdir)
           process_list = summary_process_list(path_list, outdir)
           create_summary(process_list, outdir)
           create_list(path_list, outdir)
