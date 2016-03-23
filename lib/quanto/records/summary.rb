@@ -49,22 +49,22 @@ module Quanto
             fileid = path2fileid(path)
             dir    = summary_file_dir(outdir, fileid)
             FileUtils.mkdir_p(dir)
-            [path, fileid, dir]
+            [
+              path,
+              fileid,
+              File.join(dir, fileid + ".json"),
+              File.join(dir, fileid + ".tsv"),
+              File.join(dir, fileid + ".ttl"),
+            ]
           end
         end
 
         def create_summary(process_list, outdir)
           p_mes = "Creating summary files"
-          Parallel.map(process_list, :in_threads => @@nop, :progress => p_mes) do |items|
-            path   = items[0]
-            fileid = items[1]
-            dir    = items[2]
-            summary = summarize_fastqc(path)
-            io = Bio::FastQC::IO.new(summary, id: fileid)
-            io.write(File.join(dir, fileid + ".json"), "json")
-            io.write(File.join(dir, fileid + ".tsv"), "tsv")
-            io.write(File.join(dir, fileid + ".ttl"), "ttl")
-            nil
+          Parallel.each(process_list, :in_threads => @@nop, :progress => p_mes) do |items|
+            c = Bio::FastQC::Converter.new(Bio::FastQC::Parser.new(Bio::FastQC::Data.read(items[0])).summary, items[1])
+            open(items[2], 'w'){|f| f.puts(c.to_json) }
+            open(items[3], 'w'){|f| f.puts(c.to_tsv) }
           end
         end
 
@@ -89,8 +89,7 @@ module Quanto
         end
 
         def summarize_fastqc(fastqc_zip_path)
-          data = Bio::FastQC::Data.read(fastqc_zip_path)
-          Bio::FastQC::Parser.new(data).summary
+          Bio::FastQC::Parser.new(Bio::FastQC::Data.read(fastqc_zip_path)).summary
         end
 
         def create_list(path_list, outdir)
