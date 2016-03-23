@@ -61,10 +61,11 @@ module Quanto
 
         def create_summary(process_list, outdir)
           p_mes = "Creating summary files"
-          Parallel.each(process_list, :in_threads => @@nop, :progress => p_mes) do |items|
+          Parallel.map(process_list, :in_threads => @@nop, :progress => p_mes) do |items|
             c = Bio::FastQC::Converter.new(Bio::FastQC::Parser.new(Bio::FastQC::Data.read(items[0])).summary, id: items[1])
             open(items[2], 'w'){|f| f.puts(c.to_json) }
             open(items[3], 'w'){|f| f.puts(c.to_tsv) }
+            nil
           end
         end
 
