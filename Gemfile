@@ -5,7 +5,7 @@ gem 'parallel'
 gem 'ruby-progressbar'
 gem 'rubyzip'
 gem 'ciika'
-gem 'bio-fastqc', '0.5.2'
+gem 'bio-fastqc', '0.6.0'
 
 group :development do
   gem 'pry'
