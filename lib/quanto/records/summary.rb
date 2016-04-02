@@ -35,12 +35,18 @@ module Quanto
           list.compact
         end
 
+        def output_formats
+          [
+            "json",
+            # "ttl", # currently not working with parallel gem
+            "tsv",
+          ]
+        end
+
         def summary_exist?(path, outdir)
           fileid  = path2fileid(path)
-          json    = summary_file_path(outdir, fileid, "json")
-          tsv     = summary_file_path(outdir, fileid, "tsv")
-          ttl     = summary_file_path(outdir, fileid, "ttl")
-          File.exist?(json) && File.exist?(tsv) && File.exist?(ttl)
+          files = output_formats.map{|ext| File.exist?(summary_file_path(outdir, fileid, ext)) }
+          files.uniq == [true]
         end
 
         def summary_process_list(path_list, outdir)
@@ -49,13 +55,7 @@ module Quanto
             fileid = path2fileid(path)
             dir    = summary_file_dir(outdir, fileid)
             FileUtils.mkdir_p(dir)
-            [
-              path,
-              fileid,
-              File.join(dir, fileid + ".json"),
-              File.join(dir, fileid + ".tsv"),
-              File.join(dir, fileid + ".ttl"),
-            ]
+            [ path, fileid ] + output_formats.map{|ext| File.join(dir, fileid + ext) }
           end
         end
 
