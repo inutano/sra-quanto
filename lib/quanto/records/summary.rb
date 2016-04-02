@@ -70,7 +70,7 @@ module Quanto
         end
 
         def path2fileid(path)
-          path.split("/").last
+          path.split("/").last.split(".")[0]
         end
 
         def summary_file_dir(outdir, fileid)
