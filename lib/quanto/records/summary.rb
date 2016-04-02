@@ -55,7 +55,7 @@ module Quanto
             fileid = path2fileid(path)
             dir    = summary_file_dir(outdir, fileid)
             FileUtils.mkdir_p(dir)
-            [ path, fileid ] + output_formats.map{|ext| File.join(dir, fileid + ext) }
+            [ path, fileid ] + output_formats.map{|ext| summary_file_path(outdir, fileid, ext) }
           end
         end
 
