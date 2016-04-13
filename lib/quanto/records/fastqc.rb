@@ -23,7 +23,7 @@ module Quanto
       end
 
       def run_dir_finished
-        deep_p_glob(@fastqc_dir, 3)
+        deep_p_glob(@fastqc_dir, 4)
       end
 
       def deep_p_glob(base_dir, depth)
