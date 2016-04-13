@@ -32,23 +32,31 @@ namespace :tables do
   ]
 
   task :get_sra_metadata => table_dir do |t|
+    puts "==> #{Time.now} Fetching SRA metadata..."
     Quanto::Records::SRA.download_sra_metadata(table_dir)
+    puts "==> #{Time.now} Done."
   end
 
   file list_fastqc_finished => fastqc_dir do |t|
+    puts "==> #{Time.now} Searching FastQC records..."
     fastqc_records = Quanto::Records::FastQC.new(fastqc_dir)
     Quanto::Records::IO.write(fastqc_records.finished, t.name)
+    puts "==> #{Time.now} Done."
   end
 
   file list_public_sra => sra_metadata do |t|
+    puts "==> #{Time.now} Searching live SRA records..."
     sra_records = Quanto::Records::SRA.new(sra_metadata)
     Quanto::Records::IO.write(sra_records.available, t.name)
+    puts "==> #{Time.now} Done."
   end
 
   file list_available => [list_fastqc_finished, list_public_sra] do |t|
+    puts "==> #{Time.now} Creating list of items to process..."
     records_finished = Quanto::Records::IO.read(list_fastqc_finished)
     records_public   = Quanto::Records::IO.read(list_public_sra)
     quanto_records   = Quanto::Records.new(records_finished, records_public)
     Quanto::Records::IO.write(quanto_records.available, t.name)
+    puts "==> #{Time.now} Done."
   end
 end
