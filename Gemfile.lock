@@ -37,7 +37,6 @@ GEM
     rdf-turtle (1.99.0)
       ebnf (~> 1.0)
       rdf (~> 1.99)
-    ruby-progressbar (1.7.5)
     rubyzip (1.1.7)
     slop (3.6.0)
     sxp (0.1.5)
@@ -53,7 +52,6 @@ DEPENDENCIES
   pry
   pry-byebug
   rake
-  ruby-progressbar
   rubyzip
 
 BUNDLED WITH

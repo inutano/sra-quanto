@@ -1,5 +1,4 @@
 require 'parallel'
-require 'ruby-progressbar'
 require 'bio-fastqc'
 require 'fileutils'
 require 'json'
@@ -28,8 +27,7 @@ module Quanto
         end
 
         def list_not_yet_summarized(path_list, outdir)
-          p_mes = "Initializing item list"
-          list = Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |path|
+          list = Parallel.map(path_list, :in_threads => @@nop) do |path|
             path if !summary_exist?(path, outdir)
           end
           list.compact
@@ -50,8 +48,7 @@ module Quanto
         end
 
         def summary_process_list(path_list, outdir)
-          p_mes = "Creating destination directories"
-          Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |path|
+          Parallel.map(path_list, :in_threads => @@nop) do |path|
             fileid = path2fileid(path)
             dir    = summary_file_dir(outdir, fileid)
             FileUtils.mkdir_p(dir)
@@ -60,8 +57,7 @@ module Quanto
         end
 
         def create_summary(process_list, outdir)
-          p_mes = "Creating summary files"
-          Parallel.map(process_list, :in_threads => @@nop, :progress => p_mes) do |items|
+          Parallel.map(process_list, :in_threads => @@nop) do |items|
             c = Bio::FastQC::Converter.new(Bio::FastQC::Parser.new(Bio::FastQC::Data.read(items[0])).summary, id: items[1])
             open(items[2], 'w'){|f| f.puts(c.to_json) }
             open(items[3], 'w'){|f| f.puts(c.to_tsv) }
@@ -94,8 +90,7 @@ module Quanto
         end
 
         def create_list(path_list, outdir)
-          p_mes = "Creating file list"
-          list = Parallel.map(path_list, :in_threads => @@nop, :progress => p_mes) do |path|
+          list = Parallel.map(path_list, :in_threads => @@nop) do |path|
             fileid = path2fileid(path)
             summary_file_path(outdir, fileid, "json").sub(/^.+summary\//,"")
           end
