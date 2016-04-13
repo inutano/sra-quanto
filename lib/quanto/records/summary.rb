@@ -17,8 +17,9 @@ module Quanto
           @@outdir = outdir
           # Create item list to summarize
           item_list = create_item_list(list_fastqc_finished, format)
+          item_list_to_summarize = create_item_list_to_summarize(list_fastqc_finished, format)
           # Create summary for each item on the list
-          create_summary(item_list, format)
+          create_summary(item_list_to_summarize, format)
           # Create list for summarized items
           create_list(item_list, format)
           # merge tsv
@@ -30,6 +31,12 @@ module Quanto
         # col1: full path to fastqc zip file, col2: fastqc version
 
         def create_item_list(list_fastqc_finished, ext)
+          Parallel.map(open(list_fastqc_finished).readlines, :in_threads => @@nop) do |line|
+            line.split("\t").first
+          end
+        end
+
+        def create_item_list_to_summarize(list_fastqc_finished, ext)
           list = Parallel.map(open(list_fastqc_finished).readlines, :in_threads => @@nop) do |line|
             path = line.split("\t").first
             path if !summary_exist?(path, ext)
