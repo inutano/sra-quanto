@@ -45,8 +45,7 @@ module Quanto
         end
 
         def sra_metadata_tarball_fname
-          ym = Time.now.strftime("%Y%m")
-          "NCBI_SRA_Metadata_Full_#{ym}01.tar.gz"
+          `lftp -c \"open #{sra_ftp_base_url} && cls --sort=date -1 *Full* | head -1\"`
         end
 
         def fix_sra_metadata_directory(metadata_parent_dir)
