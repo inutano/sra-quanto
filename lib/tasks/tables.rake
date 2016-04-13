@@ -1,6 +1,9 @@
 # Rakefile to create tables for execution manage
 
 namespace :tables do
+  # rake fileutils verbose option: false
+  verbose(false)
+  
   # setup working dir
   workdir      = ENV['workdir'] || PROJ_ROOT
   table_dir    = File.join(workdir, "tables")
