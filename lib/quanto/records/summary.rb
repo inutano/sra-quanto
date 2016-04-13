@@ -16,7 +16,7 @@ module Quanto
           # Set class variables of output directory path
           @@outdir = outdir
           # Create item list to summarize
-          item_list = create_item_list(list_fastqc_finished)
+          item_list = create_item_list(list_fastqc_finished, format)
           # Create summary for each item on the list
           create_summary(item_list, format)
           # Create list for summarized items
@@ -27,32 +27,23 @@ module Quanto
         # input file: list_fastqc_finished (runs.done.tab)
         # col1: full path to fastqc zip file, col2: fastqc version
 
-        def create_item_list(list_fastqc_finished)
+        def create_item_list(list_fastqc_finished, ext)
           list = Parallel.map(open(list_fastqc_finished).readlines, :in_threads => @@nop) do |line|
             path = line.split("\t").first
-            path if !summary_exist?(path)
+            path if !summary_exist?(path, ext)
           end
           list.compact
         end
 
-        def summary_exist?(path)
+        def summary_exist?(path, ext)
           # return true if summary file already exists for all kind of summary formats
           id = path_to_fileid(path)
-          files_exist = summary_formats.map{|ext| File.exist?(summary_file_path(id, ext)) }
-          files_exist.uniq == [true]
+          File.exist?(summary_file_path(id, ext))
         end
 
         def path_to_fileid(path)
           # return "DRR000001_1_fastqc" from "/path/to/DRR000001_1_fastqc.zip"
           path.split("/").last.split(".")[0]
-        end
-
-        def summary_formats
-          [
-            "json",
-            "tsv",
-            # "ttl", # currently not working with parallel gem
-          ]
         end
 
         def summary_file_path(fileid, ext)
