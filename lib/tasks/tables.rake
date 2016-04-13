@@ -31,11 +31,11 @@ namespace :tables do
     list_available
   ]
 
-  task :get_sra_metadata do |t|
+  task :get_sra_metadata => table_dir do |t|
     Quanto::Records::SRA.download_sra_metadata(table_dir)
   end
 
-  file list_fastqc_finished do |t|
+  file list_fastqc_finished => fastqc_dir do |t|
     fastqc_records = Quanto::Records::FastQC.new(fastqc_dir)
     Quanto::Records::IO.write(fastqc_records.finished, t.name)
   end
