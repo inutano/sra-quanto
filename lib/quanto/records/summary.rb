@@ -21,6 +21,8 @@ module Quanto
           create_summary(item_list, format)
           # Create list for summarized items
           create_list(item_list, format)
+          # merge tsv
+          merge_tsv(item_list) if format == "tsv"
         end
 
         # Create item list to summarize
@@ -98,16 +100,33 @@ module Quanto
 
         # Create list for summarized items
 
+        def backup(filename)
+          filename + "." + Time.now.strftime("%Y%m%d")
+        end
+
         def create_list(item_list, ext)
           item_path_set = create_item_path_set(item_list, ext)
           list = Parallel.map(item_path_set, :in_threads => @@nop) do |item|
             item[:summary_path].sub(/^.+summary\//,"")
           end
-          list_path = File.join(@@outdir, "summary_list_#{ext}")
-          backup = list_path + "." + Time.now.strftime("%Y%m%d")
-          FileUtils.mv(list_path, backup) if File.exist?(list_path)
+          path = File.join(@@outdir, "summary_list_#{ext}")
+          FileUtils.mv(path, backup(path)) if File.exist?(path)
           open(list_path, 'w'){|f| f.puts(list) }
         end
+
+        # merge tsv
+
+        def merge_tsv(item_list)
+          item_path_set = create_item_path_set(item_list, "tsv")
+          path = File.join(@@outdir, "quanto.tsv")
+          FileUtils.mv(path, backup(path)) if File.exist?(path)
+          File.open(path, 'w') do |file|
+            item_path_set.each do |item|
+              file.puts(open(item[:summary_path]).read.chomp)
+            end
+          end
+        end
+        # :)
       end
     end
   end
