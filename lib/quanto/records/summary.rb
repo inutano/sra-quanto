@@ -28,7 +28,7 @@ module Quanto
         # col1: full path to fastqc zip file, col2: fastqc version
 
         def create_item_list(list_fastqc_finished)
-          list = Parallel.map(list_fastqc_finished, :in_threads => @@nop) do |line|
+          list = Parallel.map(open(list_fastqc_finished).readlines, :in_threads => @@nop) do |line|
             path = line.split("\t").first
             path if !summary_exist?(path)
           end
