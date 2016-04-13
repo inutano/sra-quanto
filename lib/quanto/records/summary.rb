@@ -12,92 +12,110 @@ module Quanto
           @@nop = nop
         end
 
-        def summarize(list_fastqc_finished, outdir)
-          path_list_full = zip_path_list(list_fastqc_finished)
-          path_list = list_not_yet_summarized(path_list_full, outdir)
-          process_list = summary_process_list(path_list, outdir)
-          create_summary(process_list, outdir)
-          create_list(path_list, outdir)
+        def summarize(list_fastqc_finished, outdir, format)
+          # Set class variables of output directory path
+          @@outdir = outdir
+          # Create item list to summarize
+          item_list = create_item_list(list_fastqc_finished)
+          # Create summary for each item on the list
+          create_summary(item_list, format)
+          # Create list for summarized items
+          create_list(item_list, format)
         end
 
-        def zip_path_list(list_fastqc_finished)
-          open(list_fastqc_finished).readlines.map do |line|
-            line.split("\t").first
-          end
-        end
+        # Create item list to summarize
+        # input file: list_fastqc_finished (runs.done.tab)
+        # col1: full path to fastqc zip file, col2: fastqc version
 
-        def list_not_yet_summarized(path_list, outdir)
-          list = Parallel.map(path_list, :in_threads => @@nop) do |path|
-            path if !summary_exist?(path, outdir)
+        def create_item_list(list_fastqc_finished)
+          list = Parallel.map(list_fastqc_finished, :in_threads => @@nop) do |line|
+            path = line.split("\t").first
+            path if !summary_exist?(path)
           end
           list.compact
         end
 
-        def output_formats
-          [
-            "json",
-            # "ttl", # currently not working with parallel gem
-            "tsv",
-          ]
+        def summary_exist?(path)
+          # return true if summary file already exists for all kind of summary formats
+          id = path_to_fileid(path)
+          files_exist = summary_formats.map{|ext| File.exist?(summary_file_path(id, ext)) }
+          files_exist.uniq == [true]
         end
 
-        def summary_exist?(path, outdir)
-          fileid  = path2fileid(path)
-          files = output_formats.map{|ext| File.exist?(summary_file_path(outdir, fileid, ext)) }
-          files.uniq == [true]
-        end
-
-        def summary_process_list(path_list, outdir)
-          Parallel.map(path_list, :in_threads => @@nop) do |path|
-            fileid = path2fileid(path)
-            dir    = summary_file_dir(outdir, fileid)
-            FileUtils.mkdir_p(dir)
-            [ path, fileid ] + output_formats.map{|ext| summary_file_path(outdir, fileid, ext) }
-          end
-        end
-
-        def create_summary(process_list, outdir)
-          Parallel.map(process_list, :in_threads => @@nop) do |items|
-            c = Bio::FastQC::Converter.new(Bio::FastQC::Parser.new(Bio::FastQC::Data.read(items[0])).summary, id: items[1])
-            open(items[2], 'w'){|f| f.puts(c.to_json) }
-            open(items[3], 'w'){|f| f.puts(c.to_tsv) }
-            nil
-          end
-        end
-
-        def path2fileid(path)
+        def path_to_fileid(path)
+          # return "DRR000001_1_fastqc" from "/path/to/DRR000001_1_fastqc.zip"
           path.split("/").last.split(".")[0]
         end
 
-        def summary_file_dir(outdir, fileid)
-          # create directory
+        def summary_formats
+          [
+            "json",
+            "tsv",
+            # "ttl", # currently not working with parallel gem
+          ]
+        end
+
+        def summary_file_path(fileid, ext)
+          # returns path to summary file
+          # e.g. "/path/to/out_dir/DRR/DRR0/DRR000/DRR000001/DRR000001_fastqc.tsv"
+          dir = summary_file_dir(fileid)
+          File.join(dir, fileid + "." + ext)
+        end
+
+        def summary_file_dir(fileid)
           id = fileid.sub(/_.+$/,"")
           center = id.slice(0,3)
           prefix = id.slice(0,4)
           index  = id.sub(/...$/,"")
-          File.join(outdir, center, prefix, index, id)
+          File.join(@@outdir, center, prefix, index, id)
         end
 
-        def summary_file_path(outdir, fileid, ext)
-          # returns path like /path/to/out_dir/DRR/DRR0/DRR000/DRR000001/DRR000001_fastqc.json
-          dir = summary_file_dir(outdir, fileid)
-          summary_file_name = fileid.sub(".zip",".#{ext}")
-          File.join(dir, summary_file_name)
-        end
+        # Create sumamry for each item on the list
 
-        def summarize_fastqc(fastqc_zip_path)
-          Bio::FastQC::Parser.new(Bio::FastQC::Data.read(fastqc_zip_path)).summary
-        end
-
-        def create_list(path_list, outdir)
-          list = Parallel.map(path_list, :in_threads => @@nop) do |path|
-            fileid = path2fileid(path)
-            summary_file_path(outdir, fileid, "json").sub(/^.+summary\//,"")
+        def create_summary(item_list, ext)
+          item_path_set = create_item_path_set(item_list, ext)
+          bf = Bio::FastQC
+          Parallel.map(item_path_set, :in_threads => @@nop) do |item|
+            open(items[:summary_path], 'w') do |f|
+              f.puts(
+                bf::Converter.new(
+                  bf::Parser.new(
+                    bf::Data.read(item[:zip_path])
+                  ).summary, # summary method of FastQC parser class
+                  id: item[:fileid] # file id argument for FastQC converter
+                ).send("to_#{ext}".intern) # call to_XXX method of Converter class
+              )
+            end
+            nil
           end
-          list_file_path = File.join(outdir, "summary_list")
-          backup = list_file_path + "." + Time.now.strftime("%Y%m%d")
-          FileUtils.mv(list_file_path, backup) if File.exist?(list_file_path)
-          open(list_file_path, "w"){|file| file.puts(list) }
+        end
+
+        def create_item_path_set(item_list, ext)
+          # returns list of object including paths to summary file
+          # [["/path/to/DRR000001_fastqc.zip", "DRR000001_fastqc", "/path/to/DRR000001_fastqc.tsv"], ..]
+          Parallel.map(item_list, :in_threads => @@nop) do |path|
+            fileid = path_to_fileid(path)
+            dir    = summary_file_dir(fileid)
+            FileUtils.mkdir_p(dir)
+            {
+              zip_path: path,
+              fileid: fileid,
+              summary_path: summary_file_path(fileid, ext)
+            }
+          end
+        end
+
+        # Create list for summarized items
+
+        def create_list(item_list, ext)
+          item_path_set = create_item_path_set(item_list, ext)
+          list = Parallel.map(item_path_set, :in_threads => @@nop) do |item|
+            item[:summary_path].sub(/^.+summary\//,"")
+          end
+          list_path = File.join(@@outdir, "summary_list_#{ext}")
+          backup = list_path + "." + Time.now.strftime("%Y%m%d")
+          FileUtils.mv(list_path, backup) if File.exist?(list_path)
+          open(list_path, 'w'){|f| f.puts(list) }
         end
       end
     end

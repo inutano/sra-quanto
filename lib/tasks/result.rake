@@ -17,7 +17,10 @@ namespace :result do
   # set number of parallels
   Quanto::Records::Summary.set_number_of_parallels(NUM_OF_PARALLEL)
 
+  # set format of summarization
+  format = ENV['format'] || "json"
+
   task :summarize => [summary_outdir] do |t|
-    Quanto::Records::Summary.summarize(list_fastqc_finished, summary_outdir)
+    Quanto::Records::Summary.summarize(list_fastqc_finished, summary_outdir, format)
   end
 end
