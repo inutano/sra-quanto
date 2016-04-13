@@ -10,7 +10,16 @@ module Quanto
 
         def set_number_of_parallels(nop)
           @@num_of_parallels = nop
-          @sra_metadata_tarball_fname = `lftp -c \"open #{sra_ftp_base_url} && cls --sort=date -1 *Full* | head -1\"`
+          @sra_metadata_tarball_fname = get_sra_metadata_tarball_fname
+        end
+
+        # Get metadata tarball filename from NCBI ftp
+        def get_sra_metadata_tarball_fname
+          `lftp -c \"open #{sra_ftp_base_url} && cls --sort=date -1 *Full* | head -1\"`.chomp
+        end
+
+        def sra_ftp_base_url
+          "ftp.ncbi.nlm.nih.gov/sra/reports/Metadata"
         end
 
         # Download metadata reference tables
@@ -39,10 +48,6 @@ module Quanto
 
         def extract_metadata(dest_dir, tarball_downloaded)
           sh "cd #{dest_dir} && tar zxf #{tarball_downloaded}"
-        end
-
-        def sra_ftp_base_url
-          "ftp.ncbi.nlm.nih.gov/sra/reports/Metadata"
         end
 
         def fix_sra_metadata_directory(metadata_parent_dir)
