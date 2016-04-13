@@ -76,7 +76,7 @@ module Quanto
           item_path_set = create_item_path_set(item_list, ext)
           bf = Bio::FastQC
           Parallel.map(item_path_set, :in_threads => @@nop) do |item|
-            open(items[:summary_path], 'w') do |f|
+            open(item[:summary_path], 'w') do |f|
               f.puts(
                 bf::Converter.new(
                   bf::Parser.new(
