@@ -111,7 +111,7 @@ module Quanto
           end
           path = File.join(@@outdir, "summary_list_#{ext}")
           FileUtils.mv(path, backup(path)) if File.exist?(path)
-          open(list_path, 'w'){|f| f.puts(list) }
+          open(path, 'w'){|f| f.puts(list) }
         end
 
         # merge tsv
