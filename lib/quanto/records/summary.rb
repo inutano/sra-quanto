@@ -128,10 +128,33 @@ module Quanto
           path = File.join(@@outdir, "quanto.tsv")
           FileUtils.mv(path, backup(path)) if File.exist?(path)
           File.open(path, 'w') do |file|
+            file.puts(tsv_header.join("\t"))
             item_path_set.each do |item|
               file.puts(open(item[:summary_path]).read.chomp)
             end
           end
+        end
+
+        def tsv_header
+          [
+            "ID",
+            "fastqc_version",
+            "filename",
+            "file_type",
+            "encoding",
+            "total_sequences",
+            "filtered_sequences",
+            "sequence_length",
+            "min_sequence_length",
+            "max_sequence_length",
+            "mean_sequence_length",
+            "median_sequence_length",
+            "percent_gc",
+            "total_duplicate_percentage",
+            "overall_mean_quality_score",
+            "overall_median_quality_score",
+            "overall_n_content",
+          ]
         end
         # :)
       end
