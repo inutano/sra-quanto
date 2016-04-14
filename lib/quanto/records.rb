@@ -24,8 +24,8 @@ module Quanto
 
     def runids_finished
       runids = Parallel.map(@fastqc_finished, :in_threads => @nop) do |record|
-        fastqc_path = record.split("\t")[0]
-        fastqc_path.split("/").last.split("_")[0]
+        rec = record.split("\t")
+        rec[0].split("/").last.split("_")[0] if rec[1] != "CORRUPT"
       end
       runids.uniq
     end
