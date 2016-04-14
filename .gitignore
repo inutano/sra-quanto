@@ -3,3 +3,4 @@ vendor/bundle
 fastqc
 tables
 log
+.ruby-version
