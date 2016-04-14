@@ -50,8 +50,7 @@ module Quanto
 
       def fastqc_versions(zipfiles)
         Parallel.map(zipfiles, :in_threads => @@num_of_parallels) do |zipfile|
-          version = extract_version(zipfile)
-          [zipfile, version] if version != "CORRUPT"
+          [zipfile, extract_version(zipfile)]
         end
       end
 
