@@ -21,6 +21,8 @@ namespace :result do
   format = ENV['format'] || "json"
 
   task :summarize => [summary_outdir] do |t|
+    puts "==> #{Time.now} Create summary files..."
     Quanto::Records::Summary.summarize(list_fastqc_finished, summary_outdir, format)
+    puts "==> #{Time.now} Done."
   end
 end
