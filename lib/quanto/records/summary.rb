@@ -19,7 +19,7 @@ module Quanto
           item_list = create_item_list(list_fastqc_finished, format)
           item_list_to_summarize = create_item_list_to_summarize(list_fastqc_finished, format)
           # Create summary for each item on the list
-          create_summary(item_list_to_summarize, format)
+          create_summary_files(item_list_to_summarize, format)
           # Create list for summarized items
           create_list(item_list, format)
           # merge tsv
@@ -72,22 +72,28 @@ module Quanto
 
         # Create sumamry for each item on the list
 
-        def create_summary(item_list, ext)
+        def create_summary_files(item_list, ext)
           item_path_set = create_item_path_set(item_list, ext)
           bf = Bio::FastQC
           Parallel.map(item_path_set, :in_threads => @@nop) do |item|
-            open(item[:summary_path], 'w') do |f|
-              f.puts(
-                bf::Converter.new(
-                  bf::Parser.new(
-                    bf::Data.read(item[:zip_path])
-                  ).summary, # summary method of FastQC parser class
-                  id: item[:fileid] # file id argument for FastQC converter
-                ).send("to_#{ext}".intern) # call to_XXX method of Converter class
-              )
-            end
+            create_summary(item, ext)
             nil
           end
+        end
+
+        def create_summary(item, ext)
+          open(item[:summary_path], 'w') do |f|
+            f.puts(
+              bf::Converter.new(
+                bf::Parser.new(
+                  bf::Data.read(item[:zip_path])
+                ).summary, # summary method of FastQC parser class
+                id: item[:fileid] # file id argument for FastQC converter
+              ).send("to_#{ext}".intern) # call to_XXX method of Converter class
+            )
+          end
+        rescue
+          open(item[:summary_path], 'w'){|f| f.puts('ERROR') }
         end
 
         def create_item_path_set(item_list, ext)
