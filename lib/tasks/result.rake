@@ -9,6 +9,7 @@ namespace :result do
   workdir              = ENV['workdir'] || PROJ_ROOT
   table_dir            = File.join(workdir, "tables")
   list_fastqc_finished = File.join(table_dir, "runs.done.tab")
+  sra_metadata         = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
   summary_outdir       = ENV['summary_outdir'] || File.join(table_dir, "summary")
 
   # create directory if it does not exist
@@ -22,7 +23,11 @@ namespace :result do
 
   task :summarize => [summary_outdir] do |t|
     puts "==> #{Time.now} Create summary files..."
-    Quanto::Records::Summary.summarize(list_fastqc_finished, summary_outdir, format)
+    sum = Quanto::Records::Summary.new(list_fastqc_finished)
+    sum.summarize(format, summary_outdir)
+    puts "==> #{Time.now} Done."
+    puts "==> #{Time.now} Merge summary files..."
+    sum.merge(format, summary_outdir, sra_metadata)
     puts "==> #{Time.now} Done."
   end
 end

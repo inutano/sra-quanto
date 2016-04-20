@@ -1,3 +1,4 @@
+require 'quanto/records/summary-merge'
 require 'quanto/records/summary'
 require 'quanto/records/fastqc'
 require 'quanto/records/sra'
