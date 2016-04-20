@@ -126,7 +126,13 @@ module Quanto
       def summary_file_dir(fileid)
         # returns "/path/to/out_dir/DRR/DRR0/DRR000/DRR000001" from "DRR000001_1_fastqc"
         id = fileid.sub(/_.+$/,"")
-        File.join(@outdir, id.slice(0,3), id.slice(0,4), id.sub(/...$/,""), id)
+        File.join(
+          @outdir,
+          id.slice(0,3),
+          id.sub(/.....$/,""),
+          id.sub(/...$/,""),
+          id
+        )
       end
     end
   end
