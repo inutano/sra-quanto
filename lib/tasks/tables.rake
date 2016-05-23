@@ -3,7 +3,7 @@
 namespace :tables do
   # rake fileutils verbose option: false
   verbose(false)
-  
+
   # setup working dir
   workdir      = ENV['workdir'] || PROJ_ROOT
   table_dir    = File.join(workdir, "tables")
@@ -19,6 +19,7 @@ namespace :tables do
   list_fastqc_finished = File.join(table_dir, "runs.done.tab")
   list_public_sra      = File.join(table_dir, "runs.public.tab")
   list_available       = File.join(table_dir, "experiments.available.tab")
+  list_read_layout     = File.join(table_dir, "read_layout.tab")
 
   # set number of parallels
   Quanto::Records.set_number_of_parallels(NUM_OF_PARALLEL)
@@ -30,6 +31,7 @@ namespace :tables do
   task :available => [
     :get_sra_metadata,
     list_fastqc_finished,
+    list_read_layout,
     list_public_sra,
     list_available
   ]
@@ -47,10 +49,18 @@ namespace :tables do
     puts "==> #{Time.now} Done."
   end
 
-  file list_public_sra => sra_metadata do |t|
+  file list_read_layout => sra_metadata do |t|
+    puts "==> #{Time.now} Creating list of read layout..."
+    # create read layout file
+     sra = Quanto::Records::SRA.new(sra_metadata)
+     Quanto::Records::IO.write(sra.read_layout, t.name)
+    puts "==> #{Time.now} Done."
+  end
+
+  file list_public_sra => [sra_metadata, list_read_layout] do |t|
     puts "==> #{Time.now} Searching live SRA records..."
-    sra_records = Quanto::Records::SRA.new(sra_metadata)
-    Quanto::Records::IO.write(sra_records.available, t.name)
+    sra = Quanto::Records::SRA.new(sra_metadata)
+    Quanto::Records::IO.write(sra.available(list_read_layout), t.name)
     puts "==> #{Time.now} Done."
   end
 

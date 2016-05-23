@@ -70,14 +70,21 @@ module Quanto
       end
 
       # Get a list of public/accesiible SRA entries with read layout
-      def available
-        layout_hash = read_layout
+      def available(list_read_layout)
+        h = layout_hash(list_read_layout)
         Parallel.map(public_idsets, :in_threads => @@num_of_parallels) do |idset|
-          exp_id = idset[2]
-          layout = layout_hash[exp_id]
-          read_layout = layout ? layout : "UNDEFINED"
-          idset << layout
+          layout = h[idset[2]]
+          idset << layout ? layout : "UNDEFINED"
         end
+      end
+
+      def layout_hash(list_read_layout)
+        hash = {}
+        open(list_read_layout).readlines.each do |id_layout|
+          a = id_layout.chomp.split("\t")
+          hash[a[0]] = a[1]
+        end
+        hash
       end
 
       def sra_accessions_path
@@ -106,13 +113,9 @@ module Quanto
 
       # create hash for read layout reference
       def read_layout
-        hash = {}
-        public_exp_with_read_layout.each do |id_layout|
-          id = id_layout[0]
-          layout = id_layout[1]
-          hash[id] = layout
+        public_exp_with_read_layout.map do |id_layout|
+          id_layout.join("\t")
         end
-        hash
       end
 
       def public_exp_with_read_layout
