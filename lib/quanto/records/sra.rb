@@ -126,7 +126,7 @@ module Quanto
 
       def public_xml
         list_public_xml = Parallel.map(public_accid, :in_threads => @@num_of_parallels) do |acc_id|
-          exp_xml_path(acc_id)
+          exp_xml_path(acc_id[0])
         end
         list_public_xml.compact
       end
