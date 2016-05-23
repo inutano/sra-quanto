@@ -107,8 +107,8 @@ module Quanto
       def list_public(fields)
         cat = "cat #{sra_accessions_path}"
         awk = "awk -F '\t' '#{awk_public_run_pattern} {print #{fields} }'"
-        out = `#{cat} | #{awk}`.split("\n")
-        Parallel.map(public_accid, :in_threads => @@num_of_parallels){|l| l.split("\t") }
+        catawk = `#{cat} | #{awk}`.split("\n")
+        Parallel.map(catawk, :in_threads => @@num_of_parallels){|l| l.split("\t") }
       end
 
       # create hash for read layout reference
