@@ -34,9 +34,15 @@ module Quanto
         bf = Bio::FastQC
         path_list = create_fastqc_zip_path_list_to_summarize
         objects = create_fastqc_data_objects(path_list)
-        Parallel.map(objects, :in_threads => @@nop) do |obj|
-          create_summary(bf, obj)
-          nil
+        if @format == "turtle" # turtle conversion cannot be parallelized
+          objects.each do |obj|
+            create_summary(bf, obj)
+          end
+        else
+          Parallel.map(objects, :in_threads => @@nop) do |obj|
+            create_summary(bf, obj)
+            nil
+          end
         end
       end
 
