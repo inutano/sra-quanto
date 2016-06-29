@@ -19,7 +19,7 @@ module Quanto
     end
 
     def date_base
-      @date_base ? DateTime.parse(@date_base) : Time.now
+      @date_base ? DateTime.parse(@date_base) : Time.now.to_datetime
     end
 
     def runids_finished
