@@ -113,12 +113,6 @@ module Quanto
 
       # create hash for read layout reference
       def read_layout
-        public_exp_with_read_layout.map do |id_layout|
-          id_layout.join("\t")
-        end
-      end
-
-      def public_exp_with_read_layout
         Parallel.map(public_xml, :in_threads => @@num_of_parallels) do |xml|
           extract_layout(xml)
         end
