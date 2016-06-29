@@ -74,7 +74,7 @@ module Quanto
         h = layout_hash(list_read_layout)
         Parallel.map(public_idsets, :in_threads => @@num_of_parallels) do |idset|
           layout = h[idset[2]]
-          idset << layout ? layout : "UNDEFINED"
+          idset << (layout ? layout : "UNDEFINED")
         end
       end
 
