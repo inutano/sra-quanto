@@ -23,6 +23,7 @@ module Quanto
           @reads_fpath = output_fpath("quanto.reads.tsv")
           @runs_fpath = output_fpath("quanto.runs.tsv")
           @experiments_fpath = output_fpath("quanto.exp.tsv")
+          @samples_fpath = output_fpath("quanto.sample.tsv")
 
           # merge
           merge_reads
@@ -51,18 +52,35 @@ module Quanto
       #
 
       def create_merge_files
-        # require one by one merge process
+        create_run_summary
+        create_exp_summary
+        create_sample_summary
+      end
+
+      def create_run_summary
         merge_dataset(
           @runs_fpath,
           :read_to_run,
-          tsv_header,
+          tsv_header.drop(1).insert(0, "Run ID"),
           reads_by_runid
         )
+      end
+
+      def create_exp_summary
         merge_dataset(
           @experiments_fpath,
           :run_to_exp,
-          tsv_header.insert(1, "Run ID"),
+          tsv_header.drop(1).insert(0, "Experiment ID", "Run ID"),
           runs_by_expid
+        )
+      end
+
+      def create_sample_summary
+        merge_dataset(
+          @samples_fpath,
+          :exp_to_sample,
+          tsv_header.drop(1).insert(0, "Sample ID", "Experiment ID", "Run ID"),
+          exps_by_sampleid
         )
       end
 
@@ -81,6 +99,8 @@ module Quanto
           merge_read_to_run(id, data)
         when :run_to_exp
           merge_run_to_exp(id, data)
+        when :exp_to_sample
+          merge_exp_to_sample(id, data)
         end
       end
 
@@ -125,24 +145,13 @@ module Quanto
           ([expid] + runs[0]).join("\t")
         else
           data = merge_data(runs)
-          ([expid] << data).join("\t")
+          ([expid] + data).join("\t")
         end
-      end
-
-      def runs_by_runid
-        runs = open(@runs_fpath).readlines.drop(1)
-        hash = {}
-        runs.each do |run|
-          runid = run.split("\t")[0]
-          hash[runid] = run.chomp.split("\t")
-        end
-        hash
       end
 
       def runs_by_expid
-        run_data = runs_by_runid
-        run_members = File.join(@metadata_dir, "SRA_Run_Members")
-        exp_run = `cat #{run_members} | awk -F '\t' '$8 == "live" { print $3 "\t" $1 }'`.split("\n")
+        run_data = data_by_id(@runs_fpath)
+        exp_run = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $3 "\t" $1 }'`.split("\n")
         hash = {}
         exp_run.each do |e_r|
           er = e_r.split("\t")
@@ -156,10 +165,53 @@ module Quanto
       end
 
       #
+      # Merge experiments to sample
+      #
+
+      def merge_exp_to_sample(sampleid, exps)
+        if exps.size == 1
+          ([sampleid] + exps[0]).join("\t")
+        else
+          expids = exps.map{|e| e[0] }.join(",")
+          data = merge_data(exps.map{|e| e.drop(1) }) # remove experiment id column
+          ([sampleid, expids] + data).join("\t")
+        end
+      end
+
+      def exps_by_sampleid
+        exp_data = data_by_id(@experiments_fpath)
+        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $4 "\t" $3 }' | sort -u`.split("\n")
+        hash = {}
+        sample_exp.each do |s_e|
+          se = s_e.split("\t")
+          exp = exp_data[se[1]]
+          if exp
+            hash[se[0]] ||= []
+            hash[se[0]] << exp
+          end
+        end
+        hash
+      end
+
+      #
       # Protected methods for data merge
       #
 
       protected
+
+      def run_members_path
+        File.join(@metadata_dir, "SRA_Run_Members")
+      end
+
+      def data_by_id(data_fpath)
+        data = open(data_fpath).readlines.drop(1)
+        hash = {}
+        data.each do |d|
+          id = d.split("\t")[0]
+          hash[id] = d.chomp.split("\t")
+        end
+        hash
+      end
 
       def merge_data(data_list)
         data_scheme.map.with_index do |method, i|
