@@ -52,8 +52,8 @@ namespace :tables do
   file list_read_layout => sra_metadata do |t|
     puts "==> #{Time.now} Creating list of read layout..."
     # create read layout file
-     sra = Quanto::Records::SRA.new(sra_metadata)
-     Quanto::Records::IO.write(sra.read_layout, t.name)
+    sra = Quanto::Records::SRA.new(sra_metadata)
+    sra.read_layout(t.name)
     puts "==> #{Time.now} Done."
   end
 

@@ -100,8 +100,8 @@ module Quanto
       end
 
       def public_idsets
-         # run id, submission id, experiment id, published date
-         list_public('$1 "\t" $2 "\t" $11 "\t" $5')
+        # run id, submission id, experiment id, published date
+        list_public('$1 "\t" $2 "\t" $11 "\t" $5')
       end
 
       def public_accid
@@ -116,17 +116,41 @@ module Quanto
       end
 
       # create hash for read layout reference
-      def read_layout
-        Parallel.map(public_xml, :in_threads => @@num_of_parallels) do |xml|
-          extract_layout(xml)
+      def read_layout(output_path)
+        layout_list = write_layout
+        open(output_path, 'w') do |file|
+          open(layout_list).readlines.each do |path|
+            file.puts(open(path.chomp).read.chomp)
+          end
         end
       end
 
-      def public_xml
-        list_public_xml = Parallel.map(public_accid, :in_threads => @@num_of_parallels) do |acc_id|
-          exp_xml_path(acc_id[0])
+      def write_layout
+        paths = Parallel.map(public_xml, :in_threads => @@num_of_parallels) do |out_xml|
+          save_layout(*out_xml)
+          out_xml[0]
         end
-        list_public_xml.compact
+        sum = File.join(@sra_metadata_dir, "layout", "layout_list.txt")
+        open(sum, 'w') do |file|
+          file.puts(paths)
+        end
+        sum
+      end
+
+      def public_xml
+        list = Parallel.map(public_accid.flatten, :in_threads => @@num_of_parallels) do |acc_id|
+          xml = exp_xml_path(acc_id)
+          if xml
+            [read_layout_path(acc_id), xml]
+          end
+        end
+        list.compact
+      end
+
+      def read_layout_path(acc_id)
+        dir = File.join(@sra_metadata_dir, "layout", acc_id.sub(/...$/,""), acc_id)
+        FileUtils.mkdir_p(dir)
+        File.join(dir, acc_id + ".read_layout.tsv")
       end
 
       def exp_xml_path(acc_id)
@@ -134,9 +158,15 @@ module Quanto
         xml if File.exist?(xml)
       end
 
+      def save_layout(output_path, xml_path)
+        open(output_path, 'w') do |file|
+          file.puts(extract_layout(xml_path))
+        end
+      end
+
       def extract_layout(xml)
         Ciika::SRA::Experiment.new(xml).parse.map do |a|
-          [a[:accession], a[:library_description][:library_layout]]
+          [a[:accession], a[:library_description][:library_layout]].join("\t")
         end
       end
     end
