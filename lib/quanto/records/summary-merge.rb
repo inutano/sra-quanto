@@ -19,9 +19,14 @@ module Quanto
           # sra metadata location
           @metadata_dir = metadata_dir
           # merge read data
+          @reads_fpath = File.join(@outdir, "quanto.reads.tsv")
           merge_reads
           # merge reads to run
+          @runs_fpath = File.join(@outdir, "quanto.runs.tsv")
           merge_reads_to_run
+          # merge run to experiment
+          @experiments_fpath = File.join(@outdir, "quanto.exp.tsv")
+          merge_runs_to_experiment
           # merge run to sample
           #merge_runs_to_sample
           # link annotation to each samples
@@ -57,9 +62,8 @@ module Quanto
       #
 
       def merge_reads
-        path = File.join(@outdir, "quanto.reads.tsv")
-        FileUtils.mv(path, backup(path)) if File.exist?(path)
-        File.open(path, 'w') do |file|
+        FileUtils.mv(path, backup(@reads_fpath)) if File.exist?(@reads_fpath)
+        File.open(@reads_fpath, 'w') do |file|
           file.puts(tsv_header[0..-1].join("\t"))
           @objects.each do |obj|
             file.puts(open(obj[:summary_path]).read.chomp)
@@ -72,9 +76,8 @@ module Quanto
       #
 
       def merge_reads_to_run
-        path = File.join(@outdir, "quanto.run.tsv")
-        FileUtils.mv(path, backup(path)) if File.exist?(path)
-        File.open(path, 'w') do |file|
+        FileUtils.mv(@runs_fpath, backup(path)) if File.exist?(@runs_fpath)
+        File.open(@runs_fpath, 'w') do |file|
           file.puts(tsv_header.join("\t"))
           reads_by_run.each_pair do |runid, obj_list|
             if obj_list.size == 1
@@ -169,6 +172,12 @@ module Quanto
 
       def layout_paired(i, f, r)
         "PAIRED"
+      end
+
+      #
+      # Merge reads to experiment
+      #
+      def merge_runs_to_experiment
       end
     end
   end
