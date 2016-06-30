@@ -10,28 +10,31 @@ module Quanto
       # Merge tsv
       #
 
-      def merge(format, outdir, metadata_dir)
+      def merge(format, outdir, metadata_dir, ow)
         @format = format
         @outdir = outdir
+        @overwrite = ow
         if @format == "tsv"
           # data object to merge, method defined in sumamry.rb
           @objects = create_fastqc_data_objects(@list_fastqc_zip_path)
           # sra metadata location
           @metadata_dir = metadata_dir
-
-          # merged data file path
-          @reads_fpath = output_fpath("quanto.reads.tsv")
-          @runs_fpath = output_fpath("quanto.runs.tsv")
-          @experiments_fpath = output_fpath("quanto.exp.tsv")
-          @samples_fpath = output_fpath("quanto.sample.tsv")
-
-          # merge
-          merge_reads
-          create_merge_files
-
+          # data to each type
+          assemble
           # link annotation to each samples
           #annotate_samples
         end
+      end
+
+      def assemble
+        puts "==> #{Time.now}   Assembling Reads..."
+        merge_reads
+        puts "==> #{Time.now}   Assembling Run..."
+        create_run_summary
+        puts "==> #{Time.now}   Assembling Experiments..."
+        create_exp_summary
+        puts "==> #{Time.now}   Assembling Samples..."
+        create_sample_summary
       end
 
       #
@@ -39,10 +42,13 @@ module Quanto
       #
 
       def merge_reads
-        File.open(@reads_fpath, 'w') do |file|
-          file.puts(tsv_header[0..-1].join("\t"))
-          @objects.each do |obj|
-            file.puts(open(obj[:summary_path]).read.chomp)
+        @reads_fpath = output_fpath("quanto.reads.tsv")
+        if !output_exist?(@reads_fpath)
+          File.open(@reads_fpath, 'w') do |file|
+            file.puts(tsv_header[0..-1].join("\t"))
+            @objects.each do |obj|
+              file.puts(open(obj[:summary_path]).read.chomp)
+            end
           end
         end
       end
@@ -51,37 +57,40 @@ module Quanto
       # Merge data
       #
 
-      def create_merge_files
-        create_run_summary
-        create_exp_summary
-        create_sample_summary
-      end
-
       def create_run_summary
-        merge_dataset(
-          @runs_fpath,
-          :read_to_run,
-          tsv_header.drop(1).insert(0, "Run ID"),
-          reads_by_runid
-        )
+        @runs_fpath = output_fpath("quanto.runs.tsv")
+        if !output_exist?(@runs_fpath)
+          merge_dataset(
+            @runs_fpath,
+            :read_to_run,
+            tsv_header.drop(1).insert(0, "Run ID"),
+            reads_by_runid
+          )
+        end
       end
 
       def create_exp_summary
-        merge_dataset(
-          @experiments_fpath,
-          :run_to_exp,
-          tsv_header.drop(1).insert(0, "Experiment ID", "Run ID"),
-          runs_by_expid
-        )
+        @experiments_fpath = output_fpath("quanto.exp.tsv")
+        if !output_exist?(@experiments_fpath)
+          merge_dataset(
+            @experiments_fpath,
+            :run_to_exp,
+            tsv_header.drop(1).insert(0, "Experiment ID", "Run ID"),
+            runs_by_expid
+          )
+        end
       end
 
       def create_sample_summary
-        merge_dataset(
-          @samples_fpath,
-          :exp_to_sample,
-          tsv_header.drop(1).insert(0, "Sample ID", "Experiment ID", "Run ID"),
-          exps_by_sampleid
-        )
+        @samples_fpath = output_fpath("quanto.sample.tsv")
+        if !output_exist?(@samples_fpath)
+          merge_dataset(
+            @samples_fpath,
+            :exp_to_sample,
+            tsv_header.drop(1).insert(0, "Sample ID", "Experiment ID", "Run ID"),
+            exps_by_sampleid
+          )
+        end
       end
 
       def merge_dataset(outpath, type, header, id_data_pairs)
@@ -201,6 +210,23 @@ module Quanto
 
       def run_members_path
         File.join(@metadata_dir, "SRA_Run_Members")
+      end
+
+      def output_fpath(fname)
+        File.join(@outdir, fname)
+      end
+
+      def output_exist?(fpath) # true to skip creation
+        if File.exist?(fpath)
+          if @overwrite
+            backup_dir = File.join(@outdir, "backup", Time.now.strftime("%Y%m%d"))
+            FileUtils.mkdir_p(backup_dir)
+            FileUtils.mv(fpath, backup_dir)
+            false
+          else
+            true
+          end
+        end
       end
 
       def data_by_id(data_fpath)

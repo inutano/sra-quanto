@@ -12,6 +12,9 @@ namespace :result do
   sra_metadata         = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
   summary_outdir       = ENV['summary_outdir'] || File.join(table_dir, "summary")
 
+  # summary merge option: false to use existing summary files
+  overwrite = ENV['overwrite'] == "false" ? false : true
+
   # create directory if it does not exist
   directory summary_outdir
 
@@ -27,7 +30,7 @@ namespace :result do
     sum.summarize(format, summary_outdir)
     puts "==> #{Time.now} Done."
     puts "==> #{Time.now} Merge summary files..."
-    sum.merge(format, summary_outdir, sra_metadata)
+    sum.merge(format, summary_outdir, sra_metadata, overwrite)
     puts "==> #{Time.now} Done."
   end
 end
