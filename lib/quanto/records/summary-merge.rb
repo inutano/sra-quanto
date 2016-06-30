@@ -76,7 +76,7 @@ module Quanto
         FileUtils.mv(path, backup(path)) if File.exist?(path)
         File.open(path, 'w') do |file|
           file.puts(tsv_header.join("\t"))
-          run_to_reads.each_pair do |runid, obj_list|
+          reads_by_run.each_pair do |runid, obj_list|
             if obj_list.size == 1
               file.puts(open(obj_list[0][:summary_path]).read.chomp)
             else
@@ -86,7 +86,7 @@ module Quanto
         end
       end
 
-      def run_to_reads
+      def reads_by_run
         hash = {}
         @objects.each do |obj|
           runid = obj[:fileid].split("_")[0]
