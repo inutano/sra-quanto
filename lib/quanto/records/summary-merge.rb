@@ -19,13 +19,13 @@ module Quanto
           # sra metadata location
           @metadata_dir = metadata_dir
           # merge read data
-          @reads_fpath = File.join(@outdir, "quanto.reads.tsv")
+          @reads_fpath = output_fpath("quanto.reads.tsv")
           merge_reads
           # merge reads to run
-          @runs_fpath = File.join(@outdir, "quanto.runs.tsv")
+          @runs_fpath = output_fpath("quanto.runs.tsv")
           merge_reads_to_run
           # merge run to experiment
-          @experiments_fpath = File.join(@outdir, "quanto.exp.tsv")
+          @experiments_fpath = output_fpath("quanto.exp.tsv")
           merge_runs_to_experiment
           # merge run to sample
           #merge_runs_to_sample
@@ -62,7 +62,6 @@ module Quanto
       #
 
       def merge_reads
-        FileUtils.mv(path, backup(@reads_fpath)) if File.exist?(@reads_fpath)
         File.open(@reads_fpath, 'w') do |file|
           file.puts(tsv_header[0..-1].join("\t"))
           @objects.each do |obj|
@@ -76,7 +75,6 @@ module Quanto
       #
 
       def merge_reads_to_run
-        FileUtils.mv(@runs_fpath, backup(path)) if File.exist?(@runs_fpath)
         File.open(@runs_fpath, 'w') do |file|
           file.puts(tsv_header.join("\t"))
           reads_by_run.each_pair do |runid, obj_list|
@@ -178,6 +176,9 @@ module Quanto
       # Merge reads to experiment
       #
       def merge_runs_to_experiment
+        File.open(@experiments_fpath, 'w') do |file|
+          # do something
+        end
       end
     end
   end

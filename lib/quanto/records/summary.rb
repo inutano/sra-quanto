@@ -65,8 +65,14 @@ module Quanto
       # Create list of summarized data
       #
 
-      def backup(path)
-        path + "." + Time.now.strftime("%Y%m%d")
+      def output_fpath(fname)
+        outpath = File.join(@outdir, fname)
+        if File.exist?(outpath)
+          backup_dir = File.join(@outdir, "backup", Time.now.strftime("%Y%m%d"))
+          FileUtils.mkdir_p(backup_dir)
+          FileUtils.mv(outpath, backup_dir)
+        end
+        outpath
       end
 
       def create_summary_files_list
@@ -74,8 +80,7 @@ module Quanto
         list = Parallel.map(objects, :in_threads => @@nop) do |obj|
           obj[:summary_path].sub(/^.+summary\//,"")
         end
-        path = File.join(@outdir, "summary_list_#{@format}")
-        FileUtils.mv(path, backup(path)) if File.exist?(path)
+        path = output_fpath("summary_list_#{@format}")
         open(path, 'w'){|f| f.puts(list) }
       end
 
