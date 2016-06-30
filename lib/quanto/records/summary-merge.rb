@@ -14,7 +14,7 @@ module Quanto
         @format = format
         @outdir = outdir
         if @format == "tsv"
-          # data object to merge
+          # data object to merge, method defined in sumamry.rb
           @objects = create_fastqc_data_objects(@list_fastqc_zip_path)
           # sra metadata location
           @metadata_dir = metadata_dir
