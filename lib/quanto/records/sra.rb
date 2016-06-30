@@ -10,7 +10,10 @@ module Quanto
 
         def set_number_of_parallels(nop)
           @@num_of_parallels = nop
-          @sra_metadata_tarball_fname = get_sra_metadata_tarball_fname
+        end
+
+        def set_sra_metadata_tarball_fname
+          @@sra_metadata_tarball_fname = get_sra_metadata_tarball_fname
         end
 
         # Get metadata tarball filename from NCBI ftp
@@ -24,7 +27,8 @@ module Quanto
 
         # Download metadata reference tables
         def download_sra_metadata(dest_dir)
-          tarball_downloaded = File.join(dest_dir, @sra_metadata_tarball_fname)
+          set_sra_metadata_tarball_fname
+          tarball_downloaded = File.join(dest_dir, @@sra_metadata_tarball_fname)
           unpacked_metadata  = tarball_downloaded.sub(/.tar.gz/,"")
           metadata_dest_path = File.join(dest_dir, "sra_metadata")
 
@@ -43,7 +47,7 @@ module Quanto
         end
 
         def download_metadata_via_ftp(dest_dir)
-          sh "lftp -c \"open #{sra_ftp_base_url} && pget -n 8 -O #{dest_dir} #{@sra_metadata_tarball_fname}\""
+          sh "lftp -c \"open #{sra_ftp_base_url} && pget -n 8 -O #{dest_dir} #{@@sra_metadata_tarball_fname}\""
         end
 
         def extract_metadata(dest_dir, tarball_downloaded)
