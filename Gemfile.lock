@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    bio-fastqc (0.7.0)
+    bio-fastqc (0.8.0)
       json-ld (~> 1.99)
       rdf-turtle (~> 1.99)
       rubyzip (~> 1.1, >= 1.1.0)
@@ -46,7 +46,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bio-fastqc (= 0.7.0)
+  bio-fastqc (= 0.8.0)
   ciika
   parallel
   pry
