@@ -189,7 +189,7 @@ module Quanto
 
       def exps_by_sampleid
         exp_data = data_by_id(@experiments_fpath)
-        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $4 "\t" $3 }' | sort -u`.split("\n")
+        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $9 "\t" $3 }' | sort -u`.split("\n")
         hash = {}
         sample_exp.each do |s_e|
           se = s_e.split("\t")
