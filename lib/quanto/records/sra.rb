@@ -1,6 +1,6 @@
 require 'rake'
 require 'parallel'
-require 'ciika'
+require './xml_parser'
 
 module Quanto
   class Records
@@ -165,9 +165,22 @@ module Quanto
       end
 
       def extract_layout(xml)
-        Ciika::SRA::Experiment.new(xml).parse.map do |a|
-          [a[:accession], a[:library_description][:library_layout]].join("\t")
+        hash = {}
+        XML::Parser.new(Nokogiri::XML::Reader(open(xml))) do
+          for_element 'EXPERIMENT' do
+            id = attribute("accession")
+            hash[id] = []
+            inside_element do
+              for_element 'SINGLE' do hash[id] << name end
+              for_element 'PAIRED' do hash[id] << name end
+              for_element 'LIBRARY_STRATEGY' do hash[id] << inner_xml end
+              for_element 'LIBRARY_SOURCE' do hash[id] << inner_xml end
+              for_element 'LIBRARY_SELECTION' do hash[id] << inner_xml end
+              for_element 'INSTRUMENT_MODEL' do hash[id] << inner_xml end
+            end
+          end
         end
+        hash.map{|id, values| [id, values].flatten.join("\t") }
       end
     end
   end
