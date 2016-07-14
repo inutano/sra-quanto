@@ -74,21 +74,33 @@ module Quanto
       end
 
       # Get a list of public/accesiible SRA entries with read layout
-      def available(list_read_layout)
-        h = layout_hash(list_read_layout)
+      def available(list_experiment_metadata)
+        h = layout_hash(list_experiment_metadata)
         Parallel.map(public_idsets, :in_threads => @@num_of_parallels) do |idset|
           layout = h[idset[2]]
           idset << (layout ? layout : "UNDEFINED")
         end
       end
 
-      def layout_hash(list_read_layout)
+      def layout_hash(list_experiment_metadata)
         hash = {}
-        open(list_read_layout).readlines.each do |id_layout|
-          a = id_layout.chomp.split("\t")
-          hash[a[0]] = a[1]
+        open(list_experiment_metadata).readlines.each do |metadata|
+          a = metadata.chomp.split("\t")
+          hash[a[0]] = a[5]
         end
         hash
+      end
+
+      def public_idsets
+        # run id, submission id, experiment id, published date
+        list_public('$1 "\t" $2 "\t" $11 "\t" $5')
+      end
+
+      def list_public(fields)
+        cat = "cat #{sra_accessions_path}"
+        awk = "awk -F '\t' '#{awk_public_run_pattern} { print #{fields} }'"
+        catawk = `#{cat} | #{awk}`.split("\n")
+        Parallel.map(catawk, :in_threads => @@num_of_parallels){|l| l.split("\t") }
       end
 
       def sra_accessions_path
@@ -99,58 +111,37 @@ module Quanto
         '$1 ~ /^.RR/ && $3 == "live" && $9 == "public"'
       end
 
-      def public_idsets
-        # run id, submission id, experiment id, published date
-        list_public('$1 "\t" $2 "\t" $11 "\t" $5')
+      #
+      # Extract experimental metadata from SRA XML and create tsv file
+      #
+
+      def experiment_metadata(fname)
+        extract_experiment_metadata
+        `cat #{index_filepath} | xargs cat > #{fname}`
       end
 
-      def public_accid
-        list_public('$2') # submission id
+      def index_filepath
+        File.join(@sra_metadata_dir, "metadata.experiment.txt")
       end
 
-      def list_public(fields)
-        cat = "cat #{sra_accessions_path}"
-        awk = "awk -F '\t' '#{awk_public_run_pattern} {print #{fields} }'"
-        catawk = `#{cat} | #{awk}`.split("\n")
-        Parallel.map(catawk, :in_threads => @@num_of_parallels){|l| l.split("\t") }
-      end
-
-      # create hash for read layout reference
-      def read_layout(output_path)
-        layout_list = write_layout
-        open(output_path, 'w') do |file|
-          open(layout_list).readlines.each do |path|
-            file.puts(open(path.chomp).read.chomp)
-          end
+      def extract_experiment_metadata
+        list = public_experiment_xml_list
+        list.each{|xml| save_metadata(xml) }
+        index = list.map{|xml_path| xml_path.sub(/.xml$/,".tsv")}
+        open(index_filepath,'w') do |file|
+          file.puts(index)
         end
       end
 
-      def write_layout
-        paths = Parallel.map(public_xml, :in_threads => @@num_of_parallels) do |out_xml|
-          save_layout(*out_xml)
-          out_xml[0]
-        end
-        sum = File.join(@sra_metadata_dir, "layout", "layout_list.txt")
-        open(sum, 'w') do |file|
-          file.puts(paths)
-        end
-        sum
-      end
-
-      def public_xml
-        list = Parallel.map(public_accid.flatten, :in_threads => @@num_of_parallels) do |acc_id|
-          xml = exp_xml_path(acc_id)
-          if xml
-            [read_layout_path(acc_id), xml]
-          end
+      def public_experiment_xml_list
+        list = Parallel.map(public_accid, :in_threads => @@num_of_parallels) do |acc_id|
+          exp_xml_path(acc_id)
         end
         list.compact
       end
 
-      def read_layout_path(acc_id)
-        dir = File.join(@sra_metadata_dir, "layout", acc_id.sub(/...$/,""), acc_id)
-        FileUtils.mkdir_p(dir)
-        File.join(dir, acc_id + ".read_layout.tsv")
+      def public_accid
+        list_public('$2').flatten.uniq # submission id
       end
 
       def exp_xml_path(acc_id)
@@ -158,13 +149,12 @@ module Quanto
         xml if File.exist?(xml)
       end
 
-      def save_layout(output_path, xml_path)
-        open(output_path, 'w') do |file|
-          file.puts(extract_layout(xml_path))
-        end
+      def save_metadata(xml)
+        target = xml.sub(/.xml$/,".tsv")
+        open(target, 'w'){|f| f.puts(extract_metadata(xml)) }
       end
 
-      def extract_layout(xml)
+      def extract_metadata(xml)
         hash = {}
         XML::Parser.new(Nokogiri::XML::Reader(open(xml))) do
           for_element 'EXPERIMENT' do

@@ -16,10 +16,10 @@ namespace :tables do
   directory fastqc_dir
 
   # path to list
-  list_fastqc_finished = File.join(table_dir, "runs.done.tab")
-  list_public_sra      = File.join(table_dir, "runs.public.tab")
-  list_available       = File.join(table_dir, "experiments.available.tab")
-  list_read_layout     = File.join(table_dir, "read_layout.tab")
+  list_fastqc_finished     = File.join(table_dir, "runs.done.tab")
+  list_public_sra          = File.join(table_dir, "runs.public.tab")
+  list_available           = File.join(table_dir, "experiments.available.tab")
+  list_experiment_metadata = File.join(table_dir, "read_layout.tab")
 
   # set number of parallels
   Quanto::Records.set_number_of_parallels(NUM_OF_PARALLEL)
@@ -31,7 +31,7 @@ namespace :tables do
   task :available => [
     :get_sra_metadata,
     list_fastqc_finished,
-    list_read_layout,
+    list_experiment_metadata,
     list_public_sra,
     list_available
   ]
@@ -49,18 +49,17 @@ namespace :tables do
     puts "==> #{Time.now} Done."
   end
 
-  file list_read_layout => sra_metadata do |t|
-    puts "==> #{Time.now} Creating list of read layout..."
-    # create read layout file
+  file list_experiment_metadata => sra_metadata do |t|
+    puts "==> #{Time.now} Creating list of experimental metadata..."
     sra = Quanto::Records::SRA.new(sra_metadata)
-    sra.read_layout(t.name)
+    sra.experiment_metadata(t.name)
     puts "==> #{Time.now} Done."
   end
 
-  file list_public_sra => [sra_metadata, list_read_layout] do |t|
+  file list_public_sra => [sra_metadata, list_experiment_metadata] do |t|
     puts "==> #{Time.now} Searching live SRA records..."
     sra = Quanto::Records::SRA.new(sra_metadata)
-    Quanto::Records::IO.write(sra.available(list_read_layout), t.name)
+    Quanto::Records::IO.write(sra.available(list_experiment_metadata), t.name)
     puts "==> #{Time.now} Done."
   end
 
