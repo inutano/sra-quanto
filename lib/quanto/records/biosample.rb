@@ -51,34 +51,40 @@ module Quanto
         File.join(@bs_dir, "biosample_set.xml")
       end
 
-      def create_list_metadata(fpath)
-        data = extract_metadata(metadata_xml_path)
-        open(fpath, 'w'){|f| f.puts(data) }
+      def create_list_metadata(metadata_list_path)
+        extract_metadata(metadata_xml_path, metadata_list_path + ".tmp")
+        collect_sra_biosample(metadata_list_path)
+      end
+
+      def extract_metadata(xml, fpath)
+        open(fpath, 'w') do |file|
+          XML::Parser.new(Nokogiri::XML::Reader(open(xml))) do
+            for_element 'BioSample' do
+              file.print attribute("accession")
+              file.print "\t"
+              inside_element do
+                for_element 'Organism' do
+                  file.print attribute("taxonomy_id")
+                  file.print "\t"
+                  file.print attribute("taxonomy_name")
+                end
+              end
+              file.print "\n"
+            end
+          end
+        end
+      end
+
+      def collect_sra_biosample(fpath)
+        tmp = fpath + ".tmp"
+        live = list_live_biosample
+        sra_samples = open(tmp).readlines.select{|line| live.include?(line.split("\t")[0]) }
+        open(fpath, 'w'){|f| f.puts(sra_samples) }
       end
 
       def list_live_biosample
         run_members = File.join(@sra_dir, "SRA_Run_Members")
         `cat #{run_members} | awk -F '\t' '$8 == "live" { print $9 }' | sort -u`.split("\n")
-      end
-
-      def extract_metadata(xml)
-        hash = {}
-        live = list_live_biosample
-        XML::Parser.new(Nokogiri::XML::Reader(open(xml))) do
-          for_element 'BioSample' do
-            id = attribute("accession")
-            if live.include?(id)
-              hash[id] = []
-              inside_element do
-                for_element 'Organism' do
-                  hash[id] << attribute("taxonomy_id")
-                  hash[id] << attribute("taxonomy_name")
-                end
-              end
-            end
-          end
-        end
-        hash.map{|id, values| [id, values].flatten.join("\t") }
       end
     end
   end
