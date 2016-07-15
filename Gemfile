@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gem 'rake'
 gem 'parallel'
 gem 'rubyzip'
-gem 'ciika'
+gem 'nokogiri'
 gem 'bio-fastqc', '0.8.0'
 
 group :development do
