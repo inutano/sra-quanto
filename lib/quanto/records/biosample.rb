@@ -24,7 +24,7 @@ module Quanto
         end
 
         def download_xml_gz
-          sh "lftp #{ftp_url} && pget -n 8 #{xml_gz} -O #{@@bs_dir}"
+          sh "lftp -c \"open #{ftp_url} && pget -n 8 -O #{@@bs_dir} #{xml_gz}\""
         end
 
         def unarchive_gz
