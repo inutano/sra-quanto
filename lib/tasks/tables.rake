@@ -74,7 +74,7 @@ namespace :tables do
   file list_biosample_metadata => biosample_metadata_dir do |t|
     puts "==> #{Time.now} Creating list of biosample metadata..."
     bs = Quanto::Records::BioSample.new(biosample_metadata_dir, sra_metadata_dir)
-    bs.sample_metadata(t.name)
+    bs.create_list_metadata(t.name)
     puts "==> #{Time.now} Done."
   end
 

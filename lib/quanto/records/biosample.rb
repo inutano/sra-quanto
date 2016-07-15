@@ -51,7 +51,7 @@ module Quanto
         File.join(@bs_dir, "biosample_set.xml")
       end
 
-      def biosample_metadata(fpath)
+      def create_list_metadata(fpath)
         data = extract_metadata(metadata_xml_path)
         open(fpath, 'w'){|f| f.puts(data) }
       end
