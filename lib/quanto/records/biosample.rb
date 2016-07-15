@@ -12,7 +12,7 @@ module Quanto
         end
 
         def xml_fname
-          File.join(@@bs_dir, "biosample_set.xml")
+          "biosample_set.xml"
         end
 
         def xml_gz
