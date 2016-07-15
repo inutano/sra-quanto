@@ -25,17 +25,17 @@ Dir["#{PROJ_ROOT}/lib/tasks/**/*.rake"].each do |path|
 end
 
 namespace :quanto do
-  desc "Create lists of available items, fastqc_dir, sra_metadata_dir, workdir can be specified"
+  desc "option: workdir, fastqc_dir, sra_metadata_dir, biosample_metadata_dir"
   task :available do
     Rake::Task["tables:available"].invoke
   end
 
-  desc "Run fastqc for available items"
+  desc "option: workdir, fastqc_dir"
   task :execute do
     Rake::Task["fastqc:exec"].invoke
   end
 
-  desc "Summarize fastqc data, required update of tables by rake quanto:available before summarize. summary_outdir can be specified"
+  desc "option: workdir, sra_metadata_dir, summary_outdir, overwrite, format"
   task :summarize do
     Rake::Task["result:summarize"].invoke
   end
