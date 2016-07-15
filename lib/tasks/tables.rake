@@ -53,7 +53,7 @@ namespace :tables do
 
   task :get_biosample_metadata => biosample_metadata_dir do |t|
     puts "==> #{Time.now} Fetching BioSample metadata..."
-    Quanto::Records::BioSample.download_biosample_metadata(biosample_metadata_dir)
+    Quanto::Records::BioSample.download_metadata_xml(biosample_metadata_dir)
     puts "==> #{Time.now} Done."
   end
 

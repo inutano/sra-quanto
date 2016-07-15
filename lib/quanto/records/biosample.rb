@@ -11,33 +11,33 @@ module Quanto
           @@num_of_parallels = nop
         end
 
-        def bs_xml_fname
+        def xml_fname
           File.join(@@bs_dir, "biosample_set.xml")
         end
 
-        def bs_xml_gz
-          bs_xml_fname + ".gz"
+        def xml_gz
+          xml_fname + ".gz"
         end
 
-        def biosample_ftp_url
+        def ftp_url
           "ftp.ncbi.nlm.nih.gov/biosample"
         end
 
-        def get_biosample_metadata
-          sh "lftp #{bs_ftp_url} && pget -n 8 #{bs_xml_gz} -O #{@@bs_dir}"
+        def download_xml_gz
+          sh "lftp #{ftp_url} && pget -n 8 #{xml_gz} -O #{@@bs_dir}"
         end
 
-        def unarchive_biosample_metadata
-          sh "cd #{@@bs_dir} && gunzip #{bs_xml_gz}"
+        def unarchive_gz
+          sh "cd #{@@bs_dir} && gunzip #{xml_gz}"
         end
 
-        def download_biosample_metadata(bs_dir)
+        def download_metadata_xml(bs_dir)
           @@bs_dir = bs_dir
-          if !File.exist?(File.join(@@bs_dir, bs_xml_fname))
-            if !File.exist?(File.join(@@bs_dir, bs_xml_gz))
-              get_biosample_metadata
+          if !File.exist?(File.join(@@bs_dir, xml_fname))
+            if !File.exist?(File.join(@@bs_dir, xml_gz))
+              download_xml_gz
             end
-            unarchive_biosample_metadata
+            unarchive_gz
           end
         end
       end
