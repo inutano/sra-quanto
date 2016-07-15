@@ -67,7 +67,7 @@ module Quanto
         XML::Parser.new(Nokogiri::XML::Reader(open(xml))) do
           for_element 'BioSample' do
             id = attribute("accession")
-            if list.include?(id)
+            if live.include?(id)
               hash[id] = []
               inside_element do
                 for_element 'Organism' do
