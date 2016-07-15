@@ -1,6 +1,5 @@
 require 'rake'
 require 'parallel'
-require './xml_parser'
 
 module Quanto
   class Records

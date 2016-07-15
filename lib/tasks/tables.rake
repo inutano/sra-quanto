@@ -8,37 +8,52 @@ namespace :tables do
   workdir      = ENV['workdir'] || PROJ_ROOT
   table_dir    = File.join(workdir, "tables")
   fastqc_dir   = ENV['fastqc_dir'] || File.join(workdir, "fastqc")
-  sra_metadata = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
+
+  sra_metadata_dir = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
+  biosample_metadata_dir = ENV['biosample_metadata_dir'] || File.join(table_dir, "biosample")
 
   # create directories if missing
   directory workdir
   directory table_dir
   directory fastqc_dir
 
+  directory sra_metadata_dir
+  directory biosample_metadata_dir
+
   # path to list
   list_fastqc_finished     = File.join(table_dir, "runs.done.tab")
   list_public_sra          = File.join(table_dir, "runs.public.tab")
   list_available           = File.join(table_dir, "experiments.available.tab")
-  list_experiment_metadata = File.join(table_dir, "read_layout.tab")
+  list_experiment_metadata = File.join(table_dir, "experiment_metadata.tab")
+  list_biosample_metadata  = File.join(table_dir, "biosample_metadata.tab")
 
   # set number of parallels
   Quanto::Records.set_number_of_parallels(NUM_OF_PARALLEL)
   Quanto::Records::IO.set_number_of_parallels(NUM_OF_PARALLEL)
   Quanto::Records::SRA.set_number_of_parallels(NUM_OF_PARALLEL)
   Quanto::Records::FastQC.set_number_of_parallels(NUM_OF_PARALLEL)
+  Quanto::Records::BioSample.set_number_of_parallels(NUM_OF_PARALLEL)
 
   # base task
   task :available => [
     :get_sra_metadata,
+    :get_biosample_metadata,
     list_fastqc_finished,
     list_experiment_metadata,
+    list_biosample_metadata,
     list_public_sra,
-    list_available
+    list_available,
   ]
 
   task :get_sra_metadata => table_dir do |t|
     puts "==> #{Time.now} Fetching SRA metadata..."
     Quanto::Records::SRA.download_sra_metadata(table_dir)
+    puts "==> #{Time.now} Done."
+  end
+
+  task :get_biosample_metadata => biosample_metadata_dir do |t|
+    puts "==> #{Time.now} Fetching BioSample metadata..."
+    Quanto::Records::BioSample.download_biosample_metadata(biosample_metadata_dir)
     puts "==> #{Time.now} Done."
   end
 
@@ -49,16 +64,23 @@ namespace :tables do
     puts "==> #{Time.now} Done."
   end
 
-  file list_experiment_metadata => sra_metadata do |t|
+  file list_experiment_metadata => sra_metadata_dir do |t|
     puts "==> #{Time.now} Creating list of experimental metadata..."
-    sra = Quanto::Records::SRA.new(sra_metadata)
+    sra = Quanto::Records::SRA.new(sra_metadata_dir)
     sra.experiment_metadata(t.name)
     puts "==> #{Time.now} Done."
   end
 
-  file list_public_sra => [sra_metadata, list_experiment_metadata] do |t|
+  file list_biosample_metadata => biosample_metadata_dir do |t|
+    puts "==> #{Time.now} Creating list of biosample metadata..."
+    bs = Quanto::Records::BioSample.new(biosample_metadata_dir, sra_metadata_dir)
+    bs.sample_metadata(t.name)
+    puts "==> #{Time.now} Done."
+  end
+
+  file list_public_sra => [sra_metadata_dir, list_experiment_metadata] do |t|
     puts "==> #{Time.now} Searching live SRA records..."
-    sra = Quanto::Records::SRA.new(sra_metadata)
+    sra = Quanto::Records::SRA.new(sra_metadata_dir)
     Quanto::Records::IO.write(sra.available(list_experiment_metadata), t.name)
     puts "==> #{Time.now} Done."
   end
