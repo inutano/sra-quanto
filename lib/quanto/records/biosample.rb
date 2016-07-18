@@ -46,12 +46,12 @@ module Quanto
         @sra_dir = sra_dir
         @xml_path = File.join(@bs_dir, "biosample_set.xml")
         @xml_reduced = @xml_path + ".reduced"
-        @xml_temp = @xml_path + ".tmp"
+        @tsv_temp = @xml_path.sub(/.xml$/,".full.tsv")
       end
 
       def create_list_metadata(metadata_list_path)
-        reduce_xml
-        extract_metadata
+        reduce_xml if !File.exist?(@xml_reduced)
+        extract_metadata if !File.exist?(@tsv_temp)
         collect_sra_biosample(metadata_list_path)
       end
 
@@ -60,7 +60,7 @@ module Quanto
       end
 
       def extract_metadata
-        open(@xml_temp, 'w') do |file|
+        open(@tsv_temp, 'w') do |file|
           XML::Parser.new(Nokogiri::XML::Reader(open(@xml_reduced))) do
             for_element 'BioSample' do
               file.print attribute("accession")
@@ -80,7 +80,7 @@ module Quanto
 
       def collect_sra_biosample(out)
         liveset = biosample_liveset
-        sra_samples = Parallel.map(open(@xml_temp).readlines) do |line|
+        sra_samples = Parallel.map(open(@tsv_temp).readlines) do |line|
           line.chomp if liveset.include?(line.split("\t")[0])
         end
         open(out, 'w'){|f| f.puts(sra_samples.compact)}
