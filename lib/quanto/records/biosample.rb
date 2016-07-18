@@ -1,5 +1,6 @@
 require 'rake'
 require 'parallel'
+require 'set'
 
 module Quanto
   class Records
@@ -45,20 +46,24 @@ module Quanto
       def initialize(bs_dir, sra_dir)
         @bs_dir = bs_dir
         @sra_dir = sra_dir
-      end
-
-      def metadata_xml_path
-        File.join(@bs_dir, "biosample_set.xml")
+        @xml_path = File.join(@bs_dir, "biosample_set.xml")
+        @xml_reduced = @xml_path + ".reduced"
+        @xml_temp = @xml_path + ".tmp"
       end
 
       def create_list_metadata(metadata_list_path)
-        extract_metadata(metadata_xml_path, metadata_list_path + ".tmp")
+        reduce_xml
+        extract_metadata
         collect_sra_biosample(metadata_list_path)
       end
 
-      def extract_metadata(xml, fpath)
-        open(fpath, 'w') do |file|
-          XML::Parser.new(Nokogiri::XML::Reader(open(xml))) do
+      def reduce_xml
+        sh "cat #{@xml_path} | grep -e '<BioSample' -e '<Organism ' -e '</Organism>' -e '</BioSample' > #{@xml_reduced}"
+      end
+
+      def extract_metadata
+        open(@xml_temp, 'w') do |file|
+          XML::Parser.new(Nokogiri::XML::Reader(open(@xml_reduced))) do
             for_element 'BioSample' do
               file.print attribute("accession")
               file.print "\t"
@@ -75,16 +80,17 @@ module Quanto
         end
       end
 
-      def collect_sra_biosample(fpath)
-        tmp = fpath + ".tmp"
-        live = list_live_biosample
-        sra_samples = open(tmp).readlines.select{|line| live.include?(line.split("\t")[0]) }
-        open(fpath, 'w'){|f| f.puts(sra_samples) }
+      def collect_sra_biosample(out)
+        liveset = biosample_liveset
+        sra_samples = Parallel.map(open(@xml_temp).readlines) do |line|
+          liveset.include?(line.split("\t")[0])
+        end
+        open(out, 'w'){|f| f.puts(sra_samples.compact)}
       end
 
-      def list_live_biosample
+      def biosample_liveset
         run_members = File.join(@sra_dir, "SRA_Run_Members")
-        `cat #{run_members} | awk -F '\t' '$8 == "live" { print $9 }' | sort -u`.split("\n")
+        `cat #{run_members} | awk -F '\t' '$8 == "live" { print $9 }' | sort -u`.split("\n").to_set
       end
     end
   end
