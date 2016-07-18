@@ -56,6 +56,8 @@ module Quanto
       when :after
         date_base < date
       end
+    rescue
+      return false
     end
 
     def experiment_record(record)
