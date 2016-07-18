@@ -27,7 +27,7 @@ namespace :fastqc do
   end
 
   file logdir_table => logdir do |t|
-    cp_r table_dir, t.name
+    cp_r Dir.glob("#{table_dir}/*tab"), t.name
   end
 
   def logwrite(logfile, m)
