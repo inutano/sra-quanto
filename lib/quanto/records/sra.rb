@@ -83,7 +83,7 @@ module Quanto
         hash = {}
         open(list_experiment_metadata).readlines.each do |metadata|
           a = metadata.chomp.split("\t")
-          hash[a[0]] = a[5]
+          hash[a[0]] = a[4]
         end
         hash
       end
