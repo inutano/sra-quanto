@@ -37,7 +37,7 @@ namespace :fastqc do
 
   task :exec => [list_available, logfile, logdir_job, logdir_ftp, logdir_table] do
     logwrite(logfile, "Start FastQC execution: #{Time.now}")
-    list = Quanto::Records::IO.read(list_avaialble)
+    list = Quanto::Records::IO.read(list_available)
     logwrite(logfile, "Number of target experiments: #{list.size}")
     list.each do |record|
       exp_id = record[0]
