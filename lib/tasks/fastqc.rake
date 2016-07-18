@@ -42,7 +42,7 @@ namespace :fastqc do
     list.each do |record|
       exp_id = record[0]
       acc_id = record[1]
-      layout = record[3]
+      layout = record[2]
       logfile_job = File.join(logdir_job, exp_id + ".log")
       sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp}"
       sleep 2

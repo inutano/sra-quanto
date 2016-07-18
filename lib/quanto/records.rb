@@ -30,10 +30,11 @@ module Quanto
       runids.uniq
     end
 
-    # returns array of [experiment id, submission id, publish date, read layout]
+    # returns array of [experiment id, submission id, read layout]
     def available
       finished_set = runids_finished.to_set
       available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
+        # record is an array of [run id, submission id, experiment id, received date, read layout]
         validate_record(record, finished_set)
       end
       available_record.compact.uniq
@@ -61,7 +62,7 @@ module Quanto
     end
 
     def experiment_record(record)
-      [record[2], record[1], record[3], record[4]]
+      [record[2], record[1], record[4]]
     end
   end
 end
