@@ -74,8 +74,7 @@ module Quanto
       def available(list_experiment_metadata)
         h = layout_hash(list_experiment_metadata)
         Parallel.map(public_idsets, :in_threads => @@num_of_parallels) do |idset|
-          layout = h[idset[2]]
-          idset << (layout ? layout : "UNDEFINED")
+          idset << (h[idset[2]] || "UNDEFINED")
         end
       end
 
