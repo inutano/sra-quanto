@@ -90,6 +90,8 @@ namespace :tables do
     records_finished = Quanto::Records::IO.read(list_fastqc_finished)
     records_public   = Quanto::Records::IO.read(list_public_sra)
     quanto_records   = Quanto::Records.new(records_finished, records_public)
+    quanto_records.date_mode = RECORDS_PUBLISHED if RECORDS_PUBLISHED
+    quanto_records.date_base = BASE_DATE if BASE_DATE
     Quanto::Records::IO.write(quanto_records.available, t.name)
     puts "==> #{Time.now} Done."
   end
