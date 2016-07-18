@@ -6,8 +6,6 @@ module Quanto
   class Records
     class BioSample
       class << self
-        include RakeFileUtils
-
         def set_number_of_parallels(nop)
           @@num_of_parallels = nop
         end
@@ -25,11 +23,11 @@ module Quanto
         end
 
         def download_xml_gz
-          sh "lftp -c \"open #{ftp_url} && pget -n 8 -O #{@@bs_dir} #{xml_gz}\""
+          RakeFileUtils.sh "lftp -c \"open #{ftp_url} && pget -n 8 -O #{@@bs_dir} #{xml_gz}\""
         end
 
         def unarchive_gz
-          sh "cd #{@@bs_dir} && gunzip #{xml_gz}"
+          RakeFileUtils.sh "cd #{@@bs_dir} && gunzip #{xml_gz}"
         end
 
         def download_metadata_xml(bs_dir)
@@ -58,7 +56,7 @@ module Quanto
       end
 
       def reduce_xml
-        sh "cat #{@xml_path} | grep -e '<BioSample' -e '<Organism ' -e '</Organism>' -e '</BioSample' > #{@xml_reduced}"
+        RakeFileUtils.sh "cat #{@xml_path} | grep -e '<BioSample' -e '<Organism ' -e '</Organism>' -e '</BioSample' > #{@xml_reduced}"
       end
 
       def extract_metadata
