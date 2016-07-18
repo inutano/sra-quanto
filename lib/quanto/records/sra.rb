@@ -5,8 +5,6 @@ module Quanto
   class Records
     class SRA
       class << self
-        include RakeFileUtils
-
         def set_number_of_parallels(nop)
           @@num_of_parallels = nop
         end
@@ -41,16 +39,16 @@ module Quanto
             end
             # fix and move
             fix_sra_metadata_directory(unpacked_metadata)
-            sh "mv #{unpacked_metadata} #{metadata_dest_path} && rm -f #{tarball_downloaded}"
+            RakeFileUtils.sh "mv #{unpacked_metadata} #{metadata_dest_path} && rm -f #{tarball_downloaded}"
           end
         end
 
         def download_metadata_via_ftp(dest_dir)
-          sh "lftp -c \"open #{sra_ftp_base_url} && pget -n 8 -O #{dest_dir} #{@@sra_metadata_tarball_fname}\""
+          RakeFileUtils.sh "lftp -c \"open #{sra_ftp_base_url} && pget -n 8 -O #{dest_dir} #{@@sra_metadata_tarball_fname}\""
         end
 
         def extract_metadata(dest_dir, tarball_downloaded)
-          sh "cd #{dest_dir} && tar zxf #{tarball_downloaded}"
+          RakeFileUtils.sh "cd #{dest_dir} && tar zxf #{tarball_downloaded}"
         end
 
         def fix_sra_metadata_directory(metadata_parent_dir)
