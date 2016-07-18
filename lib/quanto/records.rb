@@ -1,5 +1,6 @@
 require 'parallel'
 require 'time'
+require 'set'
 
 module Quanto
   class Records
@@ -31,7 +32,7 @@ module Quanto
 
     # returns array of [experiment id, submission id, publish date, read layout]
     def available
-      finished_set = runids_finished
+      finished_set = runids_finished.to_set
       available_record = Parallel.map(@sra_available, :in_threads => @nop) do |record|
         validate_record(record, finished_set)
       end
