@@ -89,8 +89,8 @@ module Quanto
       end
 
       def public_idsets
-        # run id, submission id, experiment id, published date
-        list_public('$1 "\t" $2 "\t" $11 "\t" $5')
+        # run id, submission id, experiment id, received date
+        list_public('$1 "\t" $2 "\t" $11 "\t" $6')
       end
 
       def list_public(fields)
