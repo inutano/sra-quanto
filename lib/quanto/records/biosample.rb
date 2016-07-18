@@ -81,7 +81,7 @@ module Quanto
       def collect_sra_biosample(out)
         liveset = biosample_liveset
         sra_samples = Parallel.map(open(@xml_temp).readlines) do |line|
-          liveset.include?(line.split("\t")[0])
+          line.chomp if liveset.include?(line.split("\t")[0])
         end
         open(out, 'w'){|f| f.puts(sra_samples.compact)}
       end
