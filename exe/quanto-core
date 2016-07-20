@@ -295,7 +295,7 @@ if [[ ! -z "${fq_filelist}" ]] ; then
 fi
 
 flush_workdir ${workdir}
-echo `date` "Finished FastQC. for ${exp_id}."
+echo `date` "Finished FastQC for ${exp_id}."
 
 ## trap
 trap "rm -fr ${workdir}" EXIT
