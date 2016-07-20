@@ -118,7 +118,7 @@ retrieve_files_ftp(){
   lftp -c "open ${ftp_base} && (!rm ${ftp_connection_log_dir}/${exp_id}.waiting) && mirror ${path} ${dir}"
   close_ftp_connection
   echo "File downloaded:"
-  `ls ${dir}`
+  ls ${dir}
 }
 
 establish_ftp_connection(){
