@@ -243,7 +243,7 @@ flush_workdir(){
 # execute dump/fastqc
 #
 
-echo `date` "Quanto? ${exp_id}, calculating data size.."
+echo `date` "Quanto? ${exp_id} on `hostname`, calculating data size.."
 
 fpath=`get_filepath`
 if [[ -z "${fpath}" ]] ; then
