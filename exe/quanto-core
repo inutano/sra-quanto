@@ -233,8 +233,8 @@ get_result_dir(){
 
 flush_workdir(){
   local workdir=${1}
-  rm -fr ${workdir}/*sra
-  rm -fr ${workdir}/*fastq*
+  rm -fr ${workdir}/*sra 2>/dev/null
+  rm -fr ${workdir}/*fastq* 2>/dev/null
 }
 
 #
