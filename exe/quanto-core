@@ -117,6 +117,8 @@ retrieve_files_ftp(){
   establish_ftp_connection
   lftp -c "open ${ftp_base} && (!rm ${ftp_connection_log_dir}/${exp_id}.waiting) && mirror ${path} ${dir}"
   close_ftp_connection
+  echo "File downloaded:"
+  `ls ${dir}`
 }
 
 establish_ftp_connection(){
@@ -155,7 +157,7 @@ exec_qc_single(){
   ${fastqc} --outdir "${workdir}" /dev/stdin
   mkdir -p "${fname_out}"
   rename_stdin_fastqc_files "${workdir}" "${fname_out}"
-  echo "Result saved to ${fname_out}"
+  echo `date` "Result saved to ${fname_out}"
 }
 
 exec_qc_single_disk(){ ## DEPRECATED
@@ -294,7 +296,7 @@ if [[ ! -z "${fq_filelist}" ]] ; then
 fi
 
 flush_workdir ${workdir}
-echo `date` "Finished FastQC."
+echo `date` "Finished FastQC. for ${exp_id}."
 
 ## trap
 trap "rm -fr ${workdir}" EXIT
