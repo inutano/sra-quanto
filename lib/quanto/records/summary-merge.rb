@@ -10,9 +10,11 @@ module Quanto
       # Merge tsv
       #
 
-      def merge(format, outdir, metadata_dir, ow)
+      def merge(format, outdir, metadata_dir, experiment_metadata, biosample_metadata, ow)
         @format = format
         @outdir = outdir
+        @exp_metadata = experiment_metadata
+        @bs_metadata  = biosample_metadata
         @overwrite = ow
         if @format == "tsv"
           # data object to merge, method defined in sumamry.rb
@@ -22,7 +24,7 @@ module Quanto
           # data to each type
           assemble
           # link annotation to each samples
-          #annotate_samples
+          annotate_samples
         end
       end
 
@@ -198,6 +200,33 @@ module Quanto
             hash[se[0]] ||= []
             hash[se[0]] << exp
           end
+        end
+        hash
+      end
+
+      #
+      # annotate tsv with metadata
+      #
+
+      def annotate_samples
+        exp_hash = create_metadata_hash(@exp_metadata)
+        bs_hash  = create_metadata_hash(@bs_metadata)
+        annotated = Parallel.map(open(@samples_fpath).readlines, :in_threads => @@nop) do |line|
+          data = line.chomp.split("\t")
+          [
+            data,
+            bs_hash[data[0]],
+            exp_hash[data[1]],
+          ].flatten.join("\t")
+        end
+        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts(annotated) }
+      end
+
+      def create_metadata_hash(path)
+        hash = {}
+        open(path).readlines.each do |line|
+          data = line.chomp.split("\t")
+          hash[data[0]] = data.drop(1)
         end
         hash
       end
