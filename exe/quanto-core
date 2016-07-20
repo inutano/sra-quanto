@@ -123,7 +123,7 @@ retrieve_files_ftp(){
 
 establish_ftp_connection(){
   touch "${ftp_connection_log_dir}/${exp_id}.waiting"
-  while [ `ls "${ftp_connection_log_dir}" | grep "connected" | wc -l` -gt 16 && `ls -t "${ftp_connection_log_dir}" | tail -n 1` != "${exp_id}.waiting" ] ; do
+  while [ `ls "${ftp_connection_log_dir}" | grep "connected" | wc -l` -gt 16 ] && [ `ls -t "${ftp_connection_log_dir}" | tail -n 1` != "${exp_id}.waiting" ] ; do
     sleep 1
   done
   touch "${ftp_connection_log_dir}/${exp_id}.connected"
