@@ -117,8 +117,6 @@ retrieve_files_ftp(){
   establish_ftp_connection
   lftp -c "open ${ftp_base} && (!rm ${ftp_connection_log_dir}/${exp_id}.waiting) && mirror ${path} ${dir}"
   close_ftp_connection
-  echo "File downloaded:"
-  ls ${dir}
 }
 
 establish_ftp_connection(){
@@ -268,6 +266,7 @@ echo `date` "Set working directory to: ${workdir}, start downloading data.."
 ftp_path=`get_filepath_ftp`
 retrieve_files_ftp "${ftp_path}" "${workdir}"
 
+ls -l ${workdir}
 echo `date` "Data download completed. Executing FastQC.."
 
 # dump sra files and exec fastqc
