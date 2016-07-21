@@ -85,7 +85,7 @@ module Quanto
 
       def collect_sra_biosample(out)
         liveset = sample_liveset
-        sra_samples = Parallel.map(open(@tsv_temp).readlines, :in_threads => @@nop) do |line|
+        sra_samples = Parallel.map(open(@tsv_temp).readlines, :in_threads => @nop) do |line|
           line.chomp if liveset.include?(line.split("\t")[1])
         end
         open(out, 'w'){|f| f.puts(sra_samples.compact)}
