@@ -47,6 +47,7 @@ module Quanto
         @xml_path = File.join(@bs_dir, "biosample_set.xml")
         @xml_reduced = @xml_path + ".reduced"
         @tsv_temp = @xml_path.sub(/.xml$/,".full.tsv")
+        @nop = @@num_of_parallels
       end
 
       def create_list_metadata(metadata_list_path)
