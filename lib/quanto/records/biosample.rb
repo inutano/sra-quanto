@@ -68,9 +68,8 @@ module Quanto
               file.print "\t"
               inside_element do
                 for_element 'Id' do
-                  file.print inner_xml if attribute("db") == "SRA"
+                  file.print inner_xml + "\t" if attribute("db") == "SRA"
                 end
-                file.print "\t"
                 for_element 'Organism' do
                   file.print attribute("taxonomy_id")
                   file.print "\t"
