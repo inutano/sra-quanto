@@ -56,7 +56,7 @@ module Quanto
       end
 
       def reduce_xml
-        RakeFileUtils.sh "cat #{@xml_path} | grep -e '<BioSample' -e '<Organism ' -e '</Organism>' -e '</BioSample' > #{@xml_reduced}"
+        RakeFileUtils.sh "cat #{@xml_path} | grep -e '<BioSample' -e '<Organism ' -e '</Organism>' -e '</BioSample' -e '<Id ' -e '</Id>' > #{@xml_reduced}"
       end
 
       def extract_metadata
@@ -66,6 +66,10 @@ module Quanto
               file.print attribute("accession")
               file.print "\t"
               inside_element do
+                for_element 'Id' do
+                  file.print inner_xml if attribute("db") == "SRA"
+                end
+                file.print "\t"
                 for_element 'Organism' do
                   file.print attribute("taxonomy_id")
                   file.print "\t"
@@ -79,16 +83,16 @@ module Quanto
       end
 
       def collect_sra_biosample(out)
-        liveset = biosample_liveset
+        liveset = sample_liveset
         sra_samples = Parallel.map(open(@tsv_temp).readlines, :in_threads => @@nop) do |line|
-          line.chomp if liveset.include?(line.split("\t")[0])
+          line.chomp if liveset.include?(line.split("\t")[1])
         end
         open(out, 'w'){|f| f.puts(sra_samples.compact)}
       end
 
-      def biosample_liveset
+      def sample_liveset
         run_members = File.join(@sra_dir, "SRA_Run_Members")
-        `cat #{run_members} | awk -F '\t' '$8 == "live" { print $9 }' | sort -u`.split("\n").to_set
+        `cat #{run_members} | awk -F '\t' '$8 == "live" { print $4 }' | sort -u`.split("\n").to_set
       end
     end
   end
