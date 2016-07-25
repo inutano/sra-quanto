@@ -9,6 +9,7 @@ namespace :fastqc do
   table_dir      = File.join(workdir, "tables")
   list_available = File.join(table_dir, "experiments.available.tab")
   fastqc_dir     = ENV['fastqc_dir'] || File.join(workdir, "fastqc")
+  checksum_table = ENV['checksum_table'] || File.join(table_dir, "dra", "fastqlist")
 
   # logging
   date         = Time.now.strftime("%Y%m%d-%H%M")
@@ -44,7 +45,7 @@ namespace :fastqc do
       acc_id = record[1]
       layout = record[2]
       logfile_job = File.join(logdir_job, exp_id + ".log")
-      sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp}"
+      sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp} #{checksum_table}"
       sleep 2
     end
   end

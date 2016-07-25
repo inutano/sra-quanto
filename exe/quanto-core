@@ -15,6 +15,7 @@ node="sranode"
 
 # Path to tools and arguments
 fastq_dump="/home/inutano/local/bin/fastq-dump"
+vdb_validate="/home/inutano/local/bin/vdb-validate"
 fastqc="/home/inutano/local/bin/fastqc --noextract --threads 4"
 
 # Identifiers
@@ -35,6 +36,9 @@ fastqc_result_dir=${4}
 
 # Path to ftp connection log directory
 ftp_connection_log_dir=${5}
+
+# Path to md5 checksum table for fastq files
+fastq_checksum_table=${6}
 
 #
 # Functions
@@ -129,6 +133,40 @@ establish_ftp_connection(){
 
 close_ftp_connection(){
   rm -f "${ftp_connection_log_dir}/${exp_id}.connected"
+}
+
+## Validate downloaded file checksum
+validate_downloaded_files(){
+  local dir=${1}
+  validate_downloaded_sra_files "${dir}"
+  validate_downloaded_fastq_files "${dir}"
+}
+
+validate_downloaded_sra_files(){
+  local dir=${1}
+  ls ${dir}/**/*sra 2>/dev/null | xargs ${vdb_validate}
+}
+
+validate_downloaded_fastq_files(){
+  local dir=${1}
+  ls ${workdir}/*fastq* | while read fpath ; do
+    validate_downloaded_fastq "${fpath}" "${checksum_table}"
+  done
+}
+
+validate_downloaded_fastq(){
+  local fpath=${1}
+  local fname=`echo "${fpath}" | awk -F '/' '{ print $NF }'`
+  local table=${2}
+  local valid_checksum=`grep "${fname}" "${table}" | awk -F '\t' '{ print $2 }'`
+  local checksum=`md5sum "${fpath}" | awk '{ print $1 }'`
+  if [[ ${valid_checksum} != ${checksum} ]] ; then
+    echo "Validation Failed: File ${fpath} is inconsistent, skipping.."
+    echo "Valid checksum is ${valid_checksum}, one of downloaded is ${checksum}"
+    rm -f "${fpath}"
+  else
+    echo "Validated: ${fpath} with checksum ${checksum}"
+  fi
 }
 
 ## Execute FastQC
@@ -267,7 +305,11 @@ ftp_path=`get_filepath_ftp`
 retrieve_files_ftp "${ftp_path}" "${workdir}"
 
 ls -l ${workdir}
-echo `date` "Data download completed. Executing FastQC.."
+echo `date` "Data download completed, validating.."
+
+# validate downloaded files
+validate_downloaded_files "${workdir}"
+echo `date` "Validation completed, start running fastqc.."
 
 # dump sra files and exec fastqc
 sra_filelist=`ls ${workdir}/**/*sra` &&:
