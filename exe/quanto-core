@@ -146,12 +146,14 @@ validate_downloaded_files(){
 
 validate_downloaded_sra_files(){
   local dir=${1}
-  ls ${dir}/**/*sra 2>/dev/null | xargs ${vdb_validate}
+  ls ${dir}/**/*sra 2>/dev/null | while read fpath ; do
+    ${vdb_validate} "${fpath}"
+  done
 }
 
 validate_downloaded_fastq_files(){
   local dir=${1}
-  ls ${workdir}/*fastq* | while read fpath ; do
+  ls ${workdir}/*fastq* 2>/dev/null | while read fpath ; do
     validate_downloaded_fastq "${fpath}" "${checksum_table}"
   done
 }
