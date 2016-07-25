@@ -14,9 +14,12 @@ set -eu
 node="sranode"
 
 # Path to tools and arguments
-fastq_dump="/home/inutano/local/bin/fastq-dump"
-vdb_validate="/home/inutano/local/bin/vdb-validate"
-fastqc="/home/inutano/local/bin/fastqc --noextract --threads 4"
+fastq_dump="${HOME}/local/bin/fastq-dump"
+vdb_validate="${HOME}/local/bin/vdb-validate"
+fastqc="${HOME}/local/bin/fastqc --noextract --threads 4"
+
+# Temp dir on ssd
+ssd_tmp="/ssd/`whoami`/fq_tmp"
 
 # Identifiers
 acc_id=${1}
@@ -93,13 +96,12 @@ set_workdir_base(){ # sum of file size must be provided for the first argument
   local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
   local rate=`echo "scale=2; ${fsize} / ${ssd_available}" | bc`
   if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then
-    ssd_tmp="/ssd/inutano/fq_tmp"
     if [[ ! -e "${ssd_tmp}" ]] ; then
       mkdir -p "${ssd_tmp}"
     fi
     echo "${ssd_tmp}"
   else
-    home_tmp="/home/inutano/fq_tmp"
+    home_tmp="${HOME}/fq_tmp"
     if [[ ! -e "${home_tmp}" ]] ; then
       mkdir -p "${home_tmp}"
     fi
