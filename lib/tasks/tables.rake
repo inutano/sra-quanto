@@ -11,6 +11,7 @@ namespace :tables do
 
   sra_metadata_dir = ENV['sra_metadata_dir'] || File.join(table_dir, "sra_metadata")
   biosample_metadata_dir = ENV['biosample_metadata_dir'] || File.join(table_dir, "biosample")
+  dra_dir = ENV['dra_dir'] || File.join(table_dir, "dra")
 
   # create directories if missing
   directory workdir
@@ -19,6 +20,7 @@ namespace :tables do
 
   directory sra_metadata_dir
   directory biosample_metadata_dir
+  directory dra_dir
 
   # path to list
   list_fastqc_finished     = File.join(table_dir, "runs.done.tab")
@@ -26,6 +28,8 @@ namespace :tables do
   list_available           = File.join(table_dir, "experiments.available.tab")
   list_experiment_metadata = File.join(table_dir, "experiment_metadata.tab")
   list_biosample_metadata  = File.join(table_dir, "biosample_metadata.tab")
+  list_fastq_checksum      = File.join(dra_dir, "fastqlist")
+  list_sra_checksum        = File.join(dra_dir, "sralist")
 
   # set number of parallels
   Quanto::Records.set_number_of_parallels(NUM_OF_PARALLEL)
@@ -37,6 +41,7 @@ namespace :tables do
   # base task
   task :available => [
     :get_sra_metadata,
+    :get_sra_checksum_table,
     :get_biosample_metadata,
     list_fastqc_finished,
     list_experiment_metadata,
@@ -48,6 +53,23 @@ namespace :tables do
   task :get_sra_metadata => table_dir do |t|
     puts "==> #{Time.now} Fetching SRA metadata..."
     Quanto::Records::SRA.download_sra_metadata(table_dir)
+    puts "==> #{Time.now} Done."
+  end
+
+  task :get_sra_checksum_table => [
+    list_fastq_checksum,
+    list_sra_checksum,
+  ]
+
+  file list_fastq_checksum => dra_dir do |t|
+    puts "==> #{Time.now} Fetching Fastq checksum table..."
+    sh "lftp -c \"open ftp.ddbj.nig.ac.jp/dra/meta/list && pget -n 8 -O #{t.name} fastqlist\""
+    puts "==> #{Time.now} Done."
+  end
+
+  file list_sra_checksum => dra_dir do |t|
+    puts "==> #{Time.now} Fetching SRA checksum table..."
+    sh "lftp -c \"open ftp.ddbj.nig.ac.jp/dra/meta/list && pget -n 8 -O #{t.name} sralist\""
     puts "==> #{Time.now} Done."
   end
 
