@@ -63,13 +63,13 @@ namespace :tables do
 
   file list_fastq_checksum => dra_dir do |t|
     puts "==> #{Time.now} Fetching Fastq checksum table..."
-    sh "lftp -c \"open ftp.ddbj.nig.ac.jp/dra/meta/list && pget -n 8 -O #{t.name} fastqlist\""
+    sh "lftp -c \"open ftp.ddbj.nig.ac.jp/ddbj_database/dra/meta/list && pget -n 8 -O #{t.name} fastqlist\""
     puts "==> #{Time.now} Done."
   end
 
   file list_sra_checksum => dra_dir do |t|
     puts "==> #{Time.now} Fetching SRA checksum table..."
-    sh "lftp -c \"open ftp.ddbj.nig.ac.jp/dra/meta/list && pget -n 8 -O #{t.name} sralist\""
+    sh "lftp -c \"open ftp.ddbj.nig.ac.jp/ddbj_database/dra/meta/list && pget -n 8 -O #{t.name} sralist\""
     puts "==> #{Time.now} Done."
   end
 
