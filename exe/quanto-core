@@ -316,7 +316,7 @@ validate_downloaded_files "${workdir}"
 echo `date` "Validation completed, start running fastqc.."
 
 # dump sra files and exec fastqc
-sra_filelist=`ls ${workdir}/**/*sra` &&:
+sra_filelist=`ls ${workdir}/**/*sra 2>/dev/null` &&:
 if [[ ! -z "${sra_filelist}" ]] ; then
   echo "${sra_filelist}" |\
   while read f ; do
@@ -326,7 +326,7 @@ if [[ ! -z "${sra_filelist}" ]] ; then
 fi
 
 # exec fastqc directly against compressed fastqc files
-fq_filelist=`ls ${workdir}/*fastq*` &&:
+fq_filelist=`ls ${workdir}/*fastq* 2>/dev/null` &&:
 if [[ ! -z "${fq_filelist}" ]] ; then
   echo "${fq_filelist}" |\
   xargs ${fastqc} --outdir "${workdir}"
