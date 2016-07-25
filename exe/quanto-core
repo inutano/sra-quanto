@@ -154,7 +154,7 @@ validate_downloaded_sra_files(){
 validate_downloaded_fastq_files(){
   local dir=${1}
   ls ${workdir}/*fastq* 2>/dev/null | while read fpath ; do
-    validate_downloaded_fastq "${fpath}" "${checksum_table}"
+    validate_downloaded_fastq "${fpath}" "${fastq_checksum_table}"
   done
 }
 
