@@ -44,7 +44,9 @@ namespace :fastqc do
       exp_id = record[0]
       acc_id = record[1]
       layout = record[2]
-      logfile_job = File.join(logdir_job, exp_id + ".log")
+      logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
+      mkdir_p logdir_exp
+      logfile_job = File.join(logdir_exp, exp_id + ".log")
       sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp} #{checksum_table}"
       sleep 2
     end
