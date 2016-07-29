@@ -7,7 +7,7 @@ namespace :fastqc do
   # setup working dir
   workdir        = ENV['workdir'] || PROJ_ROOT
   table_dir      = File.join(workdir, "tables")
-  list_available = File.join(table_dir, "experiments.available.tab")
+  list_available = ENV['list_available'] || File.join(table_dir, "experiments.available.tab")
   fastqc_dir     = ENV['fastqc_dir'] || File.join(workdir, "fastqc")
   checksum_table = ENV['checksum_table'] || File.join(table_dir, "dra", "fastqlist")
 
