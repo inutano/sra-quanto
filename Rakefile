@@ -14,15 +14,12 @@ FASTQC_VERSION = "0.11.3"
 RECORDS_PUBLISHED = ENV['records_published'] || :before
 BASE_DATE = ENV['base_date'] # e.g. "2015-09-07"
 
-# path to executables
-QSUB = case ENV['qsub_env']
-       when "ddbj"
-         `which qsub`
-       when "dbcls"
-         "source /home/geadmin/UGED/uged/common/settings.sh && /home/geadmin/UGED/bin/lx-amd64/qsub"
-       else
-         "source /home/geadmin/UGED/uged/common/settings.sh && /home/geadmin/UGED/bin/lx-amd64/qsub"
-       end
+# path to executables and option for qsub command
+QSUB = if ENV['qsub']
+  ENV['qsub']
+else
+  "source /home/geadmin/UGED/uged/common/settings.sh && /home/geadmin/UGED/bin/lx-amd64/qsub"
+end
 
 # Constants
 PROJ_ROOT = File.expand_path(__dir__)
