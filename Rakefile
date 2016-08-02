@@ -15,7 +15,14 @@ RECORDS_PUBLISHED = ENV['records_published'] || :before
 BASE_DATE = ENV['base_date'] # e.g. "2015-09-07"
 
 # path to executables
-QSUB = "source /home/geadmin/UGED/uged/common/settings.sh && /home/geadmin/UGED/bin/lx-amd64/qsub"
+QSUB = case ENV['qsub_env']
+       when "ddbj"
+         `which qsub`
+       when "dbcls"
+         "source /home/geadmin/UGED/uged/common/settings.sh && /home/geadmin/UGED/bin/lx-amd64/qsub"
+       else
+         "source /home/geadmin/UGED/uged/common/settings.sh && /home/geadmin/UGED/bin/lx-amd64/qsub"
+       end
 
 # Constants
 PROJ_ROOT = File.expand_path(__dir__)
