@@ -47,7 +47,16 @@ namespace :fastqc do
       logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
       mkdir_p logdir_exp
       logfile_job = File.join(logdir_exp, exp_id + ".log")
-      sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp} #{checksum_table}"
+      begin
+        sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp} #{checksum_table}"
+      rescue RunTimeError
+        quser = "qstat -u " + `whoami`
+        qstat = QSUB.sub(/qsub$/,quser)
+        while `#{qstat}`.split("\n").size > 4500
+          sleep 30
+        end
+        retry
+      end
       sleep 2
     end
   end
