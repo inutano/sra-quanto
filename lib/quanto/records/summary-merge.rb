@@ -65,7 +65,7 @@ module Quanto
           merge_dataset(
             @runs_fpath,
             :read_to_run,
-            tsv_header.drop(1).insert(0, "Run ID"),
+            tsv_header.drop(1).insert(0, "run_id"),
             reads_by_runid
           )
         end
@@ -77,7 +77,7 @@ module Quanto
           merge_dataset(
             @experiments_fpath,
             :run_to_exp,
-            tsv_header.drop(1).insert(0, "Experiment ID", "Run ID"),
+            tsv_header.drop(1).insert(0, "experiment_id", "run_id"),
             runs_by_expid
           )
         end
@@ -89,7 +89,7 @@ module Quanto
           merge_dataset(
             @samples_fpath,
             :exp_to_sample,
-            tsv_header.drop(1).insert(0, "Sample ID", "Experiment ID", "Run ID"),
+            tsv_header.drop(1).insert(0, "sample_id", "experiment_id", "run_id"),
             exps_by_sampleid
           )
         end
@@ -210,6 +210,18 @@ module Quanto
       # annotate tsv with metadata
       #
 
+      def metadata_header
+        [
+          "biosample_id",
+          "taxonomy_id",
+          "taxonomy_scientific_name",
+          "library_strategy",
+          "library_source",
+          "library_selection",
+          "instrument_model",
+        ]
+      end
+
       def annotate_samples
         exp_hash = create_metadata_hash(@exp_metadata, 0)
         bs_hash  = create_metadata_hash(@bs_metadata, 1)
@@ -221,7 +233,8 @@ module Quanto
             exp_hash[data[1]],
           ].flatten.join("\t")
         end
-        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts(annotated) }
+        header = annotated.shift.split("\t").push(metadata_header).join("\t")
+        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
       end
 
       def create_metadata_hash(path, id_col)
