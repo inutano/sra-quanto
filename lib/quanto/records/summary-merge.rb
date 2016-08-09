@@ -189,9 +189,11 @@ module Quanto
         end
       end
 
+      # return hash like { "DRS000001" => ["DRX000001"], ... }
+      # key: SRA sample ID, value: array of SRA experiment ID
       def exps_by_sampleid
         exp_data = data_by_id(@experiments_fpath)
-        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $9 "\t" $3 }' | sort -u`.split("\n")
+        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $4 "\t" $3 }' | sort -u`.split("\n")
         hash = {}
         sample_exp.each do |s_e|
           se = s_e.split("\t")
@@ -209,8 +211,8 @@ module Quanto
       #
 
       def annotate_samples
-        exp_hash = create_metadata_hash(@exp_metadata)
-        bs_hash  = create_metadata_hash(@bs_metadata)
+        exp_hash = create_metadata_hash(@exp_metadata, 0)
+        bs_hash  = create_metadata_hash(@bs_metadata, 1)
         annotated = Parallel.map(open(@samples_fpath).readlines, :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
           [
@@ -222,11 +224,12 @@ module Quanto
         open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts(annotated) }
       end
 
-      def create_metadata_hash(path)
+      def create_metadata_hash(path, id_col)
         hash = {}
         open(path).readlines.each do |line|
           data = line.chomp.split("\t")
-          hash[data[0]] = data.drop(1)
+          id = data.delete_at(id_col)
+          hash[id] = data
         end
         hash
       end
