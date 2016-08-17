@@ -4,7 +4,7 @@
 # usage:
 #   quanto-core --accession-id <SRA Accession ID> --experiment-id <SRA Experiment ID> --read-layout <SINGLE or PAIRED> --fastqc-dir <FastQC result directory> --ftp-connection-pool <FTP connection management directory> --fastq-checksum-table <FastQ checksum table> --log-file <Job log file>
 #
-set -eu
+set -e
 
 #
 # Parsing command line arguments
