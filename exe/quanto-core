@@ -197,7 +197,7 @@ validate_downloaded_files(){
 validate_downloaded_sra_files(){
   local dir=${1}
   ls ${dir}/**/*sra 2>/dev/null | while read fpath ; do
-    ${VDB_VALIDATE} "${fpath}"
+    ${VDB_VALIDATE} "${fpath}" 2>> ${LOGFILE}
   done
 }
 
@@ -359,7 +359,7 @@ ls -l ${workdir} >> ${LOGFILE}
 echo `date` "Data download completed, validating.." >> ${LOGFILE}
 
 # validate downloaded files
-validate_downloaded_files "${workdir}" >> ${LOGFILE}
+validate_downloaded_files "${workdir}"
 echo `date` "Validation completed, start running fastqc.." >> ${LOGFILE}
 
 # dump sra files and exec fastqc
