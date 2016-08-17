@@ -32,6 +32,7 @@ while [[ $# -gt 1 ]]; do
     # path to log file
     --log-file)
     LOGFILE="${2}"
+    touch "${LOGFILE}"
     shift
     ;;
     # Path to ftp connection log directory
@@ -62,7 +63,8 @@ if [[ ! -z "${JOB_LIST}" ]] ; then
   EXPERIMENT_ID=`echo ${args} | awk '{ print $2 }'`
   READ_LAYOUT=`echo ${args} | awk '{ print $3 }'`
   LOGFILE=`echo ${args} | awk '{ print $4 }'`
-  echo "This is a part of array job, task id is ${job_number}" > ${LOGFILE}
+  touch "${LOGFILE}"
+  echo "This is a part of array job, task id is ${job_number}" >> ${LOGFILE}
 fi
 
 #
@@ -244,7 +246,7 @@ exec_qc_single(){
   ${FASTQ_DUMP} --stdout ${fpath} |\
   ${FASTQC} --outdir "${workdir}" /dev/stdin
   rename_stdin_fastqc_files "${workdir}" "${fname_out}"
-  echo `date` "Result saved to ${fname_out}" > ${LOGFILE}
+  echo `date` "Result saved to ${fname_out}" >> ${LOGFILE}
 }
 
 exec_qc_single_disk(){ ## DEPRECATED
@@ -275,8 +277,8 @@ exec_qc_paired(){
   rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
   rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
 
-  echo `date` "Result saved to ${fname_out_1}" > ${LOGFILE}
-  echo `date` "Result saved to ${fname_out_2}" > ${LOGFILE}
+  echo `date` "Result saved to ${fname_out_1}" >> ${LOGFILE}
+  echo `date` "Result saved to ${fname_out_2}" >> ${LOGFILE}
 
   rm -fr "${wd_read1}"
   rm -fr "${wd_read2}"
@@ -327,17 +329,17 @@ flush_workdir(){
 # execute dump/fastqc
 #
 
-echo `date` "Quanto? ${EXPERIMENT_ID} on `hostname`, calculating data size.." > ${LOGFILE}
+echo `date` "Quanto? ${EXPERIMENT_ID} on `hostname`, calculating data size.." >> ${LOGFILE}
 
 fpath=`get_filepath`
 if [[ -z "${fpath}" ]] ; then
-  echo "error" > ${LOGFILE} # error
+  echo "error" >> ${LOGFILE} # error
   exit
 fi
 
 fsize=`get_filesize`
 
-echo `date` "File size: ${fsize}, setting working directory.." > ${LOGFILE}
+echo `date` "File size: ${fsize}, setting working directory.." >> ${LOGFILE}
 
 # setting working dir
 workdir_base=`set_workdir_base`
@@ -346,18 +348,18 @@ if [[ ! -e "${workdir}" ]] ; then
   mkdir -p "${workdir}"
 fi
 
-echo `date` "Set working directory to: ${workdir}, start downloading data.." > ${LOGFILE}
+echo `date` "Set working directory to: ${workdir}, start downloading data.." >> ${LOGFILE}
 
 # retrieve files
 ftp_path=`get_filepath_ftp`
 retrieve_files_ftp "${ftp_path}" "${workdir}"
 
-ls -l ${workdir} > ${LOGFILE}
-echo `date` "Data download completed, validating.." > ${LOGFILE}
+ls -l ${workdir} >> ${LOGFILE}
+echo `date` "Data download completed, validating.." >> ${LOGFILE}
 
 # validate downloaded files
 validate_downloaded_files "${workdir}"
-echo `date` "Validation completed, start running fastqc.." > ${LOGFILE}
+echo `date` "Validation completed, start running fastqc.." >> ${LOGFILE}
 
 # dump sra files and exec fastqc
 sra_filelist=`ls ${workdir}/**/*sra 2>/dev/null` &&:
@@ -380,12 +382,12 @@ if [[ ! -z "${fq_filelist}" ]] ; then
       mkdir -p "${dir}"
     fi
     mv --force ${f} ${dir}
-    echo `date` "Result saved to ${dir}" > ${LOGFILE}
+    echo `date` "Result saved to ${dir}" >> ${LOGFILE}
   done
 fi
 
 flush_workdir ${workdir}
-echo `date` "Finished FastQC for ${EXPERIMENT_ID}." > ${LOGFILE}
+echo `date` "Finished FastQC for ${EXPERIMENT_ID}." >> ${LOGFILE}
 
 ## trap
 trap "rm -fr ${workdir}" EXIT
