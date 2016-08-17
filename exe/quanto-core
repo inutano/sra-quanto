@@ -2,7 +2,7 @@
 #$ -S /bin/bash -j y -l mem_req=4G,s_vmem=4G -pe def_slot 4
 #
 # usage:
-#   quanto_core.sh --accession-id <SRA Accession ID> --experiment-id <SRA Experiment ID> --read-layout <SINGLE or PAIRED> --fastqc-dir <FastQC result directory> --ftp-connection-pool <FTP connection management directory> --fastq-checksum-table <FastQ checksum table>
+#   quanto-core --accession-id <SRA Accession ID> --experiment-id <SRA Experiment ID> --read-layout <SINGLE or PAIRED> --fastqc-dir <FastQC result directory> --ftp-connection-pool <FTP connection management directory> --fastq-checksum-table <FastQ checksum table> --log-file <Job log file>
 #
 set -eu
 
