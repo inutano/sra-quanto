@@ -243,9 +243,8 @@ exec_qc_single(){
   local fname_out=`get_result_fname ${fpath}`
   ${FASTQ_DUMP} --stdout ${fpath} |\
   ${FASTQC} --outdir "${workdir}" /dev/stdin
-  mkdir -p "${fname_out}"
   rename_stdin_fastqc_files "${workdir}" "${fname_out}"
-  echo `date` "Result saved to ${fname_out}"
+  echo `date` "Result saved to ${fname_out}" > ${LOGFILE}
 }
 
 exec_qc_single_disk(){ ## DEPRECATED
@@ -260,14 +259,11 @@ exec_qc_single_disk(){ ## DEPRECATED
 exec_qc_paired(){
   local fpath=${1}
   local workdir=${2}
-  local wd_read1="${2}/read1"
-  local wd_read2="${2}/read2"
+  local wd_read1="${workdir}/read1"
+  local wd_read2="${workdir}/read2"
   local fname_out=`get_result_fname ${fpath}`
   local fname_out_1=`echo ${fname_out} | sed -e 's:_fastqc:_1_fastqc:g'`
   local fname_out_2=`echo ${fname_out} | sed -e 's:_fastqc:_2_fastqc:g'`
-
-  echo `date` "Result saved to ${fname_out_1}"
-  echo `date` "Result saved to ${fname_out_2}"
 
   mkdir -p "${wd_read1}"
   mkdir -p "${wd_read2}"
@@ -276,11 +272,11 @@ exec_qc_paired(){
   tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin ) |\
   awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin
 
-  mkdir -p "${fname_out_1}"
-  mkdir -p "${fname_out_2}"
-
   rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
   rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
+
+  echo `date` "Result saved to ${fname_out_1}" > ${LOGFILE}
+  echo `date` "Result saved to ${fname_out_2}" > ${LOGFILE}
 
   rm -fr "${wd_read1}"
   rm -fr "${wd_read2}"
