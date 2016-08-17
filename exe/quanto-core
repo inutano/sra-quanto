@@ -359,7 +359,7 @@ ls -l ${workdir} >> ${LOGFILE}
 echo `date` "Data download completed, validating.." >> ${LOGFILE}
 
 # validate downloaded files
-validate_downloaded_files "${workdir}"
+validate_downloaded_files "${workdir}" >> ${LOGFILE}
 echo `date` "Validation completed, start running fastqc.." >> ${LOGFILE}
 
 # dump sra files and exec fastqc
