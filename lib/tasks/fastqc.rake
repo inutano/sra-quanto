@@ -40,24 +40,21 @@ namespace :fastqc do
     logwrite(logfile, "Start FastQC execution: #{Time.now}")
     list = Quanto::Records::IO.read(list_available)
     logwrite(logfile, "Number of target experiments: #{list.size}")
-    list.each do |record|
-      exp_id = record[0]
-      acc_id = record[1]
-      layout = record[2]
-      logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
-      mkdir_p logdir_exp
-      logfile_job = File.join(logdir_exp, exp_id + ".log")
-      begin
-        sh "#{QSUB} -N #{exp_id} -o #{logfile_job} #{core} #{acc_id} #{exp_id} #{layout} #{fastqc_dir} #{logdir_ftp} #{checksum_table}"
-      rescue RunTimeError
-        quser = "qstat -u " + `whoami`
-        qstat = QSUB.sub(/qsub$/,quser)
-        while `#{qstat}`.split("\n").size > 4500
-          sleep 30
-        end
-        retry
+
+    process_list = File.join(logdir, "process_list.txt")
+    open(process_list, "w") do |f|
+      list.each do |record|
+        exp_id = record[0]
+        acc_id = record[1]
+        layout = record[2]
+        logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
+        mkdir_p logdir_exp
+        logfile_job = File.join(logdir_exp, exp_id + ".log")
+        f.puts("#{acc_id} #{exp_id} #{layout} #{logfile_job}")
       end
-      sleep 2
+
+      # Submit array job
+      sh "#{QSUB} -N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")} -t 1-#{list.size} #{core} --fastqc-dir #{fastqc_dir} --ftp-connection-pool #{logdir_ftp} --fastq-checksum #{checksum_table} --job-list #{process_list}"
     end
   end
 end

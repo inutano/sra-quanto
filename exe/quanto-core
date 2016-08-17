@@ -29,6 +29,11 @@ while [[ $# -gt 1 ]]; do
     FASTQC_RESULT_DIR="${2}"
     shift
     ;;
+    # path to log file
+    --log-file)
+    LOGFILE="${2}"
+    shift
+    ;;
     # Path to ftp connection log directory
     --ftp-connection-pool)
     FTP_CONNECTION_POOL="${2}"
@@ -39,9 +44,26 @@ while [[ $# -gt 1 ]]; do
     FASTQ_CHECKSUM="${2}"
     shift
     ;;
+    --job-list)
+    JOB_LIST="${2}"
+    shift
+    ;;
   esac
   shift
 done
+
+#
+# Option: SGE array job
+#
+if [[ ! -z "${JOB_LIST}" ]] ; then
+  job_number=${SGE_TASK_ID}
+  args=`cat ${JOB_LIST} | sed "${job_number}q;d"`
+  ACCESSION_ID=`echo ${args} | awk '{ print $1 }'`
+  EXPERIMENT_ID=`echo ${args} | awk '{ print $2 }'`
+  READ_LAYOUT=`echo ${args} | awk '{ print $3 }'`
+  LOGFILE=`echo ${args} | awk '{ print $4 }'`
+  echo "This is a part of array job, task id is ${job_number}" > ${LOGFILE}
+fi
 
 #
 # Global variables
@@ -309,17 +331,17 @@ flush_workdir(){
 # execute dump/fastqc
 #
 
-echo `date` "Quanto? ${EXPERIMENT_ID} on `hostname`, calculating data size.."
+echo `date` "Quanto? ${EXPERIMENT_ID} on `hostname`, calculating data size.." > ${LOGFILE}
 
 fpath=`get_filepath`
 if [[ -z "${fpath}" ]] ; then
-  echo "error"  # error
+  echo "error" > ${LOGFILE} # error
   exit
 fi
 
 fsize=`get_filesize`
 
-echo `date` "File size: ${fsize}, setting working directory.."
+echo `date` "File size: ${fsize}, setting working directory.." > ${LOGFILE}
 
 # setting working dir
 workdir_base=`set_workdir_base`
@@ -328,18 +350,18 @@ if [[ ! -e "${workdir}" ]] ; then
   mkdir -p "${workdir}"
 fi
 
-echo `date` "Set working directory to: ${workdir}, start downloading data.."
+echo `date` "Set working directory to: ${workdir}, start downloading data.." > ${LOGFILE}
 
 # retrieve files
 ftp_path=`get_filepath_ftp`
 retrieve_files_ftp "${ftp_path}" "${workdir}"
 
-ls -l ${workdir}
-echo `date` "Data download completed, validating.."
+ls -l ${workdir} > ${LOGFILE}
+echo `date` "Data download completed, validating.." > ${LOGFILE}
 
 # validate downloaded files
 validate_downloaded_files "${workdir}"
-echo `date` "Validation completed, start running fastqc.."
+echo `date` "Validation completed, start running fastqc.." > ${LOGFILE}
 
 # dump sra files and exec fastqc
 sra_filelist=`ls ${workdir}/**/*sra 2>/dev/null` &&:
@@ -362,12 +384,12 @@ if [[ ! -z "${fq_filelist}" ]] ; then
       mkdir -p "${dir}"
     fi
     mv --force ${f} ${dir}
-    echo `date` "Result saved to ${dir}"
+    echo `date` "Result saved to ${dir}" > ${LOGFILE}
   done
 fi
 
 flush_workdir ${workdir}
-echo `date` "Finished FastQC for ${EXPERIMENT_ID}."
+echo `date` "Finished FastQC for ${EXPERIMENT_ID}." > ${LOGFILE}
 
 ## trap
 trap "rm -fr ${workdir}" EXIT
