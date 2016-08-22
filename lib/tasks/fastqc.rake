@@ -17,11 +17,13 @@ namespace :fastqc do
   logfile      = File.join(logdir, "exec.log")
   logdir_job   = File.join(logdir, "job")
   logdir_ftp   = File.join(logdir, "ftp")
+  logdir_uge   = File.join(logdir, "uge")
   logdir_table = File.join(logdir, "tables")
 
   directory logdir
   directory logdir_job
   directory logdir_ftp
+  directory logdir_uge
 
   file logfile => logdir do |t|
     touch t.name
@@ -36,7 +38,7 @@ namespace :fastqc do
     open(logfile, "a"){|f| f.puts(m) }
   end
 
-  task :exec => [list_available, logfile, logdir_job, logdir_ftp, logdir_table] do
+  task :exec => [list_available, logfile, logdir_job, logdir_ftp, logdir_uge, logdir_table] do
     logwrite(logfile, "Start FastQC execution: #{Time.now}")
     list = Quanto::Records::IO.read(list_available)
     logwrite(logfile, "Number of target experiments: #{list.size}")
@@ -54,7 +56,7 @@ namespace :fastqc do
       end
 
       # Submit array job
-      sh "#{QSUB} -N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")} -t 1-#{list.size} #{core} --fastqc-dir #{fastqc_dir} --ftp-connection-pool #{logdir_ftp} --fastq-checksum #{checksum_table} --job-list #{process_list}"
+      sh "#{QSUB} -N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")} -j y -o #{logdir_uge} -t 1-#{list.size} #{core} --fastqc-dir #{fastqc_dir} --ftp-connection-pool #{logdir_ftp} --fastq-checksum #{checksum_table} --job-list #{process_list}"
     end
   end
 end
