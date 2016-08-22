@@ -1,5 +1,6 @@
 require 'parallel'
 require 'zip'
+require 'rake'
 
 module Quanto
   class Records
@@ -61,6 +62,8 @@ module Quanto
         end
       rescue Zip::Error
         "CORRUPT"
+      rescue Errno::EISDIR
+        "DIRERR"
       end
     end
   end
