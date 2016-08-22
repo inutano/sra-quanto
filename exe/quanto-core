@@ -219,7 +219,7 @@ validate_downloaded_fastq(){
     echo "Valid checksum is ${valid_checksum}, one of downloaded is ${checksum}"
     rm -f "${fpath}"
   else
-    echo "Validated: ${fpath} with checksum ${checksum}"
+    echo "Validated: ${fpath} with checksum ${checksum}" >> ${LOGFILE}
   fi
 }
 
