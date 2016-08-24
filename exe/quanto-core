@@ -101,7 +101,7 @@ EXPERIMENT_ID_CENTER=${EXPERIMENT_ID:0:3}
 
 get_fq_path(){
   local fq_path="fastq/${ACCESSION_ID_HEAD}/${ACCESSION_ID}/${EXPERIMENT_ID}"
-  local fq_list=`ssh "${SRA_FS}" ls -lk "${DRA_PATH}/${fq_path}"`
+  local fq_list=`ssh "${SRA_FS}" ls -lk "${DRA_PATH}/${fq_path}" 2>/dev/null`
   if [[ ! -z "${fq_list}" ]] ; then
     echo "${fq_path}"
   fi
