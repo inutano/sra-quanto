@@ -171,8 +171,7 @@ validate_downloaded_fastq(){
 
 execute_qcalc(){
   local workdir="${1}"
-  local logfile="${2}"
-  local read_layout="${3}"
+  local read_layout="${2}"
 
   local fq_filelist=`ls ${workdir}/*fastq* 2>/dev/null` &&:
   if [[ ! -z "${fq_filelist}" ]] ; then
