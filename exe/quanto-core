@@ -124,7 +124,7 @@ echo `date` "Validation completed." >> ${LOGFILE}
 #
 
 result_path=`execute_qcalc "${workdir}"`
-echo `date` "FastQC completed. Result saved to ${result_path}"
+echo `date` "FastQC completed. Result saved to ${result_path}" >> ${LOGFILE}
 
 #
 # Step 5. Cleaning working directory
