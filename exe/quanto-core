@@ -109,7 +109,8 @@ echo `date` "Set working directory to: ${workdir}" >> ${LOGFILE}
 #
 
 download_data "${EXPERIMENT_ID}" "${filepath}" "${workdir}" "${FTP_CONNECTION_POOL}"
-echo `date` "Data download completed.\n" `ls -l "${workdir}"` >> ${LOGFILE}
+echo `date` "Data download completed." >> ${LOGFILE}
+ls -l "${workdir}" >> ${LOGFILE}
 
 #
 # Step 3. Validate downloaded data
