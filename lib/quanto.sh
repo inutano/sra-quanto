@@ -33,7 +33,7 @@ get_fileinfo(){
   local fq_path=`get_fq_path "${acc_id}" "${exp_id}"`
   local fq_size=`get_filesize "${fq_path}"`
   if [[ ! -z "${fq_size}" ]] ; then
-    echo "${fq_path}\t${fq_size}"
+    echo "${fq_path} ${fq_size}"
   else
     local sra_path=`get_sra_path "${exp_id}"`
     local sra_size=`get_filesize "${fq_path}"`
