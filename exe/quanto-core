@@ -143,7 +143,7 @@ get_filesize(){
 
 set_workdir_base(){ # sum of file size must be provided for the first argument
   local fsize=`get_filesize`
-  local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
+  local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }' 2>/dev/null`
   local rate=`echo "scale=2; ${fsize} / ${ssd_available}" | bc`
   if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then
     if [[ ! -e "${SSD_TEMP}" ]] ; then
