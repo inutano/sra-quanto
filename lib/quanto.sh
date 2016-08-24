@@ -38,7 +38,7 @@ get_fileinfo(){
     local sra_path=`get_sra_path "${exp_id}"`
     local sra_size=`get_filesize "${fq_path}"`
     if [[ ! -z "${sra_size}" ]] ; then
-      echo "${sra_path}\t${sra_size}"
+      echo "${sra_path} ${sra_size}"
     fi
   fi
 }
