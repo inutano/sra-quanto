@@ -7,8 +7,16 @@
 set -e
 
 #
+# Load external variables and functions
+#
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE:-$0}")"; pwd)"
+source "${script_dir}/../lib/quanto.sh"
+
+#
 # Parsing command line arguments
 #
+
 while [[ $# -gt 1 ]]; do
   key=${1}
   case ${key} in
@@ -32,7 +40,6 @@ while [[ $# -gt 1 ]]; do
     # path to log file
     --log-file)
     LOGFILE="${2}"
-    touch "${LOGFILE}"
     shift
     ;;
     # Path to ftp connection log directory
@@ -56,6 +63,7 @@ done
 #
 # Option: SGE array job
 #
+
 if [[ ! -z "${JOB_LIST}" ]] ; then
   job_number=${SGE_TASK_ID}
   args=`cat ${JOB_LIST} | sed "${job_number}q;d"`
@@ -63,329 +71,63 @@ if [[ ! -z "${JOB_LIST}" ]] ; then
   EXPERIMENT_ID=`echo ${args} | awk '{ print $2 }'`
   READ_LAYOUT=`echo ${args} | awk '{ print $3 }'`
   LOGFILE=`echo ${args} | awk '{ print $4 }'`
-  touch "${LOGFILE}"
   echo "This is a part of array job, task id is ${job_number}" >> ${LOGFILE}
 fi
 
 #
-# Global variables
+# execute download/dump/fastqc
 #
 
-# Temp dir on ssd
-SSD_TEMP="/ssd/`whoami`/fq_tmp"
-
-# Node name to access to the sra file system: sra disk attached hostname accessed via ssh
-SRA_FS="sranode"
-
-# Path to sra disk filesystem
-DRA_PATH="/usr/local/ftp/public/ddbj_database/dra"
-
-# DDBJ ftp server URL
-FTP_BASE="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
-
-# Path to tools and arguments
-FASTQ_DUMP="${HOME}/local/bin/fastq-dump"
-VDB_VALIDATE="${HOME}/local/bin/vdb-validate"
-FASTQC="${HOME}/local/bin/fastqc --noextract --threads 4"
-
-# Identifiers
-ACCESSION_ID_HEAD=`echo ${ACCESSION_ID:0:6}`
-EXPERIMENT_ID_HEAD=`echo ${EXPERIMENT_ID:0:6}`
-EXPERIMENT_ID_CENTER=${EXPERIMENT_ID:0:3}
+echo `date` "Quanto? ${EXPERIMENT_ID} on `hostname`" >> ${LOGFILE}
 
 #
-# Functions
+# Step 0. Get filapath and calculate file size
 #
 
-## Get file path to retrieve
+fileinfo=`get_fileinfo "${ACCESSION_ID}" "${EXPERIMENT_ID}"`
+filepath=`echo "${fileinfo}" | awk '{ print $1 }'`
+filesize=`echo "${fileinfo}" | awk '{ print $2 }'`
 
-get_fq_path(){
-  local fq_path="fastq/${ACCESSION_ID_HEAD}/${ACCESSION_ID}/${EXPERIMENT_ID}"
-  local fq_list=`ssh "${SRA_FS}" ls -lk "${DRA_PATH}/${fq_path}" 2>/dev/null`
-  if [[ ! -z "${fq_list}" ]] ; then
-    echo "${fq_path}"
-  fi
-}
-
-get_sra_path(){
-  local sra_path="sralite/ByExp/litesra/${EXPERIMENT_ID_CENTER}/${EXPERIMENT_ID_HEAD}/${EXPERIMENT_ID}"
-  echo "${sra_path}"
-}
-
-get_filepath(){
-  local fq_path=`get_fq_path`
-  if [[ ! -z "${fq_path}" ]] ; then
-    echo "${DRA_PATH}/${fq_path}"
-  else
-    local sra_path=`get_sra_path`
-    echo "${DRA_PATH}/${sra_path}"
-  fi
-}
-
-get_filepath_ftp(){
-  local fq_path=`get_fq_path`
-  if [[ ! -z "${fq_path}" ]] ; then
-    echo "${fq_path}"
-  else
-    local sra_path=`get_sra_path`
-    echo "${sra_path}"
-  fi
-}
-
-## Get filesize
-
-get_filesize(){
-  local fpath=`get_filepath`
-  ssh "${SRA_FS}" ls -lkR "${fpath}" | awk '{ sum += $5 }END{ print sum }'
-}
-
-## Set working directory
-
-set_workdir_base(){ # sum of file size must be provided for the first argument
-  local fsize=`get_filesize`
-  local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }' 2>/dev/null`
-  local rate=`echo "scale=2; ${fsize} / ${ssd_available}" | bc`
-  if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then
-    if [[ ! -e "${SSD_TEMP}" ]] ; then
-      mkdir -p "${SSD_TEMP}"
-    fi
-    echo "${SSD_TEMP}"
-  else
-    home_tmp="${HOME}/fq_tmp"
-    if [[ ! -e "${home_tmp}" ]] ; then
-      mkdir -p "${home_tmp}"
-    fi
-    echo "${home_tmp}"
-  fi
-}
-
-## Retrieve files
-
-retrieve_files(){ # arguments: fpath, workdir
-  local path=${1}
-  local dir=${2}
-  rsync -avr -e ssh "${SRA_FS}":"${path}"/ "${dir}"/
-}
-
-retrieve_files_ftp(){
-  local path=${1}
-  local dir=${2}
-  establish_ftp_connection
-  lftp -c "open ${FTP_BASE} && (!rm ${FTP_CONNECTION_POOL}/${EXPERIMENT_ID}.waiting) && mirror ${path} ${dir}"
-  close_ftp_connection
-}
-
-establish_ftp_connection(){
-  touch "${FTP_CONNECTION_POOL}/${EXPERIMENT_ID}.waiting"
-  while [ `ls "${FTP_CONNECTION_POOL}" | grep "connected" | wc -l` -gt 16 ] && [ `ls -t "${FTP_CONNECTION_POOL}" | tail -n 1` != "${EXPERIMENT_ID}.waiting" ] ; do
-    sleep 1
-  done
-  touch "${FTP_CONNECTION_POOL}/${EXPERIMENT_ID}.connected"
-}
-
-close_ftp_connection(){
-  rm -f "${FTP_CONNECTION_POOL}/${EXPERIMENT_ID}.connected"
-}
-
-## Validate downloaded file checksum
-validate_downloaded_files(){
-  local dir=${1}
-  validate_downloaded_sra_files "${dir}"
-  validate_downloaded_fastq_files "${dir}"
-}
-
-validate_downloaded_sra_files(){
-  local dir=${1}
-  ls ${dir}/**/*sra 2>/dev/null | while read fpath ; do
-    ${VDB_VALIDATE} "${fpath}" 2>> ${LOGFILE}
-  done
-}
-
-validate_downloaded_fastq_files(){
-  local dir=${1}
-  ls ${workdir}/*fastq* 2>/dev/null | while read fpath ; do
-    validate_downloaded_fastq "${fpath}" "${FASTQ_CHECKSUM}"
-  done
-}
-
-validate_downloaded_fastq(){
-  local fpath=${1}
-  local fname=`echo "${fpath}" | awk -F '/' '{ print $NF }'`
-  local table=${2}
-  local valid_checksum=`grep "${fname}" "${table}" | awk -F '\t' '{ print $2 }'`
-  local checksum=`md5sum "${fpath}" | awk '{ print $1 }'`
-  if [[ ${valid_checksum} != ${checksum} ]] ; then
-    echo "Validation Failed: File ${fpath} is inconsistent, skipping.."
-    echo "Valid checksum is ${valid_checksum}, one of downloaded is ${checksum}"
-    rm -f "${fpath}"
-  else
-    echo "Validated: ${fpath} with checksum ${checksum}" >> ${LOGFILE}
-  fi
-}
-
-## Execute FastQC
-
-exec_qc_sra(){
-  local layout=${1}
-  local fpath=${2}
-  local workdir=${3}
-  if [[ ${layout} == "SINGLE" ]] ; then
-    exec_qc_single "${fpath}" "${workdir}"
-  elif [[ ${layout} == "PAIRED" ]] ; then
-    exec_qc_paired "${fpath}" "${workdir}"
-  else
-    echo "error: read layout not defined. 'SINGLE' or 'PAIRED' should be provided"
-    exit
-  fi
-}
-
-exec_qc_single(){
-  local fpath=${1}
-  local workdir=${2}
-  local fname_out=`get_result_fname ${fpath}`
-  ${FASTQ_DUMP} --stdout ${fpath} |\
-  ${FASTQC} --outdir "${workdir}" /dev/stdin
-  rename_stdin_fastqc_files "${workdir}" "${fname_out}"
-  echo `date` "Result saved to ${fname_out}" >> ${LOGFILE}
-}
-
-exec_qc_single_disk(){ ## DEPRECATED
-  local fpath=${1}
-  local workdir=${2}
-  ${FASTQ_DUMP} --outdir "${workdir}" ${fpath}
-  ls ${workdir}/*fastq |\
-  xargs ${FASTQC} --outdir "${workdir}"
-  rm -f ${workdir}/*html
-}
-
-exec_qc_paired(){
-  local fpath=${1}
-  local workdir=${2}
-  local wd_read1="${workdir}/read1"
-  local wd_read2="${workdir}/read2"
-  local fname_out=`get_result_fname ${fpath}`
-  local fname_out_1=`echo ${fname_out} | sed -e 's:_fastqc:_1_fastqc:g'`
-  local fname_out_2=`echo ${fname_out} | sed -e 's:_fastqc:_2_fastqc:g'`
-
-  mkdir -p "${wd_read1}"
-  mkdir -p "${wd_read2}"
-
-  ${FASTQ_DUMP} --split-3 --stdout ${fpath} |\
-  tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin ) |\
-  awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin
-
-  rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
-  rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
-
-  echo `date` "Result saved to ${fname_out_1}" >> ${LOGFILE}
-  echo `date` "Result saved to ${fname_out_2}" >> ${LOGFILE}
-
-  rm -fr "${wd_read1}"
-  rm -fr "${wd_read2}"
-}
-
-exec_qc_paired_disk(){ ## DEPRECATED
-  local fpath=${1}
-  local workdir=${2}
-  ${FASTQ_DUMP} --split-3 --outdir "${workdir}" ${fpath}
-  ls ${workdir}/*fastq |\
-  xargs ${FASTQC} --outdir "${workdir}"
-  rm -f ${workdir}/*html
-}
-
-rename_stdin_fastqc_files(){
-  local workdir=${1}
-  local fname_out=${2}
-  mv "${workdir}/stdin_fastqc.zip" "${fname_out}"
-  #
-  # put something to extract qc stats
-  #
-  rm -f "${workdir}/stdin_fastqc.html"
-}
-
-get_result_fname(){
-  local filepath=${1} # /path/to/id.fastq.gz or /path/to/id.sra or /path/to/id_fastqc.zip
-  local fileid=`echo "${filepath}" | awk -F '/' '{ print $NF }' | sed -e 's:\.fastq.+$::g' -e 's:\.sra$::g' -e 's:_fastqc.zip$::g'`
-  local result_dir=`get_result_dir ${filepath}`
-  mkdir -p "${result_dir}"
-  echo "${result_dir}/${fileid}_fastqc.zip"
-}
-
-get_result_dir(){
-  local filepath=${1} # /path/to/id.fastq.gz or /path/to/id.sra or /path/to/id_fastqc.zip
-  local fileid=`echo "${filepath}" | awk -F '/' '{ print $NF }' | sed -e 's:\.fastq.+$::g' -e 's:\.sra$::g' -e 's:_fastqc.zip$::g'`
-  local id=`echo "${fileid}" | sed -e 's:_.$::g'`
-  echo "${FASTQC_RESULT_DIR}/${id:0:3}/${id:0:4}/`echo ${id} | sed -e 's:...$::g'`/${id}"
-}
-
-## Flush working directory
-
-flush_workdir(){
-  local workdir=${1}
-  rm -fr ${workdir}/*sra 2>/dev/null
-  rm -fr ${workdir}/*fastq* 2>/dev/null
-}
-
-#
-# execute dump/fastqc
-#
-
-echo `date` "Quanto? ${EXPERIMENT_ID} on `hostname`, calculating data size.." >> ${LOGFILE}
-
-fpath=`get_filepath`
-if [[ -z "${fpath}" ]] ; then
-  echo "error" >> ${LOGFILE} # error
-  exit
+# exit when data not found
+if [[ -z "${filepath}" ]] ; then
+  echo "Error: no data on ftp server" >> ${LOGFILE}
+  exit 1
 fi
 
-fsize=`get_filesize`
+echo `date` "File path: ${filepath}" >> ${LOGFILE}
+echo `date` "File size: ${filesize}" >> ${LOGFILE}
 
-echo `date` "File size: ${fsize}, setting working directory.." >> ${LOGFILE}
+#
+# Step 1. Set working directory
+#
 
-# setting working dir
-workdir_base=`set_workdir_base`
-workdir="${workdir_base}/${EXPERIMENT_ID_HEAD}/${EXPERIMENT_ID}"
-if [[ ! -e "${workdir}" ]] ; then
-  mkdir -p "${workdir}"
-fi
+workdir=`set_working_directory "${filesize}" "${EXPERIMENT_ID}"`
+echo `date` "Set working directory to: ${workdir}" >> ${LOGFILE}
 
-echo `date` "Set working directory to: ${workdir}, start downloading data.." >> ${LOGFILE}
+#
+# Step 2. Download data
+#
 
-# retrieve files
-ftp_path=`get_filepath_ftp`
-retrieve_files_ftp "${ftp_path}" "${workdir}"
+download_data "${EXPERIMENT_ID}" "${filepath}" "${workdir}" "${FTP_CONNECTION_POOL}"
+echo `date` "Data download completed.\n" `ls -l "${workdir}"` >> ${LOGFILE}
 
-ls -l ${workdir} >> ${LOGFILE}
-echo `date` "Data download completed, validating.." >> ${LOGFILE}
+#
+# Step 3. Validate downloaded data
+#
 
-# validate downloaded files
-validate_downloaded_files "${workdir}"
-echo `date` "Validation completed, start running fastqc.." >> ${LOGFILE}
+validate_downloaded_files "${workdir}" "${LOGFILE}" "${FASTQ_CHECKSUM}"
+echo `date` "Validation completed." >> ${LOGFILE}
 
-# dump sra files and exec fastqc
-sra_filelist=`ls ${workdir}/**/*sra 2>/dev/null` &&:
-if [[ ! -z "${sra_filelist}" ]] ; then
-  echo "${sra_filelist}" |\
-  while read f ; do
-    run_dir=`echo ${f} | sed -e 's:/[^/]*sra$::g'`
-    exec_qc_sra "${READ_LAYOUT}" "${f}" "${run_dir}"
-  done
-fi
+#
+# Step 4. Execute Fastqdump/FastQC
+#
 
-# exec fastqc directly against compressed fastqc files
-fq_filelist=`ls ${workdir}/*fastq* 2>/dev/null` &&:
-if [[ ! -z "${fq_filelist}" ]] ; then
-  echo "${fq_filelist}" |\
-  xargs ${FASTQC} --outdir "${workdir}"
-  ls ${workdir}/*zip | while read f ; do
-    dir=`get_result_dir ${f}`
-    if [ ! -e "${dir}" ] ; then
-      mkdir -p "${dir}"
-    fi
-    mv --force ${f} ${dir}
-    echo `date` "Result saved to ${dir}" >> ${LOGFILE}
-  done
-fi
+result_path=`execute_qcalc "${workdir}"`
+echo `date` "FastQC completed. Result saved to ${result_path}"
+
+#
+# Step 5. Cleaning working directory
+#
 
 flush_workdir ${workdir}
 echo `date` "Finished FastQC for ${EXPERIMENT_ID}." >> ${LOGFILE}
