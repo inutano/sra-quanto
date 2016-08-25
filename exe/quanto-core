@@ -88,14 +88,14 @@ fileinfo=`get_fileinfo "${ACCESSION_ID}" "${EXPERIMENT_ID}" "${FTP_CONNECTION_PO
 filepath=`echo "${fileinfo}" | awk '{ print $1 }'`
 filesize=`echo "${fileinfo}" | awk '{ print $2 }'`
 
+echo `date` "File path: ${filepath}" >> ${LOGFILE}
+echo `date` "File size: ${filesize}" >> ${LOGFILE}
+
 # exit when data not found
 if [[ -z "${filepath}" ]] ; then
   echo `date` "Error: no data on ftp server" >> ${LOGFILE}
   exit 1
 fi
-
-echo `date` "File path: ${filepath}" >> ${LOGFILE}
-echo `date` "File size: ${filesize}" >> ${LOGFILE}
 
 #
 # Step 1. Set working directory
