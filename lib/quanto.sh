@@ -23,20 +23,42 @@ DDBJ_FTP_BASE="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
 #
 
 #
+# FTP utilities
+#
+
+establish_ftp_connection(){
+  local exp_id="${1}"
+  local ftp_connection_pool="${2}"
+  touch "${ftp_connection_pool}/${exp_id}.waiting"
+  while [ `ls "${ftp_connection_pool}" | grep "connected" | wc -l` -gt 16 ] && [ `ls -t "${ftp_connection_pool}" | tail -n 1` != "${exp_id}.waiting" ] ; do
+    sleep 1
+  done
+  touch "${ftp_connection_pool}/${exp_id}.connected"
+}
+
+close_ftp_connection(){
+  local exp_id="${1}"
+  local ftp_connection_pool="${2}"
+  rm -f "${ftp_connection_pool}/${exp_id}.connected"
+}
+
+
+#
 # Step 0. Get filapath and calculate file size
 #
 
 get_fileinfo(){
   local acc_id="${1}"
   local exp_id="${2}"
+  local ftp_connection_pool="${3}"
 
   local fq_path=`get_fq_path "${acc_id}" "${exp_id}"`
-  local fq_size=`get_filesize "${fq_path}"`
+  local fq_size=`get_filesize "${fq_path}" "${exp_id}" "${ftp_connection_pool}"`
   if [[ ! -z "${fq_size}" ]] ; then
     echo "${fq_path} ${fq_size}"
   else
     local sra_path=`get_sra_path "${exp_id}"`
-    local sra_size=`get_filesize "${fq_path}"`
+    local sra_size=`get_filesize "${fq_path}" "${exp_id}" "${ftp_connection_pool}"`
     if [[ ! -z "${sra_size}" ]] ; then
       echo "${sra_path} ${sra_size}"
     fi
@@ -56,7 +78,13 @@ get_sra_path(){
 
 get_filesize(){
   local filepath="${1}"
-  local filelist=`lftp -c "open ${DDBJ_FTP_BASE} && ls ${filepath}"`
+  local exp_id="${2}"
+  local ftp_connection_pool="${3}"
+
+  establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
+  local filelist=`lftp -c "open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
+  close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
+
   if [[ ! -z "${filelist}" ]] ; then
     echo "${filelist}" | awk '{ sum+=$5 }END{ print sum }'
   fi
@@ -100,22 +128,6 @@ download_data(){
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
   lftp -c "open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror ${path} ${target_dir}"
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
-}
-
-establish_ftp_connection(){
-  local exp_id="${1}"
-  local ftp_connection_pool="${2}"
-  touch "${ftp_connection_pool}/${exp_id}.waiting"
-  while [ `ls "${ftp_connection_pool}" | grep "connected" | wc -l` -gt 16 ] && [ `ls -t "${ftp_connection_pool}" | tail -n 1` != "${exp_id}.waiting" ] ; do
-    sleep 1
-  done
-  touch "${ftp_connection_pool}/${exp_id}.connected"
-}
-
-close_ftp_connection(){
-  local exp_id="${1}"
-  local ftp_connection_pool="${2}"
-  rm -f "${ftp_connection_pool}/${exp_id}.connected"
 }
 
 #

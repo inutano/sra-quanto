@@ -84,7 +84,7 @@ echo `date` "Quanto? ${EXPERIMENT_ID} on `hostname`" >> ${LOGFILE}
 # Step 0. Get filapath and calculate file size
 #
 
-fileinfo=`get_fileinfo "${ACCESSION_ID}" "${EXPERIMENT_ID}"`
+fileinfo=`get_fileinfo "${ACCESSION_ID}" "${EXPERIMENT_ID}" "${FTP_CONNECTION_POOL}"`
 filepath=`echo "${fileinfo}" | awk '{ print $1 }'`
 filesize=`echo "${fileinfo}" | awk '{ print $2 }'`
 
