@@ -123,7 +123,7 @@ echo `date` "Validation completed." >> ${LOGFILE}
 # Step 4. Execute Fastqdump/FastQC
 #
 
-result_path=`execute_qcalc "${workdir}" "${READ_LAYOUT}"`
+result_path=`execute_qcalc "${workdir}" "${READ_LAYOUT}" "${LOGFILE}"`
 echo `date` "FastQC completed. Result saved to ${result_path}" >> ${LOGFILE}
 
 #

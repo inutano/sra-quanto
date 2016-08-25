@@ -172,11 +172,12 @@ validate_downloaded_fastq(){
 execute_qcalc(){
   local workdir="${1}"
   local read_layout="${2}"
+  local logfile="${3}"
 
   local fq_filelist=`ls ${workdir}/*fastq* 2>/dev/null` &&:
   if [[ ! -z "${fq_filelist}" ]] ; then
     echo "${fq_filelist}" |\
-    xargs ${FASTQC} --outdir "${workdir}"
+    xargs ${FASTQC} --outdir "${workdir}" 2>>"${logfile}" 1>>"${logfile}"
     ls ${workdir}/*zip | while read f ; do
       local dir=`get_result_dir ${f}`
       mkdir -p "${dir}"
@@ -190,7 +191,7 @@ execute_qcalc(){
     echo "${sra_filelist}" |\
     while read f ; do
       local run_dir=`echo ${f} | sed -e 's:/[^/]*sra$::g'`
-      exec_qc_sra "${read_layout}" "${f}" "${run_dir}"
+      exec_qc_sra "${read_layout}" "${f}" "${run_dir}" "${logfile}"
     done
   fi
 }
@@ -199,32 +200,35 @@ exec_qc_sra(){
   local layout="${1}"
   local fpath="${2}"
   local workdir="${3}"
+  local logfile="${4}"
 
   if [[ ${layout} == "SINGLE" ]] ; then
-    exec_qc_single "${fpath}" "${workdir}"
+    exec_qc_single "${fpath}" "${workdir}" "${logfile}"
   elif [[ ${layout} == "PAIRED" ]] ; then
-    exec_qc_paired "${fpath}" "${workdir}"
+    exec_qc_paired "${fpath}" "${workdir}" "${logfile}"
   else
     echo "Error: read layout not defined. 'SINGLE' or 'PAIRED' should be provided"
   fi
 }
 
 exec_qc_single(){
-  local fpath=${1}
-  local workdir=${2}
+  local fpath="${1}"
+  local workdir="${2}"
+  local logfile="${3}"
 
   local fname_out=`get_result_fname ${fpath}`
 
   ${FASTQ_DUMP} --stdout ${fpath} |\
-  ${FASTQC} --outdir "${workdir}" /dev/stdin
+  ${FASTQC} --outdir "${workdir}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}"
   rename_stdin_fastqc_files "${workdir}" "${fname_out}"
 
   echo "${fname_out}"
 }
 
 exec_qc_paired(){
-  local fpath=${1}
-  local workdir=${2}
+  local fpath="${1}"
+  local workdir="${2}"
+  local logfile="${3}"
 
   local wd_read1="${workdir}/read1"
   local wd_read2="${workdir}/read2"
@@ -236,8 +240,8 @@ exec_qc_paired(){
   mkdir -p "${wd_read2}"
 
   ${FASTQ_DUMP} --split-3 --stdout ${fpath} |\
-  tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin ) |\
-  awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin
+  tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}" ) |\
+  awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}"
 
   rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
   rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
