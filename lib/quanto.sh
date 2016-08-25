@@ -82,7 +82,7 @@ get_filesize(){
   local ftp_connection_pool="${3}"
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
-  local filelist=`lftp -c "open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
+  local filelist=`lftp -c "set net:max-retries 1; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 
   if [[ ! -z "${filelist}" ]] ; then
