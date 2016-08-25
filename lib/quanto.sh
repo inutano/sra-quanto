@@ -58,7 +58,7 @@ get_fileinfo(){
     echo "${fq_path} ${fq_size}"
   else
     local sra_path=`get_sra_path "${exp_id}"`
-    local sra_size=`get_filesize "${fq_path}" "${exp_id}" "${ftp_connection_pool}"`
+    local sra_size=`get_filesize "${sra_path}" "${exp_id}" "${ftp_connection_pool}"`
     if [[ ! -z "${sra_size}" ]] ; then
       echo "${sra_path} ${sra_size}"
     fi
