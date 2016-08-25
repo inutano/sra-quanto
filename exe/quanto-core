@@ -90,7 +90,7 @@ filesize=`echo "${fileinfo}" | awk '{ print $2 }'`
 
 # exit when data not found
 if [[ -z "${filepath}" ]] ; then
-  echo "Error: no data on ftp server" >> ${LOGFILE}
+  echo `date` "Error: no data on ftp server" >> ${LOGFILE}
   exit 1
 fi
 
