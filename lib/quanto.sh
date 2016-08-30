@@ -102,19 +102,30 @@ get_filesize(){
 set_working_directory(){
   local fsize="${1}"
   local exp_id="${2}"
-  local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }' 2>/dev/null`
-  local rate=`echo "scale=2; ${fsize} / ${ssd_available}" | bc`
-  if [[ ! -z "${ssd_available}" && ${rate} < 30 ]] ; then
-    local ssd_tmp="/ssd/`whoami`/fq_tmp/${exp_id:0:6}/${exp_id}"
-    if [[ ! -e "${ssd_tmp}" ]] ; then
-      mkdir -p "${ssd_tmp}"
+
+  # Check if ssd disk is attached
+  if [[ ! -z `ls /ssd 2>/dev/null` ]] ; then
+    # on ssd attached nodes
+    local ssd_tmp="/ssd/`whoami`/fq_tmp"
+    local reserved="${ssd_tmp}/reserved.txt"
+    local reserved_size=`cat ${reserved} 2>/dev/null`
+    local use=`echo "scale=2; ${fsize} + ${reserved_size}" | bc`
+    local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
+
+    # check if there's enough space to work
+    if [[ `echo "scale=2; ${use} / ${ssd_available} " | bc` < 90 ]]; then
+      local workdir="${ssd_tmp}/${exp_id:0:6}/${exp_id}"
+      mkdir -p "${workdir}"
+      echo "${use}" > "${reserved}"
     fi
-    echo "${ssd_tmp}"
+  fi
+
+  # if $workdir is undefined, create working directory under /home/<username>
+  if [[ ! -z "${workdir}" ]]; then
+    echo "${workdir}"
   else
     local home_tmp="${HOME}/fq_tmp/${exp_id:0:6}/${exp_id}"
-    if [[ ! -e "${home_tmp}" ]] ; then
-      mkdir -p "${home_tmp}"
-    fi
+    mkdir -p "${home_tmp}"
     echo "${home_tmp}"
   fi
 }
