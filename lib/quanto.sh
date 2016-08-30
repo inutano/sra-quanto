@@ -120,7 +120,7 @@ set_working_directory(){
     fi
 
     # check if there's enough space to work
-    if [[ `echo "scale=2; ${use} / ${ssd_available} " | bc` < 90 ]]; then
+    if [[ `echo "scale=2; ${use} / ${ssd_available}" | bc` < 0.9 ]]; then
       local workdir="${ssd_tmp}/${exp_id:0:6}/${exp_id}"
       mkdir -p "${workdir}"
       echo "${use}" > "${reserved}"
