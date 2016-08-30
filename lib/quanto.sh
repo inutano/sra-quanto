@@ -107,10 +107,17 @@ set_working_directory(){
   if [[ ! -z `ls /ssd 2>/dev/null` ]] ; then
     # on ssd attached nodes
     local ssd_tmp="/ssd/`whoami`/fq_tmp"
+    local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
+
+    # check if disk is reserved
     local reserved="${ssd_tmp}/reserved.txt"
     local reserved_size=`cat ${reserved} 2>/dev/null`
-    local use=`echo "scale=2; ${fsize} + ${reserved_size}" | bc`
-    local ssd_available=`df -k /ssd | awk 'NR == 2 { print $4 }'`
+
+    if [[ -z "${reserved_size}" ]] ; then
+      local use="${fsize}"
+    else
+      local use=`echo "scale=2; ${fsize} + ${reserved_size}" | bc`
+    fi
 
     # check if there's enough space to work
     if [[ `echo "scale=2; ${use} / ${ssd_available} " | bc` < 90 ]]; then
