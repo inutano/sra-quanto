@@ -4,7 +4,7 @@ gem 'rake'
 gem 'parallel'
 gem 'rubyzip'
 gem 'nokogiri'
-gem 'bio-fastqc', '0.8.0'
+gem 'bio-fastqc', '0.8.3'
 
 group :development do
   gem 'pry'
