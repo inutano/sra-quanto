@@ -41,13 +41,18 @@ module Quanto
         end
       end
 
-      def initialize(bs_dir, sra_dir)
+      def initialize(bs_dir, sra_dir, gsize_fpath)
         @bs_dir = bs_dir
         @sra_dir = sra_dir
+        @gsize_hash = organism_to_gsize(gsize_fpath)
         @xml_path = File.join(@bs_dir, "biosample_set.xml")
         @xml_reduced = @xml_path + ".reduced"
         @tsv_temp = @xml_path.sub(/.xml$/,".full.tsv")
         @nop = @@num_of_parallels
+      end
+
+      def organism_to_gsize(gsize_fpath)
+        RakeFileUtils.sh "cat #{gsize_fpath} | awk -F '\t' '$5 !~ \"-\" { print $1 \"\t\" $5 }'".split("\n").map{|line| line.split("\t") }.to_h
       end
 
       def create_list_metadata(metadata_list_path)
@@ -85,7 +90,11 @@ module Quanto
       def collect_sra_biosample(out)
         liveset = sample_liveset
         sra_samples = Parallel.map(open(@tsv_temp).readlines, :in_threads => @nop) do |line|
-          line.chomp if liveset.include?(line.split("\t")[1])
+          if liveset.include?(line.split("\t")[1])
+            cols = line.chomp.split("\t")
+            gsize = @gsize_hash[cols[3]] # cols[3]: organism name
+            cols.push(gsize).join("\t")
+          end
         end
         open(out, 'w'){|f| f.puts(sra_samples.compact)}
       end
