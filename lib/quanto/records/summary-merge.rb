@@ -241,21 +241,36 @@ module Quanto
 
       def annotate_experiments
         exp_hash = create_metadata_hash(@exp_metadata, 0)
-        sample_hash  = create_metadata_hash(@bs_metadata, 1)
+        sample_hash  = create_metadata_hash(@bs_metadata, 1) # sample_id => [biosample_id, taxid, organism_name, genome_size]
         exp2sample = sample_by_experiment
         annotated = Parallel.map(open(@experiments_fpath).readlines, :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
           sample_id = exp2sample[data[0]][0]
-          biosample_id = exp2sample[data[0]][1]
+          sample_data = sample_hash[sample_id]
+
+          # will be refactored later..
+          # replace genome_size in sample_data with coverage
+          # genome_size in hash = throughput.to_f / (genome_size.to_f * 1,000,000)
+          sample_data[3] = data[6].to_f / (sample_data[3].to_f * 1_000_000) if sample_data[3]
+
           [
             data,
             sample_id,
-            biosample_id,
-            sample_hash[sample_id],
+            sample_data,
             exp_hash[data[0]],
           ].flatten.join("\t")
         end
-        header = annotated.shift.split("\t").push(["sample_id", "biosample_id"]).push(metadata_header).join("\t")
+        header = annotated.shift.split("\t").push([
+          "sample_id",
+          "biosample_id",
+          "taxonomy_id",
+          "taxonomy_scientific_name",
+          "coverage",
+          "library_strategy",
+          "library_source",
+          "library_selection",
+          "instrument_model",
+          ]).join("\t")
         open(output_fpath("quanto.experiment.annotated.tsv"),"w"){|f| f.puts([header, annotated]) }
       end
 
