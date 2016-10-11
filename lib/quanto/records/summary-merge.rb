@@ -25,6 +25,8 @@ module Quanto
           assemble
           # link annotation to each samples
           annotate_samples
+          # link annotation to each Experiments
+          annotate_experiments
         end
       end
 
@@ -234,7 +236,31 @@ module Quanto
           ].flatten.join("\t")
         end
         header = annotated.shift.split("\t").push(metadata_header).join("\t")
-        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
+        open(output_fpath("quanto.sample.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
+      end
+
+      def annotate_experiments
+        exp_hash = create_metadata_hash(@exp_metadata, 0)
+        sample_hash  = create_metadata_hash(@bs_metadata, 1)
+        exp2sample = sample_by_experiment
+        annotated = Parallel.map(open(@experiments_fpath).readlines, :in_threads => @@nop) do |line|
+          data = line.chomp.split("\t")
+          sample_id = exp2sample[data[0]][0]
+          biosample_id = exp2sample[data[0]][1]
+          [
+            data,
+            sample_id,
+            biosample_id,
+            sample_hash[sample_id],
+            exp_hash[data[0]],
+          ].flatten.join("\t")
+        end
+        header = annotated.shift.split("\t").push(["sample_id", "biosample_id"]).push(metadata_header).join("\t")
+        open(output_fpath("quanto.experiment.annotated.tsv"),"w"){|f| f.puts([header, annotated]) }
+      end
+
+      def sample_by_experiment
+        `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $3 "\t" $4 "\t" $9 }' | sort -u`.split("\n").map{|line| l = line.split("\t"); [l[0], [l[1], l[2]]] }.to_h
       end
 
       def create_metadata_hash(path, id_col)
