@@ -245,21 +245,24 @@ module Quanto
         exp2sample = sample_by_experiment
         annotated = Parallel.map(open(@experiments_fpath).readlines, :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
-          sample_id = exp2sample[data[0]][0]
-          sample_data = sample_hash[sample_id]
+          sample_idset = exp2sample[data[0]] # ["sample_id", "biosample_id"]
+          if sample_idset
+            sample_data = sample_hash[sample_idset[0]]
 
-          # will be refactored later..
-          # replace genome_size in sample_data with coverage
-          # genome_size in hash = throughput.to_f / (genome_size.to_f * 1,000,000)
-          sample_data[3] = data[6].to_f / (sample_data[3].to_f * 1_000_000) if sample_data[3]
+            # will be refactored later..
+            # replace genome_size in sample_data with coverage
+            # genome_size in hash = throughput.to_f / (genome_size.to_f * 1,000,000)
+            sample_data[3] = data[6].to_f / (sample_data[3].to_f * 1_000_000) if sample_data[3]
 
-          [
-            data,
-            sample_id,
-            sample_data,
-            exp_hash[data[0]],
-          ].flatten.join("\t")
+            [
+              data,
+              sample_id,
+              sample_data,
+              exp_hash[data[0]],
+            ].flatten.join("\t")
+          end
         end
+
         header = annotated.shift.split("\t").push([
           "sample_id",
           "biosample_id",
@@ -271,7 +274,7 @@ module Quanto
           "library_selection",
           "instrument_model",
           ]).join("\t")
-        open(output_fpath("quanto.experiment.annotated.tsv"),"w"){|f| f.puts([header, annotated]) }
+        open(output_fpath("quanto.experiment.annotated.tsv"),"w"){|f| f.puts([header, annotated.compact]) }
       end
 
       def sample_by_experiment
