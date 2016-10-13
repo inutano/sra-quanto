@@ -247,7 +247,8 @@ module Quanto
           data = line.chomp.split("\t")
           sample_idset = exp2sample[data[0]] # ["sample_id", "biosample_id"]
           if sample_idset
-            sample_data = sample_hash[sample_idset[0]]
+            sample_id = sample_idset[0]
+            sample_data = sample_hash[sample_id]
 
             # will be refactored later..
             # replace genome_size in sample_data with coverage
