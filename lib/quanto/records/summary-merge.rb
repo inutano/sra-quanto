@@ -25,8 +25,6 @@ module Quanto
           assemble
           # link annotation to each samples
           annotate_samples
-          # link annotation to each Experiments
-          annotate_experiments
         end
       end
 
@@ -182,13 +180,7 @@ module Quanto
       #
 
       def merge_exp_to_sample(sampleid, exps)
-        if exps.size == 1
-          ([sampleid] + exps[0]).join("\t")
-        else
-          expids = exps.map{|e| e[0] }.join(",")
-          data = merge_data(exps.map{|e| e.drop(1) }) # remove experiment id column
-          ([sampleid, expids] + data).join("\t")
-        end
+        exps.map{|exp| ([sampleid] + exp).join("\t") }.join("\n")
       end
 
       # return hash like { "DRS000001" => ["DRX000001"], ... }
@@ -237,45 +229,6 @@ module Quanto
         end
         header = annotated.shift.split("\t").push(metadata_header).join("\t")
         open(output_fpath("quanto.sample.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
-      end
-
-      def annotate_experiments
-        exp_hash = create_metadata_hash(@exp_metadata, 0)
-        sample_hash  = create_metadata_hash(@bs_metadata, 1) # sample_id => [biosample_id, taxid, organism_name, genome_size]
-        exp2sample = sample_by_experiment
-        annotated = Parallel.map(open(@experiments_fpath).readlines, :in_threads => @@nop) do |line|
-          data = line.chomp.split("\t")
-          sample_idset = exp2sample[data[0]] # ["sample_id", "biosample_id"]
-          if sample_idset
-            sample_id = sample_idset[0]
-            sample_data = sample_hash[sample_id]
-
-            # will be refactored later..
-            # replace genome_size in sample_data with coverage
-            # genome_size in hash = throughput.to_f / (genome_size.to_f * 1,000,000)
-            sample_data[3] = data[6].to_f / (sample_data[3].to_f * 1_000_000) if sample_data[3]
-
-            [
-              data,
-              sample_id,
-              sample_data,
-              exp_hash[data[0]],
-            ].flatten.join("\t")
-          end
-        end
-
-        header = annotated.shift.split("\t").push([
-          "sample_id",
-          "biosample_id",
-          "taxonomy_id",
-          "taxonomy_scientific_name",
-          "coverage",
-          "library_strategy",
-          "library_source",
-          "library_selection",
-          "instrument_model",
-          ]).join("\t")
-        open(output_fpath("quanto.experiment.annotated.tsv"),"w"){|f| f.puts([header, annotated.compact]) }
       end
 
       def sample_by_experiment
