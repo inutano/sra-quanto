@@ -221,7 +221,9 @@ module Quanto
       def annotate_samples
         exp_hash = create_metadata_hash(@exp_metadata, 0)
         bs_hash  = create_metadata_hash(@bs_metadata, 1)
-        annotated = Parallel.map(open(@samples_fpath).readlines, :in_threads => @@nop) do |line|
+        sample_data = open(@samples_fpath).readlines
+        header = [sample_data.shift.chomp].push(metadata_header).join("\t")
+        annotated = Parallel.map(sample_data, :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
           bsm = bs_hash[data[0]]
           coverage = if bsm[3] != "NA"
@@ -236,7 +238,6 @@ module Quanto
             exp_hash[data[1]],
           ].flatten.join("\t")
         end
-        header = annotated.shift.split("\t").push(metadata_header).join("\t")
         open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
       end
 
