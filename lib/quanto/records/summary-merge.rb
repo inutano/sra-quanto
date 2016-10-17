@@ -227,7 +227,7 @@ module Quanto
           data = line.chomp.split("\t")
           bsm = bs_hash[data[0]]
           coverage = if bsm[3] != "NA"
-            data[7] / bsm[3] * 1_000_000
+            data[7].to_f / bsm[3].to_f * 1_000_000
           else
             "NA"
           end
