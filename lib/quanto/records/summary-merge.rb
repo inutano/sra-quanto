@@ -209,6 +209,8 @@ module Quanto
           "biosample_id",
           "taxonomy_id",
           "taxonomy_scientific_name",
+          "genome_size",
+          "coverage",
           "library_strategy",
           "library_source",
           "library_selection",
@@ -221,14 +223,17 @@ module Quanto
         bs_hash  = create_metadata_hash(@bs_metadata, 1)
         annotated = Parallel.map(open(@samples_fpath).readlines, :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
+          bsm = bs_hash[data[0]]
+          coverage = data[7] / bsm[3] * 1_000_000 if bsm[3]
           [
             data,
-            bs_hash[data[0]],
+            bsm,
+            coverage,
             exp_hash[data[1]],
           ].flatten.join("\t")
         end
         header = annotated.shift.split("\t").push(metadata_header).join("\t")
-        open(output_fpath("quanto.sample.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
+        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
       end
 
       def sample_by_experiment
