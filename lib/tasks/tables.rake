@@ -76,7 +76,9 @@ namespace :tables do
 
   file list_genomesize => biosample_metadata_dir do |t|
     puts "==> #{Time.now} Fetching Genome size data..."
-    sh "lftp -c \"open ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS && pget -n 8 -O #{File.dirname(t.name)} overview.txt\""
+    origin_fname = "overview.txt"
+    sh "lftp -c \"open ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS && pget -n 8 -O #{File.dirname(t.name)} #{origin_fname}\""
+    mv File.join(File.dirname(t.name), origin_fname), t.name
     puts "==> #{Time.now} Done."
   end
 
