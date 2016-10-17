@@ -1,7 +1,7 @@
 # Rakefile to calculate statistics and draw plots
 
 def uniq_count(data, idx)
-  data.map{|d| d[idx] }.sort.uniq.size
+  data.map{|d| d[idx] }.compact.sort.uniq.size
 end
 
 namespace :quanto do
@@ -95,18 +95,18 @@ namespace :quanto do
   end
 
   task :count_number_of_sequencing_methods do
-    puts "The number of sequencing methods: #{data.map{|d| d[23] }.compact.sort.uniq.size}"
+    puts "The number of sequencing methods: #{uniq_count(data, 23)}"
   end
 
   task :count_number_and_percentage_of_top_method do
   end
 
   task :count_number_of_sequencing_instruments do
-    puts "The number of sequencing instruments: #{data.map{|d| d[27] }.compact.sort.uniq.size}"
+    puts "The number of sequencing instruments: #{uniq_count(data, 27)}"
   end
 
   task :count_number_of_sequenced_organisms do
-    puts "The number of sequenced organisms: #{data.map{|d| d[22] }.compact.sort.uniq.size}"
+    puts "The number of sequenced organisms: #{uniq_count(data, 22)}"
   end
 
   task :count_number_and_percentage_of_top_organism do
