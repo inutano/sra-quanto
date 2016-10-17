@@ -224,7 +224,11 @@ module Quanto
         annotated = Parallel.map(open(@samples_fpath).readlines, :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
           bsm = bs_hash[data[0]]
-          coverage = data[7] / bsm[3] * 1_000_000 if bsm[3]
+          coverage = if bsm[3] != "NA"
+            data[7] / bsm[3] * 1_000_000
+          else
+            "NA"
+          end
           [
             data,
             bsm,
