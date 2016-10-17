@@ -87,21 +87,26 @@ namespace :quanto do
   ]
 
   task :count_total_number_of_samples do
+    puts "Total number of sample is #{data.size}"
   end
 
   task :count_total_number_of_bases do
+    puts "Total number of base is #{data.map{|d| d[7].to_i }.reduce(:+)}"
   end
 
   task :count_number_of_sequencing_methods do
+    puts "The number of sequencing methods: #{data.map{|d| d[23] }.compact.sort.uniq.size}"
   end
 
   task :count_number_and_percentage_of_top_method do
   end
 
   task :count_number_of_sequencing_instruments do
+    puts "The number of sequencing instruments: #{data.map{|d| d[27] }.compact.sort.uniq.size}"
   end
 
   task :count_number_of_sequenced_organisms do
+    puts "The number of sequenced organisms: #{data.map{|d| d[22] }.compact.sort.uniq.size}"
   end
 
   task :count_number_and_percentage_of_top_organism do
