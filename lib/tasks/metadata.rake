@@ -1,6 +1,6 @@
 # Rakefile to create tables for execution manage
 
-namespace :tables do
+namespace :quanto do
   # rake fileutils verbose option: false
   verbose(false)
 
@@ -40,6 +40,7 @@ namespace :tables do
   Quanto::Records::BioSample.set_number_of_parallels(NUM_OF_PARALLEL)
 
   # base task
+  desc "option: workdir, fastqc_dir, sra_metadata_dir, biosample_metadata_dir"
   task :available => [
     :get_sra_metadata,
     :get_sra_checksum_table,
