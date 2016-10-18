@@ -243,9 +243,10 @@ module Quanto
 
       def annotate_samples
         # hash to connect metadata
-        exp_hash = create_metadata_hash(@exp_metadata, 0) # { expid => [metadata] }
-        bs_hash  = create_metadata_hash(@bs_metadata, 0)  # { biosampleid => [metadata] }
-        srs_hash = create_metadata_hash(@bs_metadata, 1)  # { sampleid => [metadata] }
+        exp_hash  = create_metadata_hash(@exp_metadata, 0) # { expid => [metadata] }
+        bs_hash   = create_metadata_hash(@bs_metadata, 0)  # { biosampleid => [metadata] }
+        srs_hash  = create_metadata_hash(@bs_metadata, 1)  # { sampleid => [metadata] }
+        date_hash = received_date_by_experiment            # { expid => date_received }
 
         sample_data = open(@samples_fpath).readlines
         header = [sample_data.shift.chomp].push(metadata_header).join("\t")
@@ -268,6 +269,7 @@ module Quanto
             data,
             sample_info,
             exp_hash[data[1]],
+            date_hash[data[1]],
           ].flatten.join("\t")
         end
         open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated.compact]) }
@@ -275,6 +277,10 @@ module Quanto
 
       def sample_by_experiment
         `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $3 "\t" $4 "\t" $9 }' | sort -u`.split("\n").map{|line| l = line.split("\t"); [l[0], [l[1], l[2]]] }.to_h
+      end
+
+      def received_date_by_experiment
+        `cat #{accessions_path} | awk -F '\t' '$1 ~ /^.RX/ && $3 == "live" && $9 == "public" { print $1 "\t" $6 }'`.split("\n").map{|line| l = line.split("\t"); [l[0], l[1]]}.to_h
       end
 
       def create_metadata_hash(path, id_col)
@@ -295,6 +301,10 @@ module Quanto
 
       def run_members_path
         File.join(@metadata_dir, "SRA_Run_Members")
+      end
+
+      def accessions_path
+        File.join(@metadata_dir, "SRA_Accessions")
       end
 
       def output_fpath(fname)
