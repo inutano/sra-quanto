@@ -5,15 +5,22 @@ def uniq_count(data, idx)
 end
 
 namespace :quanto do
-  data_path = ENV['data'] || File.join(PROJ_ROOT, "tables/summary/quanto.annotated.tsv")
-  data = open(data_path).readlines.drop(1).map{|d| d.chomp.split("\t") }
-
   desc "option: data (default: tables/summary/quanto.annotated.tsv)"
   task :plot => [
+    :load_data,
     :figures,
     :tables,
     :statistics,
   ]
+
+  #
+  # Load data file
+  #
+
+  task :load_data do
+    data_path = ENV['data'] || File.join(PROJ_ROOT, "tables/summary/quanto.annotated.tsv")
+    data = open(data_path).readlines.drop(1).map{|d| d.chomp.split("\t") }
+  end
 
   #
   # Figures
