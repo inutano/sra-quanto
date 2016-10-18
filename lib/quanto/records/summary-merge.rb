@@ -238,6 +238,7 @@ module Quanto
           "library_source",
           "library_selection",
           "instrument_model",
+          "submitted_date",
         ]
       end
 
