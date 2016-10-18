@@ -89,7 +89,7 @@ module Quanto
           merge_dataset(
             @samples_fpath,
             :exp_to_sample,
-            tsv_header.drop(1).insert(0, "sample_id", "experiment_id", "run_id"),
+            tsv_header.drop(1).insert(0, "biosample_id", "experiment_id", "run_id"),
             exps_by_sampleid
           )
         end
@@ -183,21 +183,44 @@ module Quanto
         exps.map{|exp| ([sampleid] + exp).join("\t") }.join("\n")
       end
 
-      # return hash like { "DRS000001" => ["DRX000001"], ... }
-      # key: SRA sample ID, value: array of SRA experiment ID
+      # return hash { "SAMD00016353" => ["DRX000001"], ... }
+      # key: BioSample ID (can be SRS ID), value: array of SRA experiment ID
       def exps_by_sampleid
         exp_data = data_by_id(@experiments_fpath)
-        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $4 "\t" $3 }' | sort -u`.split("\n")
+        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $9 "\t" $3 "\t" $4 }' | sort -u`.split("\n")
         hash = {}
         sample_exp.each do |s_e|
           se = s_e.split("\t")
+          samid = select_sampleid(se[0], se[2])
           exp = exp_data[se[1]]
           if exp
-            hash[se[0]] ||= []
-            hash[se[0]] << exp
+            hash[samid] ||= []
+            hash[samid] << exp
           end
         end
         hash
+      end
+
+      def select_sampleid(biosample_id, srs_id)
+        if biosample_id == "-"
+          srs_id
+        elsif biosampleid =~ /^[0-9]+$/
+          numbers_to_biosampleid(biosample_id, srs_id)
+        else
+          biosample_id
+        end
+      end
+
+      def numbers_to_biosampleid(num, srs_id)
+        pfx = case srs_id[0]
+        when "S"
+          "SAMN"
+        when "E"
+          "SAME"
+        when "D"
+          "SAMD"
+        end
+        pfx + num.to_s
       end
 
       #
@@ -206,7 +229,7 @@ module Quanto
 
       def metadata_header
         [
-          "biosample_id",
+          "secondary_sample_id",
           "taxonomy_id",
           "taxonomy_scientific_name",
           "genome_size",
@@ -219,26 +242,35 @@ module Quanto
       end
 
       def annotate_samples
-        exp_hash = create_metadata_hash(@exp_metadata, 0)
-        bs_hash  = create_metadata_hash(@bs_metadata, 1)
+        # hash to connect metadata
+        exp_hash = create_metadata_hash(@exp_metadata, 0) # { expid => [metadata] }
+        bs_hash  = create_metadata_hash(@bs_metadata, 0)  # { biosampleid => [metadata] }
+        srs_hash = create_metadata_hash(@bs_metadata, 1)  # { sampleid => [metadata] }
+
         sample_data = open(@samples_fpath).readlines
         header = [sample_data.shift.chomp].push(metadata_header).join("\t")
+
         annotated = Parallel.map(sample_data, :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
-          bsm = bs_hash[data[0]]
-          coverage = if bsm[3] != "NA"
-            data[7].to_f / bsm[3].to_f * 1_000_000
-          else
-            "NA"
+          sample_md = bs_hash[data[0]] || srs_hash[data[0]]
+          sample_info = if sample_md
+            coverage = if sample_md[3] != "NA"
+              data[7].to_f / sample_md[3].to_f * 1_000_000
+            else
+              "NA"
+            end
+            [
+              sample_md,
+              coverage,
+            ]
           end
           [
             data,
-            bsm,
-            coverage,
+            sample_info,
             exp_hash[data[1]],
           ].flatten.join("\t")
         end
-        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
+        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated.compact]) }
       end
 
       def sample_by_experiment
