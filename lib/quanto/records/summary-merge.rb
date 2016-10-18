@@ -204,7 +204,7 @@ module Quanto
       def select_sampleid(biosample_id, srs_id)
         if biosample_id == "-"
           srs_id
-        elsif biosampleid =~ /^[0-9]+$/
+        elsif biosample_id =~ /^[0-9]+$/
           numbers_to_biosampleid(biosample_id, srs_id)
         else
           biosample_id
