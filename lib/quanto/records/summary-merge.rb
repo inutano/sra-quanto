@@ -255,7 +255,7 @@ module Quanto
             date_hash[data[1]],
           ].flatten.join("\t")
         end
-        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([annotated_header, annotated]) }
+        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([annotated_header.join("\t"), annotated]) }
       end
 
       def sample_by_experiment
