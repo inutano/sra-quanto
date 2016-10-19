@@ -52,12 +52,12 @@ module Quanto
         end
 
         def fix_sra_metadata_directory(metadata_parent_dir)
-          RakeFileUtils.sh "cd #{metadata_parent_dir}"
+          RakeFileUtils.cd metadata_parent_dir
           pdir = get_accession_directories(metadata_parent_dir)
           pdir.group_by{|id| id.sub(/...$/,"") }.each_pair do |pid, ids|
             moveto = File.join(metadata_parent_dir, pid)
-            RakeFileUtils.sh "mkdir #{moveto}"
-            RakeFileUtils.sh "mv #{ids}, #{moveto}"
+            RakeFileUtils.mkdir moveto
+            RakeFileUtils.mv ids, moveto
           end
         end
 
