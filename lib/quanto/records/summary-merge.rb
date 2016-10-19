@@ -127,7 +127,7 @@ module Quanto
           if pairs.size == 2
             merge_paired_reads(pairs).join("\t")
           else
-            "IMPERFECT PAIR DETECTED"
+            "PAIR CORRUPTED: #{runid}"
           end
         end
       end
