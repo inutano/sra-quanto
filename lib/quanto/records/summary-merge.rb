@@ -534,8 +534,8 @@ module Quanto
           "library_strategy",
           "library_source",
           "library_selection",
-          "instrument_model",
           "described_read_layout",
+          "instrument_model",
           "submitted_date",
         ]
       end
