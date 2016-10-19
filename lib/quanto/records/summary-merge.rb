@@ -47,7 +47,7 @@ module Quanto
         @reads_fpath = output_fpath("quanto.reads.tsv")
         if !output_exist?(@reads_fpath)
           File.open(@reads_fpath, 'w') do |file|
-            file.puts(tsv_header[0..-1].join("\t"))
+            file.puts(reads_header.join("\t"))
             @objects.each do |obj|
               file.puts(open(obj[:summary_path]).read.chomp)
             end
@@ -65,7 +65,7 @@ module Quanto
           merge_dataset(
             @runs_fpath,
             :read_to_run,
-            tsv_header.drop(1).insert(0, "run_id"),
+            runs_header,
             reads_by_runid
           )
         end
@@ -77,7 +77,7 @@ module Quanto
           merge_dataset(
             @experiments_fpath,
             :run_to_exp,
-            tsv_header.drop(1).insert(0, "experiment_id", "run_id"),
+            exps_header,
             runs_by_expid
           )
         end
@@ -89,7 +89,7 @@ module Quanto
           merge_dataset(
             @samples_fpath,
             :exp_to_sample,
-            tsv_header.drop(1).insert(0, "biosample_id", "experiment_id", "run_id"),
+            samples_header,
             exps_by_sampleid
           )
         end
@@ -125,7 +125,7 @@ module Quanto
         else
           pairs = remove_nonpair(reads)
           if pairs.size == 2
-            merge_data(remove_nonpair(reads)).join("\t")
+            merge_paired_reads(pairs).join("\t")
           else
             "IMPERFECT PAIR DETECTED"
           end
@@ -155,7 +155,7 @@ module Quanto
         if runs.size == 1
           ([expid] + runs[0]).join("\t")
         else
-          data = merge_data(runs)
+          data = merge_runs_data_to_exp(runs)
           ([expid] + data).join("\t")
         end
       end
@@ -227,21 +227,6 @@ module Quanto
       # annotate tsv with metadata
       #
 
-      def metadata_header
-        [
-          "secondary_sample_id",
-          "taxonomy_id",
-          "taxonomy_scientific_name",
-          "genome_size",
-          "coverage",
-          "library_strategy",
-          "library_source",
-          "library_selection",
-          "instrument_model",
-          "submitted_date",
-        ]
-      end
-
       def annotate_samples
         # hash to connect metadata
         exp_hash  = create_metadata_hash(@exp_metadata, 0) # { expid => [metadata] }
@@ -249,10 +234,7 @@ module Quanto
         srs_hash  = create_metadata_hash(@bs_metadata, 1)  # { sampleid => [metadata] }
         date_hash = received_date_by_experiment            # { expid => date_received }
 
-        sample_data = open(@samples_fpath).readlines
-        header = [sample_data.shift.chomp].push(metadata_header).join("\t")
-
-        annotated = Parallel.map(sample_data, :in_threads => @@nop) do |line|
+        annotated = Parallel.map(open(@samples_fpath).readlines.drop(1), :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
           sample_md = bs_hash[data[0]] || srs_hash[data[0]]
           sample_info = if sample_md
@@ -273,7 +255,7 @@ module Quanto
             date_hash[data[1]],
           ].flatten.join("\t")
         end
-        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([header, annotated.compact]) }
+        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([annotated_header, annotated]) }
       end
 
       def sample_by_experiment
@@ -335,13 +317,13 @@ module Quanto
         hash
       end
 
-      def merge_data(data_list)
-        data_scheme.map.with_index do |method, i|
+      def merge_paired_reads(data_list)
+        reads_join_scheme.map.with_index do |method, i|
           self.send(method, i, data_list)
         end
       end
 
-      def data_scheme
+      def reads_join_scheme
         [
           :join_ids,         # Run id
           :join_literals,    # fastqc version
@@ -364,6 +346,35 @@ module Quanto
         ]
       end
 
+      def merge_runs_data_to_exp(runs)
+        runs_join_scheme.map.with_index do |method, i|
+          self.send(method, i, runs)
+        end
+      end
+
+      def runs_join_scheme
+        [
+          :join_literals,    # Run id
+          :join_literals,    # fastqc version
+          :join_literals,    # filename
+          :join_literals,    # file type
+          :join_literals,    # encoding
+          :sum_floats,       # total sequences
+          :sum_floats,       # filtered sequences
+          :mean_floats,      # sequence length
+          :mean_floats,      # min seq length
+          :mean_floats,      # max seq length
+          :mean_floats,      # mean sequence length
+          :mean_floats,      # median sequence length
+          :sum_reads_percent, # percent gc
+          :sum_reads_percent, # total duplication percentage
+          :mean_floats,      # overall mean quality
+          :mean_floats,      # overall median quality
+          :mean_floats,      # overall n content
+          :join_literals,    # layout
+        ]
+      end
+
       def join_ids(i, data)
         data.map{|d| d[i].split("_")[0] }.uniq.join(",")
       end
@@ -377,7 +388,7 @@ module Quanto
       end
 
       def mean_floats(i, data)
-        sum_floats(i, data) / 2
+        sum_floats(i, data) / data.size
       end
 
       def sum_reads_percent(i, data)
@@ -394,9 +405,10 @@ module Quanto
         "PAIRED"
       end
 
-      def tsv_header
+      def reads_header
+        # header for tsv generated by Quanto::Records::Summary#merge_reads
         [
-          "ID",
+          "identifier",
           "fastqc_version",
           "filename",
           "file_type",
@@ -404,8 +416,8 @@ module Quanto
           "total_sequences",
           "filtered_sequences",
           "sequence_length",
-          "min_sequence_length",
-          "max_sequence_length",
+          "min_length",
+          "max_length",
           "mean_sequence_length",
           "median_sequence_length",
           "percent_gc",
@@ -413,7 +425,118 @@ module Quanto
           "overall_mean_quality_score",
           "overall_median_quality_score",
           "overall_n_content",
-          "read_layout",
+        ]
+      end
+
+      def runs_header
+        # header for tsv generated by Quanto::Records::Summary#create_run_summary
+        [
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+        ]
+      end
+
+      def exps_header
+        # header for tsv generated by Quanto::Records::Summary#create_exp_summary
+        [
+          "experiment_id",
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+        ]
+      end
+
+      def samples_header
+        # header for tsv generated by Quanto::Records::Summary#create_sample_summary
+        [
+          "biosample_id",
+          "experiment_id",
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+        ]
+      end
+
+      def annotated_header
+        # header for tsv generated by Quanto::Records::Summary#annotate_samples
+        [
+          "biosample_id",
+          "experiment_id",
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+          "secondary_sample_id",
+          "taxonomy_id",
+          "taxonomy_scientific_name",
+          "genome_size",
+          "calculated_coverage",
+          "library_strategy",
+          "library_source",
+          "library_selection",
+          "instrument_model",
+          "described_read_layout",
+          "submitted_date",
         ]
       end
     end
