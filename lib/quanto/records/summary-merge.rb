@@ -380,7 +380,7 @@ module Quanto
       end
 
       def join_literals(i, data)
-        data.map{|d| d[i] }.uniq.join(",")
+        data.map{|d| d[i] }.sort.uniq.join(",")
       end
 
       def sum_floats(i, data)
