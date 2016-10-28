@@ -1,6 +1,6 @@
 # Rakefile to create tables for execution manage
 
-namespace :tables do
+namespace :quanto do
   # rake fileutils verbose option: false
   verbose(false)
 
@@ -40,6 +40,7 @@ namespace :tables do
   Quanto::Records::BioSample.set_number_of_parallels(NUM_OF_PARALLEL)
 
   # base task
+  desc "option: workdir, fastqc_dir, sra_metadata_dir, biosample_metadata_dir"
   task :available => [
     :get_sra_metadata,
     :get_sra_checksum_table,
@@ -76,7 +77,9 @@ namespace :tables do
 
   file list_genomesize => biosample_metadata_dir do |t|
     puts "==> #{Time.now} Fetching Genome size data..."
-    sh "lftp -c \"open ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS && pget -n 8 -O #{File.dirname(t.name)} overview.txt\""
+    origin_fname = "overview.txt"
+    sh "lftp -c \"open ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS && pget -n 8 -O #{File.dirname(t.name)} #{origin_fname}\""
+    mv File.join(File.dirname(t.name), origin_fname), t.name
     puts "==> #{Time.now} Done."
   end
 

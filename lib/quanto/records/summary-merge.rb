@@ -25,8 +25,6 @@ module Quanto
           assemble
           # link annotation to each samples
           annotate_samples
-          # link annotation to each Experiments
-          annotate_experiments
         end
       end
 
@@ -49,7 +47,7 @@ module Quanto
         @reads_fpath = output_fpath("quanto.reads.tsv")
         if !output_exist?(@reads_fpath)
           File.open(@reads_fpath, 'w') do |file|
-            file.puts(tsv_header[0..-1].join("\t"))
+            file.puts(reads_header.join("\t"))
             @objects.each do |obj|
               file.puts(open(obj[:summary_path]).read.chomp)
             end
@@ -67,7 +65,7 @@ module Quanto
           merge_dataset(
             @runs_fpath,
             :read_to_run,
-            tsv_header.drop(1).insert(0, "run_id"),
+            runs_header,
             reads_by_runid
           )
         end
@@ -79,7 +77,7 @@ module Quanto
           merge_dataset(
             @experiments_fpath,
             :run_to_exp,
-            tsv_header.drop(1).insert(0, "experiment_id", "run_id"),
+            exps_header,
             runs_by_expid
           )
         end
@@ -91,7 +89,7 @@ module Quanto
           merge_dataset(
             @samples_fpath,
             :exp_to_sample,
-            tsv_header.drop(1).insert(0, "sample_id", "experiment_id", "run_id"),
+            samples_header,
             exps_by_sampleid
           )
         end
@@ -127,9 +125,9 @@ module Quanto
         else
           pairs = remove_nonpair(reads)
           if pairs.size == 2
-            merge_data(remove_nonpair(reads)).join("\t")
+            merge_paired_reads(pairs).join("\t")
           else
-            "IMPERFECT PAIR DETECTED"
+            "PAIR CORRUPTED: #{runid}"
           end
         end
       end
@@ -157,7 +155,7 @@ module Quanto
         if runs.size == 1
           ([expid] + runs[0]).join("\t")
         else
-          data = merge_data(runs)
+          data = merge_runs_data_to_exp(runs)
           ([expid] + data).join("\t")
         end
       end
@@ -182,104 +180,90 @@ module Quanto
       #
 
       def merge_exp_to_sample(sampleid, exps)
-        if exps.size == 1
-          ([sampleid] + exps[0]).join("\t")
-        else
-          expids = exps.map{|e| e[0] }.join(",")
-          data = merge_data(exps.map{|e| e.drop(1) }) # remove experiment id column
-          ([sampleid, expids] + data).join("\t")
-        end
+        exps.map{|exp| ([sampleid] + exp).join("\t") }.join("\n")
       end
 
-      # return hash like { "DRS000001" => ["DRX000001"], ... }
-      # key: SRA sample ID, value: array of SRA experiment ID
+      # return hash { "SAMD00016353" => ["DRX000001"], ... }
+      # key: BioSample ID (can be SRS ID), value: array of SRA experiment ID
       def exps_by_sampleid
         exp_data = data_by_id(@experiments_fpath)
-        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $4 "\t" $3 }' | sort -u`.split("\n")
+        sample_exp = `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $9 "\t" $3 "\t" $4 }' | sort -u`.split("\n")
         hash = {}
         sample_exp.each do |s_e|
           se = s_e.split("\t")
+          samid = select_sampleid(se[0], se[2])
           exp = exp_data[se[1]]
           if exp
-            hash[se[0]] ||= []
-            hash[se[0]] << exp
+            hash[samid] ||= []
+            hash[samid] << exp
           end
         end
         hash
+      end
+
+      def select_sampleid(biosample_id, srs_id)
+        if biosample_id == "-"
+          srs_id
+        elsif biosample_id =~ /^[0-9]+$/
+          numbers_to_biosampleid(biosample_id, srs_id)
+        else
+          biosample_id
+        end
+      end
+
+      def numbers_to_biosampleid(num, srs_id)
+        pfx = case srs_id[0]
+        when "S"
+          "SAMN"
+        when "E"
+          "SAME"
+        when "D"
+          "SAMD"
+        end
+        pfx + num.to_s
       end
 
       #
       # annotate tsv with metadata
       #
 
-      def metadata_header
-        [
-          "biosample_id",
-          "taxonomy_id",
-          "taxonomy_scientific_name",
-          "library_strategy",
-          "library_source",
-          "library_selection",
-          "instrument_model",
-        ]
-      end
-
       def annotate_samples
-        exp_hash = create_metadata_hash(@exp_metadata, 0)
-        bs_hash  = create_metadata_hash(@bs_metadata, 1)
-        annotated = Parallel.map(open(@samples_fpath).readlines, :in_threads => @@nop) do |line|
+        # hash to connect metadata
+        exp_hash  = create_metadata_hash(@exp_metadata, 0) # { expid => [metadata] }
+        bs_hash   = create_metadata_hash(@bs_metadata, 0)  # { biosampleid => [metadata] }
+        srs_hash  = create_metadata_hash(@bs_metadata, 1)  # { sampleid => [metadata] }
+        date_hash = received_date_by_experiment            # { expid => date_received }
+
+        annotated = Parallel.map(open(@samples_fpath).readlines.drop(1), :in_threads => @@nop) do |line|
           data = line.chomp.split("\t")
+          sample_md = bs_hash[data[0]] || srs_hash[data[0]]
+          sample_info = if sample_md
+            coverage = if sample_md[3] != "NA"
+              data[7].to_f / sample_md[3].to_f * 1_000_000
+            else
+              "NA"
+            end
+            [
+              sample_md,
+              coverage,
+            ]
+          end
           [
             data,
-            bs_hash[data[0]],
+            sample_info,
             exp_hash[data[1]],
+            date_hash[data[1]],
           ].flatten.join("\t")
         end
-        header = annotated.shift.split("\t").push(metadata_header).join("\t")
-        open(output_fpath("quanto.sample.annotated.tsv"), 'w'){|f| f.puts([header, annotated]) }
-      end
-
-      def annotate_experiments
-        exp_hash = create_metadata_hash(@exp_metadata, 0)
-        sample_hash  = create_metadata_hash(@bs_metadata, 1) # sample_id => [biosample_id, taxid, organism_name, genome_size]
-        exp2sample = sample_by_experiment
-        annotated = Parallel.map(open(@experiments_fpath).readlines, :in_threads => @@nop) do |line|
-          data = line.chomp.split("\t")
-          sample_idset = exp2sample[data[0]] # ["sample_id", "biosample_id"]
-          if sample_idset
-            sample_id = sample_idset[0]
-            sample_data = sample_hash[sample_id]
-
-            # will be refactored later..
-            # replace genome_size in sample_data with coverage
-            # genome_size in hash = throughput.to_f / (genome_size.to_f * 1,000,000)
-            sample_data[3] = data[6].to_f / (sample_data[3].to_f * 1_000_000) if sample_data[3]
-
-            [
-              data,
-              sample_id,
-              sample_data,
-              exp_hash[data[0]],
-            ].flatten.join("\t")
-          end
-        end
-
-        header = annotated.shift.split("\t").push([
-          "sample_id",
-          "biosample_id",
-          "taxonomy_id",
-          "taxonomy_scientific_name",
-          "coverage",
-          "library_strategy",
-          "library_source",
-          "library_selection",
-          "instrument_model",
-          ]).join("\t")
-        open(output_fpath("quanto.experiment.annotated.tsv"),"w"){|f| f.puts([header, annotated.compact]) }
+        open(output_fpath("quanto.annotated.tsv"), 'w'){|f| f.puts([annotated_header.join("\t"), annotated]) }
       end
 
       def sample_by_experiment
         `cat #{run_members_path} | awk -F '\t' '$8 == "live" { print $3 "\t" $4 "\t" $9 }' | sort -u`.split("\n").map{|line| l = line.split("\t"); [l[0], [l[1], l[2]]] }.to_h
+      end
+
+      def received_date_by_experiment
+        `cat #{accessions_path} | awk -F '\t' '$1 ~ /^.RX/ && $3 == "live" && $9 == "public" { print $1 "\t" $6 }'`.split("\n").map{|line| l = line.split("\t"); [l[0], l[1]]}.to_h
       end
 
       def create_metadata_hash(path, id_col)
@@ -300,6 +284,10 @@ module Quanto
 
       def run_members_path
         File.join(@metadata_dir, "SRA_Run_Members")
+      end
+
+      def accessions_path
+        File.join(@metadata_dir, "SRA_Accessions")
       end
 
       def output_fpath(fname)
@@ -329,13 +317,13 @@ module Quanto
         hash
       end
 
-      def merge_data(data_list)
-        data_scheme.map.with_index do |method, i|
+      def merge_paired_reads(data_list)
+        reads_join_scheme.map.with_index do |method, i|
           self.send(method, i, data_list)
         end
       end
 
-      def data_scheme
+      def reads_join_scheme
         [
           :join_ids,         # Run id
           :join_literals,    # fastqc version
@@ -358,12 +346,41 @@ module Quanto
         ]
       end
 
+      def merge_runs_data_to_exp(runs)
+        runs_join_scheme.map.with_index do |method, i|
+          self.send(method, i, runs)
+        end
+      end
+
+      def runs_join_scheme
+        [
+          :join_literals,    # Run id
+          :join_literals,    # fastqc version
+          :join_literals,    # filename
+          :join_literals,    # file type
+          :join_literals,    # encoding
+          :sum_floats,       # total sequences
+          :sum_floats,       # filtered sequences
+          :mean_floats,      # sequence length
+          :mean_floats,      # min seq length
+          :mean_floats,      # max seq length
+          :mean_floats,      # mean sequence length
+          :mean_floats,      # median sequence length
+          :sum_reads_percent, # percent gc
+          :sum_reads_percent, # total duplication percentage
+          :mean_floats,      # overall mean quality
+          :mean_floats,      # overall median quality
+          :mean_floats,      # overall n content
+          :join_literals,    # layout
+        ]
+      end
+
       def join_ids(i, data)
         data.map{|d| d[i].split("_")[0] }.uniq.join(",")
       end
 
       def join_literals(i, data)
-        data.map{|d| d[i] }.uniq.join(",")
+        data.map{|d| d[i] }.sort.uniq.join(",")
       end
 
       def sum_floats(i, data)
@@ -371,7 +388,7 @@ module Quanto
       end
 
       def mean_floats(i, data)
-        sum_floats(i, data) / 2
+        sum_floats(i, data) / data.size
       end
 
       def sum_reads_percent(i, data)
@@ -388,9 +405,10 @@ module Quanto
         "PAIRED"
       end
 
-      def tsv_header
+      def reads_header
+        # header for tsv generated by Quanto::Records::Summary#merge_reads
         [
-          "ID",
+          "identifier",
           "fastqc_version",
           "filename",
           "file_type",
@@ -398,8 +416,8 @@ module Quanto
           "total_sequences",
           "filtered_sequences",
           "sequence_length",
-          "min_sequence_length",
-          "max_sequence_length",
+          "min_length",
+          "max_length",
           "mean_sequence_length",
           "median_sequence_length",
           "percent_gc",
@@ -407,7 +425,118 @@ module Quanto
           "overall_mean_quality_score",
           "overall_median_quality_score",
           "overall_n_content",
-          "read_layout",
+        ]
+      end
+
+      def runs_header
+        # header for tsv generated by Quanto::Records::Summary#create_run_summary
+        [
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+        ]
+      end
+
+      def exps_header
+        # header for tsv generated by Quanto::Records::Summary#create_exp_summary
+        [
+          "experiment_id",
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+        ]
+      end
+
+      def samples_header
+        # header for tsv generated by Quanto::Records::Summary#create_sample_summary
+        [
+          "biosample_id",
+          "experiment_id",
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+        ]
+      end
+
+      def annotated_header
+        # header for tsv generated by Quanto::Records::Summary#annotate_samples
+        [
+          "biosample_id",
+          "experiment_id",
+          "run_id",
+          "fastqc_version",
+          "filename",
+          "file_type",
+          "encoding",
+          "total_sequences",
+          "filtered_sequences",
+          "sequence_length",
+          "min_length",
+          "max_length",
+          "mean_sequence_length",
+          "median_sequence_length",
+          "percent_gc",
+          "total_duplicate_percentage",
+          "overall_mean_quality_score",
+          "overall_median_quality_score",
+          "overall_n_content",
+          "confirmed_read_layout",
+          "secondary_sample_id",
+          "taxonomy_id",
+          "taxonomy_scientific_name",
+          "genome_size",
+          "calculated_coverage",
+          "library_strategy",
+          "library_source",
+          "library_selection",
+          "described_read_layout",
+          "instrument_model",
+          "submitted_date",
         ]
       end
     end

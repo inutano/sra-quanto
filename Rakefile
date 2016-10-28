@@ -27,20 +27,3 @@ PROJ_ROOT = File.expand_path(__dir__)
 Dir["#{PROJ_ROOT}/lib/tasks/**/*.rake"].each do |path|
   load path
 end
-
-namespace :quanto do
-  desc "option: workdir, fastqc_dir, sra_metadata_dir, biosample_metadata_dir"
-  task :available do
-    Rake::Task["tables:available"].invoke
-  end
-
-  desc "option: workdir, fastqc_dir"
-  task :execute do
-    Rake::Task["fastqc:exec"].invoke
-  end
-
-  desc "option: workdir, sra_metadata_dir, summary_outdir, overwrite, format"
-  task :summarize do
-    Rake::Task["result:summarize"].invoke
-  end
-end

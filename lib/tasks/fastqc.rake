@@ -1,6 +1,6 @@
 # Rakefile to execute fastqc for given items
 
-namespace :fastqc do
+namespace :quanto do
   # executable
   core = File.join(PROJ_ROOT, "exe", "quanto-core")
 
@@ -38,6 +38,7 @@ namespace :fastqc do
     open(logfile, "a"){|f| f.puts(m) }
   end
 
+  desc "option: workdir, fastqc_dir"
   task :exec => [list_available, logfile, logdir_job, logdir_ftp, logdir_uge, logdir_table] do
     logwrite(logfile, "Start FastQC execution: #{Time.now}")
     list = Quanto::Records::IO.read(list_available)

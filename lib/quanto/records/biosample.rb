@@ -52,7 +52,7 @@ module Quanto
       end
 
       def organism_to_gsize(gsize_fpath)
-        RakeFileUtils.sh "cat #{gsize_fpath} | awk -F '\t' '$5 !~ \"-\" { print $1 \"\t\" $5 }'".split("\n").map{|line| line.split("\t") }.to_h
+        `cat #{gsize_fpath} | awk -F '\t' '$5 !~ "-" { print $1 "\t" $5 }'`.split("\n").drop(1).map{|line| line.split("\t") }.to_h
       end
 
       def create_list_metadata(metadata_list_path)
@@ -92,7 +92,7 @@ module Quanto
         sra_samples = Parallel.map(open(@tsv_temp).readlines, :in_threads => @nop) do |line|
           if liveset.include?(line.split("\t")[1])
             cols = line.chomp.split("\t")
-            gsize = @gsize_hash[cols[3]] # cols[3]: organism name
+            gsize = @gsize_hash[cols[3]] || "NA" # genome size can be unavailable for some species
             cols.push(gsize).join("\t")
           end
         end

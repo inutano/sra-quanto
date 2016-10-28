@@ -4,7 +4,7 @@ require 'parallel'
 require 'bio-fastqc'
 require 'json'
 
-namespace :result do
+namespace :quanto do
   # setup working dir
   workdir              = ENV['workdir'] || PROJ_ROOT
   table_dir            = File.join(workdir, "tables")
@@ -27,6 +27,7 @@ namespace :result do
   # set format of summarization
   format = ENV['format'] || "json"
 
+  desc "option: workdir, sra_metadata_dir, summary_outdir, overwrite, format"
   task :summarize => [summary_outdir] do |t|
     puts "==> #{Time.now} Create summary files..."
     sum = Quanto::Records::Summary.new(list_fastqc_finished)
