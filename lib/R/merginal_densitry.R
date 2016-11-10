@@ -14,7 +14,7 @@ df <- subset(df, df$total_sequences > 0) # remove invalid data
 df <- subset(df, df$taxonomy_id == "9606") # only human
 
 x <- log10(df$median_sequence_length)
-y <- log10(df$total_sequences)
+y <- log10(df$total_sequences * df$mean_sequence_length)
 
 # # Main scatterplot
 p1 <- ggplot(df, aes(x, y)) +
