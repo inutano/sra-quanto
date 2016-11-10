@@ -155,7 +155,7 @@ ggsave(
 illumina <- c("HiSeq X Ten", "NextSeq 500")
 df$instrument_model <- as.character(df$instrument_model)
 df$instrument_vendor <- ifelse(df$instrument_model %in% illumina, "Illumina", df$instrument_model)
-df$instrument_vendor <- str_replace(df$instrument_vendor, " .+", “”)
+df$instrument_vendor <- str_replace(df$instrument_vendor, " .+", "")
 df$instrument_model <- as.factor(df$instrument_model)
 df$instrument_vendor <- as.factor(df$instrument_vendor)
 
