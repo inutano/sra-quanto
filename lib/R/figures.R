@@ -76,9 +76,23 @@ df$strTop <- as.factor(df$strTop)
 
 # Histogram template
 
-histogramOverall <- function(data, xAxisData, xLabel, title, fill=NULL, fillLegend=NULL){
-  p <- ggplot(data, aes(xAxisData, fill=fill))
-  p <- p + geom_histogram(bins = sqrt(nrow(data)))
+histogramOverall <- function(d, xAxisData, xLabel, title){
+  p <- ggplot(d, aes(xAxisData))
+  p <- p + geom_histogram(bins = sqrt(nrow(d)))
+  p <- p + theme(
+    plot.background = element_rect(fill = "transparent", colour = NA),
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    panel.grid.major = element_line(color = "gray", size = .1),
+    panel.grid.major = element_line(color = "gray", size = .05)
+  )
+  p <- p + labs(x = xLabel, title = title)
+  p <- p + scale_fill_manual(values = cbPalette)
+  return(p)
+}
+
+histogramColoured <- function(d, xAxisData, xLabel, title, fill, fillLegend){
+  p <- ggplot(d, aes(xAxisData, fill = factor(fill)))
+  p <- p + geom_histogram(bins = sqrt(nrow(d)))
   p <- p + theme(
     plot.background = element_rect(fill = "transparent", colour = NA),
     panel.background = element_rect(fill = "transparent", colour = NA),
@@ -99,13 +113,13 @@ f2a <- histogramOverall(
 )
 
 # Fig.2b - histogram of throughput, coloured by library source
-f2b <- histogramOverall(
+f2b <- histogramColoured(
   df,
   log10(df$throughput),
   "Sequencing throughput per experiment (log10)",
   "b",
-  fill = df$library_source,
-  fillLegend = "Library source"
+  df$library_source,
+  "Library source"
 )
 
 # Fig.2c - histogram of base call accuracy
@@ -117,13 +131,13 @@ f2c <- histogramOverall(
 )
 
 # Fig.2d - histogram of base call accuracy, coloured by library strategy
-f2d <- histogramOverall(
+f2d <- histogramColoured(
   df,
   df$overall_median_sequence_quality,
   "Median base call accuracy per experiment",
   "d",
-  fill = df$strTop,
-  fillLegend = "Library strategy"
+  df$strTop,
+  "Library strategy"
 )
 
 # Combine and save
@@ -149,7 +163,7 @@ df$instrument_vendor <- as.factor(df$instrument_vendor)
 # Faceted histogram template
 
 histoFaceted <- function(data, xAxisData, xLabel, title){
-  p <- ggplot(data, aes(xAxisData, fill=data$instrument_vendor))
+  p <- ggplot(data, aes(xAxisData, fill=factor(data$instrument_vendor)))
   p <- p + geom_histogram(bins = sqrt(nrow(data)))
   p <- p + theme(
     plot.background = element_rect(fill="transparent", colour=NA),
@@ -257,43 +271,43 @@ ggsave(
 #
 
 # Sup.Fig.1a - histogram by throughput, coloured by library strategy
-sf1a <- histogramOverall(
+sf1a <- histogramColoured(
   df,
   log10(df$throughput),
   "Sequencing throughput per experiment (log10)",
   "a",
-  fill = df$strTop,
-  fillLegend = "Library strategy"
+  df$strTop,
+  "Library strategy"
 )
 
 # Sup.Fig.1b - histogram by throughput, coloured by library source
-sf1b <- histogramOverall(
+sf1b <- histogramColoured(
   df,
   log10(df$throughput),
   "Sequencing throughput per experiment (log10)",
   "b",
-  fill = df$library_source,
-  fillLegend = "Library strategy"
+  df$library_source,
+  "Library strategy"
 )
 
 # Sup.Fig.1c - histogram by throughput, coloured by taxonomy
-sf1c <- histogramOverall(
+sf1c <- histogramColoured(
   df,
   log10(df$throughput),
   "Sequencing throughput per experiment (log10)",
   "c",
-  fill = df$taxTop,
-  fillLegend = "Scientific name"
+  df$taxTop,
+  "Scientific name"
 )
 
 # Sup.Fig.1d - histogram by throughput, coloured by taxonomy
-sf1d <- histogramOverall(
+sf1d <- histogramColoured(
   df,
   log10(df$throughput),
   "Sequencing throughput per experiment (log10)",
   "d",
-  fill = df$instrument_vendor,
-  fillLegend = "Instrument vendor"
+  df$instrument_vendor,
+  "Instrument vendor"
 )
 
 # Combine and save
@@ -308,43 +322,43 @@ ggsave(
 #
 
 # Sup.Fig.2a - histogram by basecall accuracy, coloured by library strategy
-sf2a <- histogramOverall(
+sf2a <- histogramColoured(
   df,
   df$overall_median_sequence_quality,
   "Median base call accuracy per experiment",
   "a",
-  fill = df$strTop,
-  fillLegend = "Library strategy"
+  df$strTop,
+  "Library strategy"
 )
 
 # Sup.Fig.2b - histogram by basecall accuracy, coloured by library source
-sf2b <- histogramOverall(
+sf2b <- histogramColoured(
   df,
   df$overall_median_sequence_quality,
   "Median base call accuracy per experiment",
   "b",
-  fill = df$library_source,
-  fillLegend = "Library strategy"
+  df$library_source,
+  "Library strategy"
 )
 
 # Sup.Fig.2c - histogram by basecall accuracy, coloured by taxonomy
-sf2c <- histogramOverall(
+sf2c <- histogramColoured(
   df,
   df$overall_median_sequence_quality,
   "Median base call accuracy per experiment",
   "c",
-  fill = df$taxTop,
-  fillLegend = "Scientific name"
+  df$taxTop,
+  "Scientific name"
 )
 
 # Sup.Fig.2d - histogram by basecall accuracy, coloured by taxonomy
-sf2d <- histogramOverall(
+sf2d <- histogramColoured(
   df,
   df$overall_median_sequence_quality,
   "Median base call accuracy per experiment",
   "d",
-  fill = df$instrument_vendor,
-  fillLegend = "Instrument vendor"
+  df$instrument_vendor,
+  "Instrument vendor"
 )
 
 # Combine and save
