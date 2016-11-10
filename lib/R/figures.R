@@ -82,7 +82,7 @@ df$strTop8 <- as.factor(df$strTop8)
 
 histogramOverall <- function(data, xAxisData, xLabel, title, fill=NULL, fillLegend=NULL){
   p <- ggplot(data, aes(xAxisData, fill=fill))
-  p <- p + geom_histogram(bins=sqrt(nrow(df)))
+  p <- p + geom_histogram(bins=sqrt(nrow(data)))
   p <- p + theme(
     plot.background = element_rect(fill="transparent", colour=NA),
     panel.background = element_rect(fill="transparent", colour=NA),
@@ -153,8 +153,8 @@ df$instrument_vendor <- as.factor(df$instrument_vendor)
 # Faceted histogram template
 
 histoFaceted <- function(data, xAxisData, xLabel, title){
-  p <- ggplot(data, aes(xAxisData, fill=df$instrument_vendor))
-  p <- p + geom_histogram(bins=sqrt(nrow(df)))
+  p <- ggplot(data, aes(xAxisData, fill=data$instrument_vendor))
+  p <- p + geom_histogram(bins=sqrt(nrow(data)))
   p <- p + theme(
     plot.background = element_rect(fill="transparent", colour=NA),
     panel.background = element_rect(fill="transparent", colour=NA),
