@@ -59,7 +59,8 @@ f1c <- barplot(df, df$instrument_model, "Instrument model", "c")
 ggsave(
   plot = grid.arrange(f1a, f1b, f1c),
   file = "./figure1.pdf",
-  dpi = 900
+  dpi = 900,
+  height = 3
 )
 
 #
@@ -83,7 +84,8 @@ histogramOverall <- function(d, xAxisData, xLabel, title){
     plot.background = element_rect(fill = "transparent", colour = NA),
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
-    panel.grid.major = element_line(color = "gray", size = .05)
+    panel.grid.major = element_line(color = "gray", size = .05),
+    plot.title = element_text(size = rel(2), hjust = 0)
   )
   p <- p + labs(x = xLabel, title = title)
   return(p)
@@ -96,7 +98,8 @@ histogramColoured <- function(d, xAxisData, xLabel, title, fill, fillLegend){
     plot.background = element_rect(fill = "transparent", colour = NA),
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
-    panel.grid.major = element_line(color = "gray", size = .05)
+    panel.grid.major = element_line(color = "gray", size = .05),
+    plot.title = element_text(size = rel(2), hjust = 0)
   )
   p <- p + labs(x = xLabel, title = title, fill = fillLegend)
   p <- p + scale_fill_manual(values = cbPalette)
@@ -143,7 +146,8 @@ f2d <- histogramColoured(
 ggsave(
   plot = grid.arrange(f2a, f2b, f2c, f2d, ncol=2),
   file = "./figure2.pdf",
-  dpi = 900
+  dpi = 900,
+  width = 5
 )
 
 #
@@ -168,9 +172,10 @@ histoFaceted <- function(data, xAxisData, xLabel, title){
     plot.background = element_rect(fill="transparent", colour=NA),
     panel.background = element_rect(fill="transparent", colour=NA),
     panel.grid.major = element_line(color="gray", size=.1),
-    panel.grid.major = element_line(color="gray", size=.05)
+    panel.grid.major = element_line(color="gray", size=.05),
+    plot.title = element_text(size = rel(2), hjust = 0)
   )
-  p <- p + labs(x = , title = title, fill = "Instrument vendor")
+  p <- p + labs(x = xLabel, title = title, fill = "Instrument vendor")
   p <- p + scale_fill_manual(values = cbPalette)
   p <- p + facet_wrap(~strTop)
   return(p)
@@ -233,7 +238,8 @@ timeSeriesBoxplot <- function(data, yAxisData, yLabel, title){
     plot.background = element_rect(fill = "transparent", colour = NA),
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
-    panel.grid.minor = element_line(color = "gray", size = .05)
+    panel.grid.minor = element_line(color = "gray", size = .05),
+    plot.title = element_text(size = rel(2), hjust = 0)
   )
   p <- p + labs(x = "Quarters", y = yLabel, title = title)
   p <- p + facet_wrap(~strTop)
