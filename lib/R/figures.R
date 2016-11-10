@@ -86,7 +86,6 @@ histogramOverall <- function(d, xAxisData, xLabel, title){
     panel.grid.major = element_line(color = "gray", size = .05)
   )
   p <- p + labs(x = xLabel, title = title)
-  p <- p + scale_fill_manual(values = cbPalette)
   return(p)
 }
 
@@ -125,7 +124,7 @@ f2b <- histogramColoured(
 # Fig.2c - histogram of base call accuracy
 f2c <- histogramOverall(
   df,
-  df$overall_median_sequence_quality,
+  df$overall_median_quality_score,
   "Median base call accuracy per experiment",
   "c"
 )
@@ -133,7 +132,7 @@ f2c <- histogramOverall(
 # Fig.2d - histogram of base call accuracy, coloured by library strategy
 f2d <- histogramColoured(
   df,
-  df$overall_median_sequence_quality,
+  df$overall_median_quality_score,
   "Median base call accuracy per experiment",
   "d",
   df$strTop,
@@ -207,7 +206,7 @@ f3c <- histoFaceted(
 # Fig.3d - histogram of base call accuracy, faceted by strategy, coloured by instrument without legend
 f3d <- histoFaceted(
   data3,
-  data3$overall_median_sequence_quality,
+  data3$overall_median_quality_score,
   "Median base call accuracy per experiment",
   "d"
 ) + theme(legend.position="none")
@@ -257,7 +256,7 @@ f4b <- timeSeriesBoxplot(data4, log10(data4$median_sequence_length), "Median seq
 f4c <- timeSeriesBoxplot(data4, log10(data4$throughput), "Sequencing throughput per experiment (log10)", "c")
 
 # Fig.4d - Box plot of base call accuracy by quarter
-f4d <- timeSeriesBoxplot(data4, data4$overall_median_sequence_quality, "Median base call accuracy per experiment", "d")
+f4d <- timeSeriesBoxplot(data4, data4$overall_median_quality_score, "Median base call accuracy per experiment", "d")
 
 # Combine and save
 ggsave(
@@ -324,7 +323,7 @@ ggsave(
 # Sup.Fig.2a - histogram by basecall accuracy, coloured by library strategy
 sf2a <- histogramColoured(
   df,
-  df$overall_median_sequence_quality,
+  df$overall_median_quality_score,
   "Median base call accuracy per experiment",
   "a",
   df$strTop,
@@ -334,7 +333,7 @@ sf2a <- histogramColoured(
 # Sup.Fig.2b - histogram by basecall accuracy, coloured by library source
 sf2b <- histogramColoured(
   df,
-  df$overall_median_sequence_quality,
+  df$overall_median_quality_score,
   "Median base call accuracy per experiment",
   "b",
   df$library_source,
@@ -344,7 +343,7 @@ sf2b <- histogramColoured(
 # Sup.Fig.2c - histogram by basecall accuracy, coloured by taxonomy
 sf2c <- histogramColoured(
   df,
-  df$overall_median_sequence_quality,
+  df$overall_median_quality_score,
   "Median base call accuracy per experiment",
   "c",
   df$taxTop,
@@ -354,7 +353,7 @@ sf2c <- histogramColoured(
 # Sup.Fig.2d - histogram by basecall accuracy, coloured by taxonomy
 sf2d <- histogramColoured(
   df,
-  df$overall_median_sequence_quality,
+  df$overall_median_quality_score,
   "Median base call accuracy per experiment",
   "d",
   df$instrument_vendor,
