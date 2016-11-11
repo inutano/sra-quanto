@@ -243,7 +243,7 @@ timeSeriesBoxplot <- function(data, yAxisData, yLabel, title){
   )
   p <- p + labs(x = "Quarters", y = yLabel, title = title)
   p <- p + facet_wrap(~strTop)
-  return p
+  return(p)
 }
 
 # Data for figure 4, valid date values, human and top8 strategies
