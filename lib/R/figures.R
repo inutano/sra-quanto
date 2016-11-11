@@ -235,8 +235,9 @@ give.n <- function(x){ return(c(y = mean(x) * 1.3, label = length(x))) }
 
 timeSeriesBoxplot <- function(data, yAxisData, yLabel, title){
   p <- ggplot(data, aes(x = data$qtr, y = yAxisData))
-  p <- p + geom_boxplot(outlier.shape=NA)
+  p <- p + geom_boxplot(outlier.shape = NA)
   p <- p + stat_summary(fun.y = mean, geom = "line", aes(group = 1))
+  p <- p + stat_summary(fun.data = give.n, geom = "text", size = 2)
   p <- p + theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     plot.background = element_rect(fill = "transparent", colour = NA),
