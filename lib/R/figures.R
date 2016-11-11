@@ -11,7 +11,7 @@ df <- read.delim(argv[1])
 df <- subset(df, df$total_sequence > 0)
 
 # Prepare colour palette - http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000")
 
 #
 # Figure 1
