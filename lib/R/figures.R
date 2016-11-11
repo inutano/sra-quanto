@@ -254,6 +254,7 @@ timeSeriesBoxplot <- function(data, yAxisData, yLabel, title){
 # Data for figure 4, valid date values, human and top8 strategies
 df$submitted_date <- as.POSIXct(df$submitted_date, format="%Y-%m-%dT%H:%M:%SZ", tz="UTC")
 df_date <- df[!is.na(df$submitted_date),]
+df_date$year <- strftime(df_date$submitted_date, format="%Y")
 df_date$qtr <- paste(format(df_date$submitted_date, "%Y"), quarters(df_date$submitted_date), sep="/")
 data4 <- subset(df_date, df_date$year!="2016" & df_date$taxonomy_id == "9606" & df_date$strTop != "OTHER")
 
