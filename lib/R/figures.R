@@ -60,7 +60,8 @@ ggsave(
   plot = grid.arrange(f1a, f1b, f1c),
   file = "./figure1.pdf",
   dpi = 900,
-  height = 3
+  height = 9,
+  width = 5
 )
 
 #
@@ -147,7 +148,8 @@ ggsave(
   plot = grid.arrange(f2a, f2b, f2c, f2d, ncol=2),
   file = "./figure2.pdf",
   dpi = 900,
-  width = 5
+  width = 10,
+  height = 4
 )
 
 #
@@ -220,7 +222,9 @@ f3d <- histoFaceted(
 ggsave(
   plot = grid.arrange(f3a, f3b, f3c, f3d, ncol=2),
   file = "./figure3.pdf",
-  dpi = 900
+  dpi = 900,
+  width = 10,
+  height = 4
 )
 
 #
@@ -268,7 +272,9 @@ f4d <- timeSeriesBoxplot(data4, data4$overall_median_quality_score, "Median base
 ggsave(
   plot = grid.arrange(f4a, f4b, f4c, f4d, ncol=2),
   file = "./figure4.pdf",
-  dpi = 900
+  dpi = 900,
+  width = 12,
+  height = 4
 )
 
 #
@@ -370,7 +376,9 @@ sf2d <- histogramColoured(
 ggsave(
   plot = grid.arrange(sf2a, sf2b, sf2c, sf2d, ncol=2),
   file = "./supplementary_figure2.pdf",
-  dpi = 900
+  dpi = 900,
+  width = 10,
+  height = 4
 )
 
 #
