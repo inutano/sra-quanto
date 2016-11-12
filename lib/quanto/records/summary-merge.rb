@@ -247,6 +247,8 @@ module Quanto
               sample_md,
               coverage,
             ]
+          else
+            "NA\tNA\tNA\tNA" # secondary sample id, taxon id, taxonomic name, coverage
           end
           [
             data,
