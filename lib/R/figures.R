@@ -1,4 +1,6 @@
 # R script to draw figures of Quanto manuscript
+# usage:
+#  Rscript --vanilla barplot.R data.tsv
 
 # Load library
 library(ggplot2)
