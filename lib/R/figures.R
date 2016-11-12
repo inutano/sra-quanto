@@ -10,8 +10,46 @@ argv <- commandArgs(trailingOnly=T)
 df <- read.delim(argv[1])
 df <- subset(df, df$total_sequence > 0)
 
-# Prepare colour palette - http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000")
+# Clour palette from http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
+cbPalette <- c(
+  "#999999",
+  "#E69F00",
+  "#56B4E9",
+  "#009E73",
+  "#F0E442",
+  "#0072B2",
+  "#D55E00",
+  "#CC79A7",
+  "#000000"
+)
+
+# Colour palette from http://stackoverflow.com/questions/9563711/r-color-palettes-for-many-data-classes
+c25Palette <- c(
+  "dodgerblue2",
+  "#E31A1C",
+  "green4",
+  "#6A3D9A", # purple
+  "#FF7F00", # orange
+  "black","gold1",
+  "skyblue2","#FB9A99", # lt pink
+  "palegreen2",
+  "#CAB2D6", # lt purple
+  "#FDBF6F", # lt orange
+  "gray70",
+  "khaki2",
+  "maroon",
+  "orchid1",
+  "deeppink1",
+  "blue1",
+  "steelblue4",
+  "darkturquoise",
+  "green1",
+  "yellow4",
+  "yellow3",
+  "darkorange4",
+  "brown"
+)
+
 
 #
 # Figure 1
@@ -41,7 +79,7 @@ barplot <- function(data, xAxisData, xLabel, title){
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
     panel.grid.minor = element_line(color = "gray", size = .05),
-    plot.title = element_text(size = rel(2), hjust = 0)
+    plot.title = element_text(size = rel(1), hjust = 0)
   )
   return(p)
 }
@@ -59,9 +97,9 @@ f1c <- barplot(df, df$instrument_model, "Instrument model", "c")
 ggsave(
   plot = grid.arrange(f1a, f1b, f1c),
   file = "./figure1.pdf",
-  dpi = 900,
-  height = 9,
-  width = 5
+  height = 225,
+  width = 85,
+  units = "mm"
 )
 
 #
@@ -147,9 +185,9 @@ f2d <- histogramColoured(
 ggsave(
   plot = grid.arrange(f2a, f2b, f2c, f2d, ncol=2),
   file = "./figure2.pdf",
-  dpi = 900,
-  width = 10,
-  height = 4
+  width = 170,
+  height = 170,
+  units = "mm"
 )
 
 #
@@ -222,9 +260,9 @@ f3d <- histoFaceted(
 ggsave(
   plot = grid.arrange(f3a, f3b, f3c, f3d, ncol=2),
   file = "./figure3.pdf",
-  dpi = 900,
-  width = 10,
-  height = 4
+  width = 170,
+  height = 170,
+  units = "mm"
 )
 
 #
@@ -274,9 +312,9 @@ f4d <- timeSeriesBoxplot(data4, data4$overall_median_quality_score, "Median base
 ggsave(
   plot = grid.arrange(f4a, f4b, f4c, f4d, ncol=2),
   file = "./figure4.pdf",
-  dpi = 900,
-  width = 12,
-  height = 4
+  width = 170,
+  height = 225,
+  units = "mm"
 )
 
 #
@@ -291,7 +329,7 @@ sf1a <- histogramColoured(
   "a",
   df$strTop,
   "Library strategy"
-)
+) + scale_fill_manual(values = c25Palette)
 
 # Sup.Fig.1b - histogram by throughput, coloured by library source
 sf1b <- histogramColoured(
@@ -300,7 +338,7 @@ sf1b <- histogramColoured(
   "Sequencing throughput per experiment (log10)",
   "b",
   df$library_source,
-  "Library strategy"
+  "Library source"
 )
 
 # Sup.Fig.1c - histogram by throughput, coloured by taxonomy
@@ -311,9 +349,9 @@ sf1c <- histogramColoured(
   "c",
   df$taxTop,
   "Scientific name"
-)
+) + scale_fill_manual(values = c25Palette)
 
-# Sup.Fig.1d - histogram by throughput, coloured by taxonomy
+# Sup.Fig.1d - histogram by throughput, coloured by instrument vendor
 sf1d <- histogramColoured(
   df,
   log10(df$throughput),
@@ -321,13 +359,15 @@ sf1d <- histogramColoured(
   "d",
   df$instrument_vendor,
   "Instrument vendor"
-)
+) + scale_fill_manual(values = c25Palette)
 
 # Combine and save
 ggsave(
   plot = grid.arrange(sf1a, sf1b, sf1c, sf1d, ncol=2),
   file = "./supplementary_figure1.pdf",
-  dpi = 900
+  width = 170,
+  height = 170,
+  units = "mm"
 )
 
 #
@@ -342,7 +382,7 @@ sf2a <- histogramColoured(
   "a",
   df$strTop,
   "Library strategy"
-)
+) + scale_fill_manual(values = c25Palette)
 
 # Sup.Fig.2b - histogram by basecall accuracy, coloured by library source
 sf2b <- histogramColoured(
@@ -351,7 +391,7 @@ sf2b <- histogramColoured(
   "Median base call accuracy per experiment",
   "b",
   df$library_source,
-  "Library strategy"
+  "Library source"
 )
 
 # Sup.Fig.2c - histogram by basecall accuracy, coloured by taxonomy
@@ -362,9 +402,9 @@ sf2c <- histogramColoured(
   "c",
   df$taxTop,
   "Scientific name"
-)
+) + scale_fill_manual(values = c25Palette)
 
-# Sup.Fig.2d - histogram by basecall accuracy, coloured by taxonomy
+# Sup.Fig.2d - histogram by basecall accuracy, coloured by instrument vendor
 sf2d <- histogramColoured(
   df,
   df$overall_median_quality_score,
@@ -372,15 +412,15 @@ sf2d <- histogramColoured(
   "d",
   df$instrument_vendor,
   "Instrument vendor"
-)
+) + scale_fill_manual(values = c25Palette)
 
 # Combine and save
 ggsave(
   plot = grid.arrange(sf2a, sf2b, sf2c, sf2d, ncol=2),
   file = "./supplementary_figure2.pdf",
-  dpi = 900,
-  width = 10,
-  height = 4
+  width = 170,
+  height = 170,
+  units = "mm"
 )
 
 #
@@ -392,8 +432,14 @@ sf3 <- histogramOverall(
   df,
   df$overall_n_content,
   "N content per experiment",
-  "",
+  NULL,
 )
 
 # save
-ggsave(plot = sf3, file = "./supplementary_figure3.pdf", dpi = 900)
+ggsave(
+  plot = sf3,
+  file = "./supplementary_figure3.pdf",
+  width = 85,
+  height = 85,
+  units = "mm"
+)
