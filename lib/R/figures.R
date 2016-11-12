@@ -81,7 +81,8 @@ barplot <- function(data, xAxisData, xLabel, title){
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
     panel.grid.minor = element_line(color = "gray", size = .05),
-    plot.title = element_text(size = rel(1), hjust = 0)
+    text = element_text(size = 5),
+    plot.title = element_text(size = 15, hjust = 0)
   )
   return(p)
 }
@@ -121,14 +122,16 @@ df$strTop <- as.factor(df$strTop)
 histogramOverall <- function(d, xAxisData, xLabel, title){
   p <- ggplot(d, aes(xAxisData))
   p <- p + geom_histogram(bins = sqrt(nrow(d)))
+  p <- p + labs(x = xLabel, title = title)
   p <- p + theme(
     plot.background = element_rect(fill = "transparent", colour = NA),
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
-    panel.grid.major = element_line(color = "gray", size = .05),
-    plot.title = element_text(size = rel(2), hjust = 0)
+    panel.grid.minor = element_line(color = "gray", size = .05),
+    text = element_text(size = 5),
+    legend.key.size = unit(5, "pt"),
+    plot.title = element_text(size = 15, hjust = 0)
   )
-  p <- p + labs(x = xLabel, title = title)
   return(p)
 }
 
@@ -139,8 +142,11 @@ histogramColoured <- function(d, xAxisData, xLabel, title, fill, fillLegend){
     plot.background = element_rect(fill = "transparent", colour = NA),
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
-    panel.grid.major = element_line(color = "gray", size = .05),
-    plot.title = element_text(size = rel(2), hjust = 0)
+    panel.grid.minor = element_line(color = "gray", size = .05),
+    text = element_text(size = 5),
+    legend.key.size = unit(5, "pt"),
+    legend.position = c(0.15,0.85),
+    plot.title = element_text(size = 15, hjust = 0)
   )
   p <- p + labs(x = xLabel, title = title, fill = fillLegend)
   p <- p + scale_fill_manual(values = cbPalette)
@@ -214,10 +220,14 @@ histoFaceted <- function(data, xAxisData, xLabel, title){
     plot.background = element_rect(fill="transparent", colour=NA),
     panel.background = element_rect(fill="transparent", colour=NA),
     panel.grid.major = element_line(color="gray", size=.1),
-    panel.grid.major = element_line(color="gray", size=.05),
-    plot.title = element_text(size = rel(2), hjust = 0)
+    panel.grid.minor = element_line(color="gray", size=.05),
+    text = element_text(size = 5),
+    legend.key.size = unit(5, "pt"),
+    legend.position = c(0.9,0.8),
+    strip.background = element_rect(fill="transparent", colour=NA),
+    plot.title = element_text(size = 15, hjust = 0),
   )
-  p <- p + labs(x = xLabel, title = title, fill = "Instrument vendor")
+  p <- p + labs(x = xLabel, title = title, fill = "Instrument")
   p <- p + scale_fill_manual(values = cbPalette)
   p <- p + facet_wrap(~strTop)
   return(p)
