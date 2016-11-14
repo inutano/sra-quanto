@@ -437,17 +437,64 @@ ggsave(
 # Supplementary Figure 3
 #
 
+dataS3 <- subset(df_date, df_date$year != "2016")
+
 # Sup.Fig.3 - histogram by N content
-sf3 <- histogramOverall(
-  df,
-  df$overall_n_content,
+sf3a <- histogramOverall(
+  dataS3,
+  quote(overall_n_content),
   "N content per experiment",
-  NULL,
-)
+  "a"
+) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+
+sf3b <- histogramColoured(
+  dataS3,
+  quote(overall_n_content),
+  "N content per experiment",
+  "b",
+  quote(strTop),
+  "Library strategy"
+) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+
+sf3c <- histogramColoured(
+  dataS3,
+  quote(overall_n_content),
+  "N content per experiment",
+  "c",
+  quote(library_source),
+  "Library source"
+) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+
+sf3d <- histogramColoured(
+  dataS3,
+  quote(overall_n_content),
+  "N content per experiment",
+  "d",
+  quote(taxTop),
+  "Sample organisms"
+) + scale_y_log10() + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.9,0.7))
+
+sf3e <- histogramColoured(
+  dataS3,
+  quote(overall_n_content),
+  "N content per experiment",
+  "e",
+  quote(instrument_vendor),
+  "Instrument vendor"
+) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+
+sf3f <- histogramColoured(
+  dataS3,
+  quote(overall_n_content),
+  "N content per experiment",
+  "f",
+  quote(year),
+  "Year"
+) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
 
 # save
 ggsave(
-  plot = sf3,
+  plot = grid.arrange(sf3a, sf3b, sf3c, sf3d, sf3e, sf3f, ncol=3),
   file = "./supplementary_figure3.pdf",
   width = 85,
   height = 85,
