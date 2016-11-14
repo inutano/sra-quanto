@@ -437,67 +437,67 @@ ggsave(
 # Supplementary Figure 3
 #
 
-dataS3 <- subset(df_date, df_date$year != "2016")
+dataS3 <- subset(df_date, df_date$year != "2016" & df_date$overall_n_content < 10)
 
 # Sup.Fig.3 - histogram by N content
 sf3a <- histogramOverall(
   dataS3,
   quote(overall_n_content),
-  "N content per experiment",
+  "Percent N content per experiment",
   "a"
-) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+) + scale_y_log10()
 
 sf3b <- histogramColoured(
   dataS3,
   quote(overall_n_content),
-  "N content per experiment",
+  "Percent N content per experiment",
   "b",
   quote(strTop),
   "Library strategy"
-) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+)+ theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 sf3c <- histogramColoured(
   dataS3,
   quote(overall_n_content),
-  "N content per experiment",
+  "Percent N content per experiment",
   "c",
   quote(library_source),
   "Library source"
-) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 sf3d <- histogramColoured(
   dataS3,
   quote(overall_n_content),
-  "N content per experiment",
+  "Percent N content per experiment",
   "d",
   quote(taxTop),
   "Sample organisms"
-) + scale_y_log10() + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.9,0.7))
+) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.8,0.7)) + scale_y_log10()
 
 sf3e <- histogramColoured(
   dataS3,
   quote(overall_n_content),
-  "N content per experiment",
+  "Percent N content per experiment",
   "e",
   quote(instrument_vendor),
   "Instrument vendor"
-) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 sf3f <- histogramColoured(
   dataS3,
   quote(overall_n_content),
-  "N content per experiment",
+  "Percent N content per experiment",
   "f",
   quote(year),
   "Year"
-) + scale_y_log10() + theme(legend.position = c(0.9,0.8))
+) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 # save
 ggsave(
   plot = grid.arrange(sf3a, sf3b, sf3c, sf3d, sf3e, sf3f, ncol=3),
   file = "./supplementary_figure3.pdf",
   width = 170,
-  height = 225,
+  height = 170,
   units = "mm"
 )
 
