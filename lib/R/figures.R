@@ -366,7 +366,7 @@ sf1c <- histogramColoured(
   "c",
   quote(taxTop),
   "Scientific name"
-) + scale_fill_manual(values = c25Palette) + scale_x_log10()+ theme(legend.position = c(0.2,0.7))
+) + scale_fill_manual(values = c25Palette) + scale_x_log10()+ theme(legend.position = c(0.25,0.6))
 
 # Sup.Fig.1d - histogram by throughput, coloured by instrument vendor
 sf1d <- histogramColoured(
