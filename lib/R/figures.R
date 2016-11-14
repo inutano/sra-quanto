@@ -334,42 +334,42 @@ ggsave(
 # Sup.Fig.1a - histogram by throughput, coloured by library strategy
 sf1a <- histogramColoured(
   df,
-  log10(df$throughput),
+  quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "a",
-  df$strTop,
+  quote(strTop),
   "Library strategy"
-) + scale_fill_manual(values = c25Palette)
+) + scale_x_log10()
 
 # Sup.Fig.1b - histogram by throughput, coloured by library source
 sf1b <- histogramColoured(
   df,
-  log10(df$throughput),
+  quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "b",
-  df$library_source,
+  quote(library_source),
   "Library source"
-)
+) + scale_x_log10()
 
 # Sup.Fig.1c - histogram by throughput, coloured by taxonomy
 sf1c <- histogramColoured(
   df,
-  log10(df$throughput),
+  quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "c",
-  df$taxTop,
+  quote(taxTop),
   "Scientific name"
-) + scale_fill_manual(values = c25Palette)
+) + scale_fill_manual(values = c25Palette) + scale_x_log10()
 
 # Sup.Fig.1d - histogram by throughput, coloured by instrument vendor
 sf1d <- histogramColoured(
   df,
-  log10(df$throughput),
+  quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "d",
-  df$instrument_vendor,
+  quote(instrument_vendor),
   "Instrument vendor"
-) + scale_fill_manual(values = c25Palette)
+) + scale_x_log10()
 
 # Combine and save
 ggsave(
@@ -387,42 +387,42 @@ ggsave(
 # Sup.Fig.2a - histogram by basecall accuracy, coloured by library strategy
 sf2a <- histogramColoured(
   df,
-  df$overall_median_quality_score,
+  quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "a",
-  df$strTop,
+  quote(strTop),
   "Library strategy"
-) + scale_fill_manual(values = c25Palette)
+)
 
 # Sup.Fig.2b - histogram by basecall accuracy, coloured by library source
 sf2b <- histogramColoured(
   df,
-  df$overall_median_quality_score,
+  quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "b",
-  df$library_source,
+  quote(library_source),
   "Library source"
 )
 
 # Sup.Fig.2c - histogram by basecall accuracy, coloured by taxonomy
 sf2c <- histogramColoured(
   df,
-  df$overall_median_quality_score,
+  quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "c",
-  df$taxTop,
+  quote(taxTop),
   "Scientific name"
-) + scale_fill_manual(values = c25Palette)
+) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.2,0.7))
 
 # Sup.Fig.2d - histogram by basecall accuracy, coloured by instrument vendor
 sf2d <- histogramColoured(
   df,
-  df$overall_median_quality_score,
+  quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "d",
-  df$instrument_vendor,
+  quote(instrument_vendor),
   "Instrument vendor"
-) + scale_fill_manual(values = c25Palette)
+)
 
 # Combine and save
 ggsave(
