@@ -117,6 +117,22 @@ df$strTop <- ifelse(df$library_strategy %in% strTop, df$library_strategy, "OTHER
 df$library_strategy <- as.factor(df$library_strategy)
 df$strTop <- as.factor(df$strTop)
 
+# instrument vendors
+
+illumina <- c("HiSeq X Ten", "NextSeq 500")
+df$instrument_model <- as.character(df$instrument_model)
+df$instrument_vendor <- ifelse(df$instrument_model %in% illumina, "Illumina", df$instrument_model)
+df$instrument_vendor <- str_replace(df$instrument_vendor, " .+", "")
+
+df$instrument_vendor <- ifelse(df$instrument_vendor == "Complete", "Complete Genomics", df$instrument_vendor)
+df$instrument_vendor <- ifelse(df$instrument_vendor == "Ion", "Ion Torrent", df$instrument_vendor)
+df$instrument_vendor <- ifelse(df$instrument_vendor == "MinION", "Oxford Nanopore", df$instrument_vendor)
+
+df$instrument_model <- as.factor(df$instrument_model)
+df$instrument_vendor <- as.factor(df$instrument_vendor)
+
+
+
 # Histogram template
 
 histogramOverall <- function(d, xAxisData, xLabel, title){
@@ -185,8 +201,8 @@ f2d <- histogramColoured(
   quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "d",
-  quote(strTop),
-  "Library strategy"
+  quote(instrument_vendor),
+  "Instrument vendor"
 )
 
 # Combine and save
@@ -201,15 +217,6 @@ ggsave(
 #
 # Figure 3
 #
-
-# instrument vendors
-
-illumina <- c("HiSeq X Ten", "NextSeq 500")
-df$instrument_model <- as.character(df$instrument_model)
-df$instrument_vendor <- ifelse(df$instrument_model %in% illumina, "Illumina", df$instrument_model)
-df$instrument_vendor <- str_replace(df$instrument_vendor, " .+", "")
-df$instrument_model <- as.factor(df$instrument_model)
-df$instrument_vendor <- as.factor(df$instrument_vendor)
 
 # Faceted histogram template
 
@@ -359,7 +366,7 @@ sf1c <- histogramColoured(
   "c",
   quote(taxTop),
   "Scientific name"
-) + scale_fill_manual(values = c25Palette) + scale_x_log10()
+) + scale_fill_manual(values = c25Palette) + scale_x_log10()+ theme(legend.position = c(0.2,0.7))
 
 # Sup.Fig.1d - histogram by throughput, coloured by instrument vendor
 sf1d <- histogramColoured(
@@ -392,7 +399,7 @@ sf2a <- histogramColoured(
   "a",
   quote(strTop),
   "Library strategy"
-)
+) + theme(legend.position = c(0.8,0.8))
 
 # Sup.Fig.2b - histogram by basecall accuracy, coloured by library source
 sf2b <- histogramColoured(
@@ -402,7 +409,7 @@ sf2b <- histogramColoured(
   "b",
   quote(library_source),
   "Library source"
-)
+) + theme(legend.position = c(0.8,0.8))
 
 # Sup.Fig.2c - histogram by basecall accuracy, coloured by taxonomy
 sf2c <- histogramColoured(
@@ -412,7 +419,7 @@ sf2c <- histogramColoured(
   "c",
   quote(taxTop),
   "Scientific name"
-) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.2,0.7))
+) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.8,0.8))
 
 # Sup.Fig.2d - histogram by basecall accuracy, coloured by instrument vendor
 sf2d <- histogramColoured(
@@ -422,7 +429,7 @@ sf2d <- histogramColoured(
   "d",
   quote(instrument_vendor),
   "Instrument vendor"
-)
+) + theme(legend.position = c(0.8,0.8))
 
 # Combine and save
 ggsave(
@@ -445,7 +452,7 @@ sf3a <- histogramOverall(
   quote(overall_n_content),
   "Percent N content per experiment",
   "a"
-) + scale_y_log10()
+) + scale_y_continuous(limits = c(0, 10000))
 
 sf3b <- histogramColoured(
   dataS3,
@@ -454,7 +461,7 @@ sf3b <- histogramColoured(
   "b",
   quote(strTop),
   "Library strategy"
-)+ theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+)+ theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
 
 sf3c <- histogramColoured(
   dataS3,
@@ -463,7 +470,7 @@ sf3c <- histogramColoured(
   "c",
   quote(library_source),
   "Library source"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+) + theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
 
 sf3d <- histogramColoured(
   dataS3,
@@ -472,7 +479,7 @@ sf3d <- histogramColoured(
   "d",
   quote(taxTop),
   "Sample organisms"
-) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.8,0.7)) + scale_y_log10()
+) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.7,0.7)) + scale_y_continuous(limits = c(0, 10000))
 
 sf3e <- histogramColoured(
   dataS3,
@@ -481,7 +488,7 @@ sf3e <- histogramColoured(
   "e",
   quote(instrument_vendor),
   "Instrument vendor"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+) + theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
 
 sf3f <- histogramColoured(
   dataS3,
@@ -490,14 +497,14 @@ sf3f <- histogramColoured(
   "f",
   quote(year),
   "Year"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+) + theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
 
 # save
 ggsave(
   plot = grid.arrange(sf3a, sf3b, sf3c, sf3d, sf3e, sf3f, ncol=3),
   file = "./supplementary_figure3.pdf",
   width = 170,
-  height = 170,
+  height = 225,
   units = "mm"
 )
 
