@@ -496,8 +496,8 @@ sf3f <- histogramColoured(
 ggsave(
   plot = grid.arrange(sf3a, sf3b, sf3c, sf3d, sf3e, sf3f, ncol=3),
   file = "./supplementary_figure3.pdf",
-  width = 85,
-  height = 85,
+  width = 170,
+  height = 225,
   units = "mm"
 )
 
