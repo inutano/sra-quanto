@@ -120,7 +120,7 @@ df$strTop <- as.factor(df$strTop)
 # Histogram template
 
 histogramOverall <- function(d, xAxisData, xLabel, title){
-  p <- ggplot(d, aes(xAxisData))
+  p <- ggplot(d, aes_(xAxisData))
   p <- p + geom_histogram(bins = sqrt(nrow(d)))
   p <- p + labs(x = xLabel, title = title)
   p <- p + theme(
@@ -136,7 +136,7 @@ histogramOverall <- function(d, xAxisData, xLabel, title){
 }
 
 histogramColoured <- function(d, xAxisData, xLabel, title, fill, fillLegend){
-  p <- ggplot(d, aes(xAxisData, fill = factor(fill)))
+  p <- ggplot(d, aes_(xAxisData, fill = fill))
   p <- p + geom_histogram(bins = sqrt(nrow(d)))
   p <- p + theme(
     plot.background = element_rect(fill = "transparent", colour = NA),
@@ -156,25 +156,25 @@ histogramColoured <- function(d, xAxisData, xLabel, title, fill, fillLegend){
 # Fig.2a - histogram of throughput
 f2a <- histogramOverall(
   df,
-  log10(df$throughput),
+  quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "a"
-)
+) + scale_x_log10()
 
 # Fig.2b - histogram of throughput, coloured by library source
 f2b <- histogramColoured(
   df,
-  log10(df$throughput),
+  quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "b",
-  df$library_source,
+  quote(library_source),
   "Library source"
-)
+) + scale_x_log10()
 
 # Fig.2c - histogram of base call accuracy
 f2c <- histogramOverall(
   df,
-  df$overall_median_quality_score,
+  quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "c"
 )
@@ -182,16 +182,16 @@ f2c <- histogramOverall(
 # Fig.2d - histogram of base call accuracy, coloured by library strategy
 f2d <- histogramColoured(
   df,
-  df$overall_median_quality_score,
+  quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "d",
-  df$strTop,
+  quote(strTop),
   "Library strategy"
 )
 
 # Combine and save
 ggsave(
-  plot = grid.arrange(f2a, f2b, f2c, f2d, ncol=2),
+  plot = grid.arrange(f2a, f2c, f2b, f2d, ncol=2),
   file = "./figure2.pdf",
   width = 170,
   height = 170,
