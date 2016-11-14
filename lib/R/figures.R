@@ -284,17 +284,19 @@ ggsave(
 give.n <- function(x){ return(c(y = mean(x) * 1.3, label = length(x))) }
 
 timeSeriesBoxplot <- function(data, yAxisData, yLabel, title){
-  p <- ggplot(data, aes(x = data$qtr, y = yAxisData))
+  p <- ggplot(data, aes_(x = quote(qtr), y = yAxisData))
   p <- p + geom_boxplot(outlier.shape = NA)
   p <- p + stat_summary(fun.y = mean, geom = "line", aes(group = 1))
-  p <- p + stat_summary(fun.data = give.n, geom = "text", size = 2)
+  p <- p + stat_summary(fun.data = give.n, geom = "text", size = 1)
   p <- p + theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     plot.background = element_rect(fill = "transparent", colour = NA),
     panel.background = element_rect(fill = "transparent", colour = NA),
     panel.grid.major = element_line(color = "gray", size = .1),
     panel.grid.minor = element_line(color = "gray", size = .05),
-    plot.title = element_text(size = rel(2), hjust = 0)
+    text = element_text(size = 5),
+    strip.background = element_rect(fill="transparent", colour=NA),
+    plot.title = element_text(size = 15, hjust = 0),
   )
   p <- p + labs(x = "Quarters", y = yLabel, title = title)
   p <- p + facet_wrap(~strTop)
@@ -306,28 +308,24 @@ df$submitted_date <- as.POSIXct(df$submitted_date, format="%Y-%m-%dT%H:%M:%SZ", 
 df_date <- df[!is.na(df$submitted_date),]
 df_date$year <- strftime(df_date$submitted_date, format="%Y")
 df_date$qtr <- paste(format(df_date$submitted_date, "%Y"), quarters(df_date$submitted_date), sep="/")
-data4 <- subset(df_date, df_date$year!="2016" & df_date$taxonomy_id == "9606" & df_date$strTop != "OTHER")
+data4 <- subset(df_date, df_date$year != "2016" & as.numeric(df_date$year) > 2010  & df_date$taxonomy_id == "9606" & df_date$strTop != "OTHER")
 
-# Fig.4a - Box plot of total sequences by quarter
-f4a <- timeSeriesBoxplot(data4, log10(data4$total_sequences), "Total number of sequences per experiment (log10)", "a")
 
-# Fig.4b - Box plot of length by quarter
-f4b <- timeSeriesBoxplot(data4, log10(data4$median_sequence_length), "Median sequence length per experiment (log10)", "b")
+# Fig.4a - Box plot of throughput by quarter
+f4a <- timeSeriesBoxplot(data4, quote(throughput), "Sequencing throughput per experiment (log10)", "a") + scale_y_log10()
 
-# Fig.4c - Box plot of throughput by quarter
-f4c <- timeSeriesBoxplot(data4, log10(data4$throughput), "Sequencing throughput per experiment (log10)", "c")
-
-# Fig.4d - Box plot of base call accuracy by quarter
-f4d <- timeSeriesBoxplot(data4, data4$overall_median_quality_score, "Median base call accuracy per experiment", "d")
+# Fig.4b - Box plot of base call accuracy by quarter
+f4b <- timeSeriesBoxplot(data4, quote(overall_median_quality_score), "Median base call accuracy per experiment", "b")
 
 # Combine and save
 ggsave(
-  plot = grid.arrange(f4a, f4b, f4c, f4d, ncol=2),
+  plot = grid.arrange(f4a, f4b, ncol=1),
   file = "./figure4.pdf",
   width = 170,
   height = 225,
   units = "mm"
 )
+
 
 #
 # Supplementary Figure 1
@@ -453,5 +451,24 @@ ggsave(
   file = "./supplementary_figure3.pdf",
   width = 85,
   height = 85,
+  units = "mm"
+)
+
+#
+# Supplementary Figure 4
+#
+
+# Sup.Fig.4a - Box plot of total sequences by quarter
+sf4a <- timeSeriesBoxplot(data4, quote(total_sequences), "Total number of sequences per experiment (log10)", "a") + scale_y_log10()
+
+# Sup.Fig.4b - Box plot of length by quarter
+sf4b <- timeSeriesBoxplot(data4, quote(median_sequence_length), "Median sequence length per experiment (log10)", "b") + scale_y_log10()
+
+# save
+ggsave(
+  plot = grid.arrange(sf4a, sf4b, ncol=1),
+  file = "./supplementary_figure4.pdf",
+  width = 170,
+  height = 225,
   units = "mm"
 )
