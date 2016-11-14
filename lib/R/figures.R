@@ -214,7 +214,7 @@ df$instrument_vendor <- as.factor(df$instrument_vendor)
 # Faceted histogram template
 
 histoFaceted <- function(data, xAxisData, xLabel, title){
-  p <- ggplot(data, aes(xAxisData, fill=factor(data$instrument_vendor)))
+  p <- ggplot(data, aes_(xAxisData, fill=quote(instrument_vendor)))
   p <- p + geom_histogram(bins = sqrt(nrow(data)))
   p <- p + theme(
     plot.background = element_rect(fill="transparent", colour=NA),
@@ -229,7 +229,7 @@ histoFaceted <- function(data, xAxisData, xLabel, title){
   )
   p <- p + labs(x = xLabel, title = title, fill = "Instrument")
   p <- p + scale_fill_manual(values = cbPalette)
-  p <- p + facet_wrap(~strTop)
+  p <- p + facet_wrap(~strTop, scales="free_y")
   return(p)
 }
 
@@ -239,31 +239,31 @@ data3 <- subset(df, df$taxonomy_id == "9606" & df$strTop != "OTHER")
 # Fig.3a - histogram of total sequences, faceted by strategy, coloured by instrument without legend
 f3a <- histoFaceted(
   data3,
-  log10(data3$total_sequences),
+  quote(total_sequences),
   "Total number of sequences per experiment (log10)",
   "a"
-) + theme(legend.position="none")
+) + theme(legend.position="none") + scale_x_log10()
 
 # Fig.3b - histogram of length, faceted by strategy, coloured by instrument with legend
 f3b <- histoFaceted(
   data3,
-  log10(data3$median_sequence_length),
+  quote(median_sequence_length),
   "Median sequence read length per experiment (log10)",
   "b"
-)
+) + scale_x_log10()
 
 # Fig.3c - histogram of throughput, faceted by strategy, coloured by instrument without legend
 f3c <- histoFaceted(
   data3,
-  log10(data3$throughput),
+  quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "c"
-) + theme(legend.position="none")
+) + theme(legend.position="none") + scale_x_log10()
 
 # Fig.3d - histogram of base call accuracy, faceted by strategy, coloured by instrument without legend
 f3d <- histoFaceted(
   data3,
-  data3$overall_median_quality_score,
+  quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
   "d"
 ) + theme(legend.position="none")
