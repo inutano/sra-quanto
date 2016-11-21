@@ -41,12 +41,12 @@ module Quanto
     end
 
     def validate_record(record, finished_set)
-      validated = is_finished?(record, finished_set) && valid_date?(record)
+      validated = !is_finished?(record, finished_set) && valid_date?(record)
       experiment_record(record) if validated
     end
 
     def is_finished?(record, finished_set)
-      !finished_set.include?(record[0])
+      finished_set.include?(record[0])
     end
 
     def valid_date?(record)
