@@ -40,24 +40,47 @@ namespace :quanto do
 
   desc "option: workdir, fastqc_dir"
   task :exec => [list_available, logfile, logdir_job, logdir_ftp, logdir_uge, logdir_table] do
-    logwrite(logfile, "Start FastQC execution: #{Time.now}")
-    list = Quanto::Records::IO.read(list_available)
-    logwrite(logfile, "Number of target experiments: #{list.size}")
+    list_records = Quanto::Records::IO.read(list_available)
+    logwrite(logfile, "#{Time.now}: Number of total target experiments: #{list_records.size}")
 
-    process_list = File.join(logdir, "process_list.txt")
-    open(process_list, "w") do |f|
-      list.each do |record|
-        exp_id = record[0]
-        acc_id = record[1]
-        layout = record[2]
-        logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
-        mkdir_p logdir_exp
-        logfile_job = File.join(logdir_exp, exp_id + ".log")
-        f.puts("#{acc_id} #{exp_id} #{layout} #{logfile_job}")
+    grouped_records = list_records.each_slice(50000).to_a
+    grouped_records.each_with_index do |records, i|
+      while !`#{QSUB.gsub(/qsub$/,"qstat")} | grep Quanto`.empty? do
+        sleep 300
+      end
+      logwrite(logfile, "#{Time.now}: Start FastQC execution #{i}/#{grouped_records.size}")
+
+      # Create process list for array job
+      process_list = File.join(logdir, "process_list_#{i}.txt")
+      open(process_list, "w") do |f|
+        records.each do |records|
+          exp_id = records[0]
+          acc_id = records[1]
+          layout = records[2]
+          logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
+          mkdir_p logdir_exp
+          logfile_job = File.join(logdir_exp, exp_id + ".log")
+          f.puts("#{acc_id} #{exp_id} #{layout} #{logfile_job}")
+        end
       end
 
       # Submit array job
-      sh "#{QSUB} -N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")} -j y -o #{logdir_uge} -t 1-#{list.size} #{core} --fastqc-dir #{fastqc_dir} --ftp-connection-pool #{logdir_ftp} --fastq-checksum #{checksum_table} --job-list #{process_list}"
+      qsub_args = [
+        "-N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")}",
+        "-j y",
+        "-o #{logdir_uge}",
+        "-t 1-#{list.size}",
+      ]
+
+      fastqc_args = [
+        "--fastqc-dir #{fastqc_dir}",
+        "--ftp-connection-pool #{logdir_ftp}",
+        "--fastq-checksum #{checksum_table}",
+        "--job-list #{process_list}",
+      ]
+
+      mes = `#{QSUB} #{qsub_args.join("\s")} #{core} #{fastqc_args.join("\s")}`
+      logwrite(logfile, "#{Time.now}: #{mes}")
     end
   end
 end
