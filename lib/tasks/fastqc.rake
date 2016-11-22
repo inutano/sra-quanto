@@ -53,10 +53,11 @@ namespace :quanto do
       # Create process list for array job
       process_list = File.join(logdir, "process_list_#{i}.txt")
       open(process_list, "w") do |f|
-        records.each do |records|
-          exp_id = records[0]
-          acc_id = records[1]
-          layout = records[2]
+        records.each do |record|
+          exp_id = record[0]
+          acc_id = record[1]
+          layout = record[2]
+
           logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
           mkdir_p logdir_exp
           logfile_job = File.join(logdir_exp, exp_id + ".log")
@@ -69,7 +70,7 @@ namespace :quanto do
         "-N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")}",
         "-j y",
         "-o #{logdir_uge}",
-        "-t 1-#{list.size}",
+        "-t 1-#{records.size}",
       ]
 
       fastqc_args = [
