@@ -446,7 +446,8 @@ ggsave(
 # Supplementary Figure 3
 #
 
-dataS3 <- subset(df_date, df_date$year != "2016" & df_date$overall_n_content < 10)
+dataS3 <- subset(df_date, df_date$year != "2016")
+dataS3[dataS3 == 0] <- NA
 
 # Sup.Fig.3 - histogram by N content
 sf3a <- histogramOverall(
@@ -454,7 +455,7 @@ sf3a <- histogramOverall(
   quote(overall_n_content),
   "Percent N content per experiment",
   "a"
-) + scale_y_continuous(limits = c(0, 10000))
+) + scale_y_log10()
 
 sf3b <- histogramColoured(
   dataS3,
@@ -463,7 +464,7 @@ sf3b <- histogramColoured(
   "b",
   quote(strTop),
   "Library strategy"
-)+ theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
+)+ theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 sf3c <- histogramColoured(
   dataS3,
@@ -472,7 +473,7 @@ sf3c <- histogramColoured(
   "c",
   quote(library_source),
   "Library source"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
+) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 sf3d <- histogramColoured(
   dataS3,
@@ -481,7 +482,7 @@ sf3d <- histogramColoured(
   "d",
   quote(taxTop),
   "Sample organisms"
-) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.7,0.7)) + scale_y_continuous(limits = c(0, 10000))
+) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.7,0.7)) + scale_y_log10()
 
 sf3e <- histogramColoured(
   dataS3,
@@ -490,7 +491,7 @@ sf3e <- histogramColoured(
   "e",
   quote(instrument_vendor),
   "Instrument vendor"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
+) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 sf3f <- histogramColoured(
   dataS3,
@@ -499,7 +500,7 @@ sf3f <- histogramColoured(
   "f",
   quote(year),
   "Year"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_continuous(limits = c(0, 10000))
+) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
 
 # save
 ggsave(
