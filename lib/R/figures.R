@@ -14,15 +14,15 @@ df <- subset(df, df$total_sequence > 0)
 
 # Clour palette from http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
 cbPalette <- c(
-  "#999999",
-  "#E69F00",
-  "#56B4E9",
-  "#009E73",
-  "#F0E442",
-  "#0072B2",
-  "#D55E00",
-  "#CC79A7",
-  "#000000"
+  "#999999", # gray
+  "#E69F00", # orange
+  "#56B4E9", # sky blue
+  "#D55E00", # vermillion
+  "#009E73", # bluish green
+  "#0072B2", # blue
+  "#CC79A7", # reddish purple
+  "#F0E442", # yellow
+  "#000000"  # black
 )
 
 # Colour palette from http://stackoverflow.com/questions/9563711/r-color-palettes-for-many-data-classes
@@ -32,8 +32,10 @@ c25Palette <- c(
   "green4",
   "#6A3D9A", # purple
   "#FF7F00", # orange
-  "black","gold1",
-  "skyblue2","#FB9A99", # lt pink
+  "black",
+  "gold1",
+  "skyblue2",
+  "#FB9A99", # lt pink
   "palegreen2",
   "#CAB2D6", # lt purple
   "#FDBF6F", # lt orange
