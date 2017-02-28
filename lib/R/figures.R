@@ -362,7 +362,7 @@ sf1c <- histogramOverall(
   quote(throughput),
   "Sequencing throughput per experiment (log10)",
   "c"
-) + scale_x_log10() + facet_wrap(~taxTop, scales="free_y") + theme(text = element_text(size = 2))
+) + scale_x_log10() + facet_wrap(~taxTop, scales="free_y") + theme(text = element_text(size = 5))
 
 
 # Sup.Fig.1d - histogram by throughput, coloured by instrument vendor
@@ -377,8 +377,8 @@ sf1d <- histogramOverall(
 ggsave(
   plot = grid.arrange(sf1a, sf1b, sf1c, sf1d, ncol=2),
   file = "./supplementary_figure1.pdf",
-  width = 170,
-  height = 170,
+  width = 340,
+  height = 340,
   units = "mm"
 )
 
@@ -387,51 +387,43 @@ ggsave(
 #
 
 # Sup.Fig.2a - histogram by basecall accuracy, coloured by library strategy
-sf2a <- histogramColoured(
+sf2a <- histogramOverall(
   df,
   quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
-  "a",
-  quote(strTop),
-  "Library strategy"
-) + theme(legend.position = c(0.8,0.8))
+  "a"
+) + facet_wrap(~strTop, scales="free_y")
 
 # Sup.Fig.2b - histogram by basecall accuracy, coloured by library source
-sf2b <- histogramColoured(
+sf2b <- histogramOverall(
   df,
   quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
-  "b",
-  quote(library_source),
-  "Library source"
-) + theme(legend.position = c(0.8,0.8))
+  "b"
+) + facet_wrap(~library_source, scales="free_y")
 
 # Sup.Fig.2c - histogram by basecall accuracy, coloured by taxonomy
-sf2c <- histogramColoured(
+sf2c <- histogramOverall(
   df,
   quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
-  "c",
-  quote(taxTop),
-  "Scientific name"
-) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.8,0.8))
+  "c"
+) + facet_wrap(~taxTop, scales="free_y") + theme(text = element_text(size = 5))
 
 # Sup.Fig.2d - histogram by basecall accuracy, coloured by instrument vendor
-sf2d <- histogramColoured(
+sf2d <- histogramOverall(
   df,
   quote(overall_median_quality_score),
   "Median base call accuracy per experiment",
-  "d",
-  quote(instrument_vendor),
-  "Instrument vendor"
-) + theme(legend.position = c(0.8,0.8))
+  "d"
+) + facet_wrap(~instrument_vendor, scales="free_y")
 
 # Combine and save
 ggsave(
   plot = grid.arrange(sf2a, sf2b, sf2c, sf2d, ncol=2),
   file = "./supplementary_figure2.pdf",
-  width = 170,
-  height = 170,
+  width = 340,
+  height = 340,
   units = "mm"
 )
 
@@ -450,57 +442,47 @@ sf3a <- histogramOverall(
   "a"
 ) + scale_y_log10()
 
-sf3b <- histogramColoured(
+sf3b <- histogramOverall(
   dataS3,
   quote(overall_n_content),
   "Percent N content per experiment",
-  "b",
-  quote(strTop),
-  "Library strategy"
-)+ theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+  "b"
+)+ facet_wrap(~strTop, scales="free_y") + scale_y_log10()
 
-sf3c <- histogramColoured(
+sf3c <- histogramOverall(
   dataS3,
   quote(overall_n_content),
   "Percent N content per experiment",
-  "c",
-  quote(library_source),
-  "Library source"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+  "c"
+) + facet_wrap(~library_source, scales="free_y") + scale_y_log10()
 
-sf3d <- histogramColoured(
+sf3d <- histogramOverall(
   dataS3,
   quote(overall_n_content),
   "Percent N content per experiment",
-  "d",
-  quote(taxTop),
-  "Sample organisms"
-) + scale_fill_manual(values = c25Palette) + theme(legend.position = c(0.7,0.7)) + scale_y_log10()
+  "d"
+) + facet_wrap(~taxTop, scales="free_y") + theme(text = element_text(size = 4)) + scale_y_log10()
 
-sf3e <- histogramColoured(
+sf3e <- histogramOverall(
   dataS3,
   quote(overall_n_content),
   "Percent N content per experiment",
-  "e",
-  quote(instrument_vendor),
-  "Instrument vendor"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+  "e"
+) + facet_wrap(~instrument_vendor, scales="free_y") + scale_y_log10()
 
-sf3f <- histogramColoured(
+sf3f <- histogramOverall(
   dataS3,
   quote(overall_n_content),
   "Percent N content per experiment",
-  "f",
-  quote(year),
-  "Year"
-) + theme(legend.position = c(0.8,0.8)) + scale_y_log10()
+  "f"
+) + facet_wrap(~year, scales="free_y") + scale_y_log10()
 
 # save
 ggsave(
   plot = grid.arrange(sf3a, sf3b, sf3c, sf3d, sf3e, sf3f, ncol=3),
   file = "./supplementary_figure3.pdf",
-  width = 170,
-  height = 225,
+  width = 340,
+  height = 170,
   units = "mm"
 )
 
