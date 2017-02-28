@@ -6,12 +6,17 @@ end
 
 namespace :quanto do
   desc "option: data (default: tables/summary/quanto.annotated.tsv)"
-  task :plot => [
-    :load_data,
-    :figures,
-    :tables,
-    :statistics,
-  ]
+  task :plot do
+    `Rscript "#{File.join(PROJ_ROOT, "lib/R/figures.R")}" "#{ENV['data']}"`
+  end
+
+  # Future task: more detail
+  # task :plot => [
+  #   :load_data,
+  #   :figures,
+  #   :tables,
+  #   :statistics,
+  # ]
 
   #
   # Load data file
