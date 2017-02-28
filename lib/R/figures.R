@@ -341,44 +341,37 @@ ggsave(
 #
 
 # Sup.Fig.1a - histogram by throughput, coloured by library strategy
-sf1a <- histogramColoured(
+sf1a <- histogramOverall(
   df,
   quote(throughput),
   "Sequencing throughput per experiment (log10)",
-  "a",
-  quote(strTop),
-  "Library strategy"
-) + scale_x_log10()
+  "a"
+) + scale_x_log10() + facet_wrap(~strTop, scales="free_y")
 
 # Sup.Fig.1b - histogram by throughput, coloured by library source
-sf1b <- histogramColoured(
+sf1b <- histogramOverall(
   df,
   quote(throughput),
   "Sequencing throughput per experiment (log10)",
-  "b",
-  quote(library_source),
-  "Library source"
-) + scale_x_log10()
+  "b"
+) + scale_x_log10() + facet_wrap(~library_source, scales="free_y")
 
 # Sup.Fig.1c - histogram by throughput, coloured by taxonomy
-sf1c <- histogramColoured(
+sf1c <- histogramOverall(
   df,
   quote(throughput),
   "Sequencing throughput per experiment (log10)",
-  "c",
-  quote(taxTop),
-  "Scientific name"
-) + scale_fill_manual(values = c25Palette) + scale_x_log10()+ theme(legend.position = c(0.25,0.6))
+  "c"
+) + scale_x_log10() + facet_wrap(~taxTop, scales="free_y") + theme(text = element_text(size = 2))
+
 
 # Sup.Fig.1d - histogram by throughput, coloured by instrument vendor
-sf1d <- histogramColoured(
+sf1d <- histogramOverall(
   df,
   quote(throughput),
   "Sequencing throughput per experiment (log10)",
-  "d",
-  quote(instrument_vendor),
-  "Instrument vendor"
-) + scale_x_log10()
+  "d"
+) + scale_x_log10() + facet_wrap(~instrument_vendor, scales="free_y")
 
 # Combine and save
 ggsave(
