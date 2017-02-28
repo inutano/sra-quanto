@@ -223,7 +223,7 @@ ggsave(
 # Faceted histogram template
 
 histoFaceted <- function(data, xAxisData, xLabel, title){
-  p <- ggplot(data, aes_(xAxisData, fill=quote(instrument_vendor)))
+  p <- ggplot(data, aes_(xAxisData))
   p <- p + geom_histogram(bins = sqrt(nrow(data)))
   p <- p + theme(
     plot.background = element_rect(fill="transparent", colour=NA),
@@ -515,16 +515,81 @@ ggsave(
 # Supplementary Figure 4
 #
 
-# Sup.Fig.4a - Box plot of total sequences by quarter
-sf4a <- timeSeriesBoxplot(data4, quote(total_sequences), "Total number of sequences per experiment (log10)", "a") + scale_y_log10()
+# Two faceted histogram template
 
-# Sup.Fig.4b - Box plot of length by quarter
-sf4b <- timeSeriesBoxplot(data4, quote(median_sequence_length), "Median sequence length per experiment (log10)", "b") + scale_y_log10()
+histoTwoFaceted <- function(data, xAxisData, xLabel, title){
+  p <- ggplot(data, aes_(xAxisData))
+  p <- p + geom_histogram(bins = sqrt(nrow(data)))
+  p <- p + theme(
+    plot.background = element_rect(fill="transparent", colour=NA),
+    panel.background = element_rect(fill="transparent", colour=NA),
+    panel.grid.major = element_line(color="gray", size=.001),
+    panel.grid.minor = element_line(color="gray", size=.0001),
+    text = element_text(size = 5),
+    strip.background = element_rect(fill="transparent", colour=NA),
+    plot.title = element_text(size = 15, hjust = 0),
+  )
+  p <- p + labs(x = xLabel, title = title, fill = "Instrument")
+  p <- p + scale_fill_manual(values = cbPalette)
+  p <- p + facet_grid(instrument_vendor~strTop, scales="free_y")
+  return(p)
+}
+
+# Fig.S4a - histogram of total sequences, faceted by strategy and instrument
+sf4a <- histoTwoFaceted(
+  data3,
+  quote(total_sequences),
+  "Total number of sequences per experiment (log10)",
+  "a"
+) + theme(legend.position="none") + scale_x_log10()
+
+# Fig.S4b - histogram of length, faceted by strategy and instrument
+sf4b <- histoTwoFaceted(
+  data3,
+  quote(median_sequence_length),
+  "Median sequence read length per experiment (log10)",
+  "b"
+) + scale_x_log10()
+
+# Fig.S4c - histogram of throughput, faceted by strategy and instrument
+sf4c <- histoTwoFaceted(
+  data3,
+  quote(throughput),
+  "Sequencing throughput per experiment (log10)",
+  "c"
+) + theme(legend.position="none") + scale_x_log10()
+
+# Fig.S4d - histogram of base call accuracy, faceted by strategy and instrument
+sf4d <- histoTwoFaceted(
+  data3,
+  quote(overall_median_quality_score),
+  "Median base call accuracy per experiment",
+  "d"
+) + theme(legend.position="none")
+
+# Combine and save
+ggsave(
+  plot = grid.arrange(sf4a, sf4b, sf4c, sf4d, ncol=2),
+  file = "./supplementary_figure4.pdf",
+  width = 340,
+  height = 340,
+  units = "mm"
+)
+
+#
+# Supplementary Figure 5
+#
+
+# Sup.Fig.5a - Box plot of total sequences by quarter
+sf5a <- timeSeriesBoxplot(data4, quote(total_sequences), "Total number of sequences per experiment (log10)", "a") + scale_y_log10()
+
+# Sup.Fig.5b - Box plot of length by quarter
+sf5b <- timeSeriesBoxplot(data4, quote(median_sequence_length), "Median sequence length per experiment (log10)", "b") + scale_y_log10()
 
 # save
 ggsave(
-  plot = grid.arrange(sf4a, sf4b, ncol=1),
-  file = "./supplementary_figure4.pdf",
+  plot = grid.arrange(sf5a, sf5b, ncol=1),
+  file = "./supplementary_figure5.pdf",
   width = 170,
   height = 225,
   units = "mm"
