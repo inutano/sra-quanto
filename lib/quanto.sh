@@ -11,7 +11,7 @@
 #
 FASTQ_DUMP="${HOME}/local/bin/fastq-dump"
 VDB_VALIDATE="${HOME}/local/bin/vdb-validate"
-FASTQC="${HOME}/local/bin/fastqc --noextract --threads 4"
+FASTQC="${HOME}/local/bin/fastqc -f fastq --quiet --nogroup --noextract --threads 4"
 
 #
 # Global variables
