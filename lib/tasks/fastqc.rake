@@ -59,8 +59,9 @@ namespace :quanto do
       logfile_job = File.join(logdir_exp, exp_id + ".log")
 
       # check the number of running job
-      running_jobs = "#{QSUB.gsub(/qsub$/,"qstat")} | awk '$5 == "r"' | wc -l"
-      queued_jobs = "#{QSUB.gsub(/qsub$/,"qstat")} | grep Quanto | wc -l"
+      qstat_cmd = QSUB.gsub(/qsub$/,"qstat")
+      running_jobs = "#{qstat_cmd} | awk '$5 == \"r\"' | wc -l"
+      queued_jobs = "#{qstat_cmd} | grep Quanto | wc -l"
       while `#{running_jobs}`.to_i > 16 || `#{queued_jobs}`.to_i > 500
         sleep 300
       end
