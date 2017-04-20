@@ -43,6 +43,50 @@ namespace :quanto do
     list_records = Quanto::Records::IO.read(list_available)
     logwrite(logfile, "#{Time.now}: Number of total target experiments: #{list_records.size}")
 
+    list_records.each do |record|
+      exp_id = record[0]
+      acc_id = record[1]
+      layout = record[2]
+
+      # create log directory
+      logdir_exp = File.join(logdir_job, exp_id.sub(/...$/,""))
+      mkdir_p logdir_exp
+
+      # create log file
+      logfile_job = File.join(logdir_exp, exp_id + ".log")
+
+      # check the number of running job
+      while `#{QSUB.gsub(/qsub$/,"qstat")} | awk '$5 == "r"' | wc -l`.to_i > 16
+        sleep 300
+      end
+
+      # qsub
+      qsub_args = [
+        "-N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")}",
+        "-j y",
+        "-o #{logdir_uge}",
+      ]
+
+      fastqc_args = [
+        "--accession-id #{acc_id}",
+        "--experiment-id #{exp_id}",
+        "--read-layout #{layout}",
+        "--log-file #{logfile_job}",
+        "--fastqc-dir #{fastqc_dir}",
+        "--ftp-connection-pool #{logdir_ftp}",
+        "--fastq-checksum #{checksum_table}",
+      ]
+
+      mes = `#{QSUB} #{qsub_args.join("\s")} #{core} #{fastqc_args.join("\s")}`
+      logwrite(logfile, "#{Time.now}: #{mes}")
+    end
+  end
+
+  desc "option: workdir, fastqc_dir"
+  task :exec_arrayjob => [list_available, logfile, logdir_job, logdir_ftp, logdir_uge, logdir_table] do
+    list_records = Quanto::Records::IO.read(list_available)
+    logwrite(logfile, "#{Time.now}: Number of total target experiments: #{list_records.size}")
+
     grouped_records = list_records.each_slice(50000).to_a
     grouped_records.each_with_index do |records, i|
       while !`#{QSUB.gsub(/qsub$/,"qstat")} | grep Quanto`.empty? do
