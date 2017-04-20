@@ -150,7 +150,8 @@ download_data(){
   local ftp_connection_pool="${4}"
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
-  lftp -c "open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror ${path} ${target_dir}"
+  lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror --parallel=8 ${path} ${target_dir}"
+  chmod -R a+w ${target_dir}
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 }
 
