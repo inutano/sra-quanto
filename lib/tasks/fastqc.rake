@@ -65,9 +65,9 @@ namespace :quanto do
 
       # qsub
       qsub_args = [
-        "-N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")}",
         "-j y",
         "-o #{logdir_uge}",
+        "-N Quanto.#{Time.now.strftime("%Y%m%d-%H%M")}",
       ]
 
       fastqc_args = [
