@@ -17,6 +17,7 @@ FASTQC="${HOME}/local/bin/fastqc -f fastq --quiet --nogroup --noextract --thread
 # Global variables
 #
 DDBJ_FTP_BASE="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
+NCBI_FTP_BASE="ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByExp/sra"
 
 #
 # Functions
@@ -73,7 +74,8 @@ get_fq_path(){
 
 get_sra_path(){
   local exp_id="${1}"
-  echo "sralite/ByExp/litesra/${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
+  #echo "sralite/ByExp/litesra/${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
+  echo "${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
 }
 
 get_filesize(){
@@ -83,9 +85,9 @@ get_filesize(){
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
   if [[ -z `echo ${filepath} | awk '$0 ~ /litesra/'` ]]; then
-    local filelist=`lftp -c "set net:max-retries 1; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
+    local filelist=`lftp -c "set net:max-retries 1; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
   else
-    local filelist=`lftp -c "set net:max-retries 1; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
+    local filelist=`lftp -c "set net:max-retries 1; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
   fi
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 
@@ -148,7 +150,7 @@ download_data(){
   local ftp_connection_pool="${4}"
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
-  lftp -c "open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror ${path} ${target_dir}"
+  lftp -c "open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror ${path} ${target_dir}"
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 }
 
