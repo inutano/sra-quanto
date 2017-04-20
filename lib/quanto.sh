@@ -85,9 +85,9 @@ get_filesize(){
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
   if [[ -z `echo ${filepath} | awk '$0 ~ /litesra/'` ]]; then
-    local filelist=`lftp -c "set net:max-retries 1; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
+    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
   else
-    local filelist=`lftp -c "set net:max-retries 1; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
+    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
   fi
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 
