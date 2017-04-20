@@ -44,6 +44,9 @@ namespace :quanto do
     logwrite(logfile, "#{Time.now}: Number of total target experiments: #{list_records.size}")
 
     list_records.each do |record|
+      # avoid continuous connetion
+      sleep 15
+
       exp_id = record[0]
       acc_id = record[1]
       layout = record[2]
