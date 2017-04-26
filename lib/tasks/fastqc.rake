@@ -31,6 +31,7 @@ namespace :quanto do
 
   file logdir_table => logdir do |t|
     mkdir_p t.name
+    cp_r list_available, t.name
     cp_r Dir.glob("#{table_dir}/*tab"), t.name
   end
 
