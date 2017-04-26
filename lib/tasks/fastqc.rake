@@ -60,9 +60,8 @@ namespace :quanto do
 
       # check the number of running job
       qstat_cmd = QSUB.gsub(/qsub$/,"qstat")
-      running_jobs = "#{qstat_cmd} | awk '$5 == \"r\"' | wc -l"
-      queued_jobs = "#{qstat_cmd} | grep Quanto | wc -l"
-      while `#{running_jobs}`.to_i > 16 || `#{queued_jobs}`.to_i > 500
+      jobs = "#{qstat_cmd} | grep Quanto | wc -l"
+      while `#{jobs}`.to_i > 16
         sleep 300
       end
 
