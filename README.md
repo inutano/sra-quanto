@@ -48,7 +48,17 @@ $ bundle exe rake quanto:plot data=/path/to/summarized_tsv
 
 ## Citation
 
-Please cite the data on figshare with doi [10.6084/m9.figshare.4498907.v2](https://doi.org/10.6084/m9.figshare.4498907.v2). The current published data is version 2.
+### Paper
+
+- Ohta, T., Nakazato, T., & Bono, H. (2017). Calculating quality of public high-throughput sequencing data to obtain suitable subset for reanalysis from the Sequence Read Archive. GigaScience.
+  - [https://doi.org/10.1093/gigascience/gix029](https://doi.org/10.1093/gigascience/gix029)
+
+### Data
+
+- Figshare
+  - Ohta, Tazro A summary of sequencing quality of data archived in Sequence Read Archive Quality information of sequencing data archived in Sequence Read Archive calculated by FastQC Sequencing quality 2017-01-05 [http://dx.doi.org/10.6084/m9.figshare.4498907.v2](http://dx.doi.org/10.6084/m9.figshare.4498907.v2)
+- GigaDB
+  - Ohta, T; Nakazato, T; Bono, H (2017): Supporting data for "Calculating quality of public high-throughput sequencing data to obtain suitable subset for reanalysis from the Sequence Read Archive" GigaScience Database. [http://dx.doi.org/10.5524/100304](http://dx.doi.org/10.5524/100304)
 
 ## Copyright
 
