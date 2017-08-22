@@ -9,14 +9,14 @@
 #
 # Path to binary, fix if necessary
 #
-FASTQ_DUMP="${HOME}/local/bin/fastq-dump"
+FASTQ_DUMP="${HOME}/local/bin/pfastq-dump -t 8"
 VDB_VALIDATE="${HOME}/local/bin/vdb-validate"
-FASTQC="${HOME}/local/bin/fastqc -f fastq --quiet --nogroup --noextract --threads 4"
+FASTQC="${HOME}/local/bin/fastqc -f fastq --quiet --nogroup --noextract --threads 8"
 
 #
 # Global variables
 #
-DDBJ_FTP_BASE="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
+DDBJ_FTP_BASE="ftp.ddbj.nig.ac.jp/ddbj_database/dra/sralite/ByExp/litesra"
 NCBI_FTP_BASE="ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByExp/sra"
 
 #
@@ -74,7 +74,6 @@ get_fq_path(){
 
 get_sra_path(){
   local exp_id="${1}"
-  #echo "sralite/ByExp/litesra/${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
   echo "${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
 }
 
@@ -85,9 +84,9 @@ get_filesize(){
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
   if [[ -z `echo ${filepath} | awk '$0 ~ /litesra/'` ]]; then
-    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
+    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
   else
-    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
+    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
   fi
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 
@@ -150,7 +149,7 @@ download_data(){
   local ftp_connection_pool="${4}"
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
-  lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror --parallel=8 ${path} ${target_dir}"
+  lftp -c "set net:max-retries 5; set net:timeout 10; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror --parallel=8 ${path} ${target_dir}"
   chmod -R a+w ${target_dir}
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 }
