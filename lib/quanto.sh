@@ -275,7 +275,7 @@ exec_qc_paired(){
   mkdir -p "${wd_read1}"
   mkdir -p "${wd_read2}"
 
-  ${FASTQ_DUMP} --split-3 --stdout ${fpath} |\
+  ${FASTQ_DUMP} --split-spot --stdout --readids ${fpath} |\
   tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}" ) |\
   awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}"
 
