@@ -16,7 +16,7 @@ FASTQC="${HOME}/local/bin/fastqc -f fastq --quiet --nogroup --noextract --thread
 #
 # Global variables
 #
-DDBJ_FTP_BASE="ftp.ddbj.nig.ac.jp/ddbj_database/dra"
+DDBJ_FTP_BASE="ftp.ddbj.nig.ac.jp/ddbj_database/dra/sralite/ByExp/litesra"
 NCBI_FTP_BASE="ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByExp/sra"
 
 #
@@ -74,7 +74,6 @@ get_fq_path(){
 
 get_sra_path(){
   local exp_id="${1}"
-  #echo "sralite/ByExp/litesra/${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
   echo "${exp_id:0:3}/${exp_id:0:6}/${exp_id}"
 }
 
@@ -85,9 +84,9 @@ get_filesize(){
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
   if [[ -z `echo ${filepath} | awk '$0 ~ /litesra/'` ]]; then
-    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
+    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}"`
   else
-    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
+    local filelist=`lftp -c "set net:max-retries 5; set net:timeout 10; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && ls ${filepath}/*/*sra"`
   fi
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 
@@ -150,7 +149,7 @@ download_data(){
   local ftp_connection_pool="${4}"
 
   establish_ftp_connection "${exp_id}" "${ftp_connection_pool}"
-  lftp -c "set net:max-retries 5; set net:timeout 10; open ${NCBI_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror --parallel=8 ${path} ${target_dir}"
+  lftp -c "set net:max-retries 5; set net:timeout 10; open ${DDBJ_FTP_BASE} && (!rm ${ftp_connection_pool}/${exp_id}.waiting) && mirror --parallel=8 ${path} ${target_dir}"
   chmod -R a+w ${target_dir}
   close_ftp_connection "${exp_id}" "${ftp_connection_pool}"
 }
@@ -262,7 +261,7 @@ exec_qc_single(){
 
   rm -f "${workdir}/${fq_fname}"
   rm -f "${workdir}/${html_fname}"
-  
+
   echo "${workdir}/${qc_fname}"
 }
 
@@ -279,7 +278,13 @@ exec_qc_paired(){
   local qc2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
   local html2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.html:')
 
+<<<<<<< HEAD
   ${PFASTQ_DUMP} --split-3 --outdir "${workdir}" "${fpath}"
+=======
+  ${FASTQ_DUMP} --split-spot --stdout --readids ${fpath} |\
+  tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}" ) |\
+  awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}"
+>>>>>>> 40e45e8ece1939efd48631807a9d3d6db0443b1c
 
   ${FASTQC} --outdir "${workdir}" "${workdir}/${fq1_fname}" >>"${logfile}" 2>&1
   ${FASTQC} --outdir "${workdir}" "${workdir}/${fq2_fname}" >>"${logfile}" 2>&1
