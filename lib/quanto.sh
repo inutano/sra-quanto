@@ -9,9 +9,9 @@
 #
 # Path to binary, fix if necessary
 #
-FASTQ_DUMP="${HOME}/local/bin/fastq-dump"
+PFASTQ_DUMP="${HOME}/local/bin/pfastq-dump -t 16"
 VDB_VALIDATE="${HOME}/local/bin/vdb-validate"
-FASTQC="${HOME}/local/bin/fastqc -f fastq --quiet --nogroup --noextract --threads 4"
+FASTQC="${HOME}/local/bin/fastqc -f fastq --quiet --nogroup --noextract --threads 16"
 
 #
 # Global variables
@@ -253,13 +253,17 @@ exec_qc_single(){
   local workdir="${2}"
   local logfile="${3}"
 
-  local fname_out=`get_result_fname ${fpath}`
+  local fq_fname=$(basename ${fpath} | sed -e 's:sra$:fastq:')
+  local qc_fname=$(echo ${fq_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
+  local html_fname=$(echo ${fq_fname} | sed -e 's:\.fastq$:_fastqc.html:')
 
-  ${FASTQ_DUMP} --stdout ${fpath} |\
-  ${FASTQC} --outdir "${workdir}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}"
-  rename_stdin_fastqc_files "${workdir}" "${fname_out}"
+  ${PFASTQ_DUMP} --outdir "${workdir}" "${fpath}"
+  ${FASTQC} --outdir "${workdir}" "${workdir}/${fq_fname}" >>"${logfile}" 2>&1
 
-  echo "${fname_out}"
+  rm -f "${workdir}/${fq_fname}"
+  rm -f "${workdir}/${html_fname}"
+  
+  echo "${workdir}/${qc_fname}"
 }
 
 exec_qc_paired(){
@@ -267,26 +271,26 @@ exec_qc_paired(){
   local workdir="${2}"
   local logfile="${3}"
 
-  local wd_read1="${workdir}/read1"
-  local wd_read2="${workdir}/read2"
-  local fname_out=`get_result_fname ${fpath}`
-  local fname_out_1=`echo ${fname_out} | sed -e 's:_fastqc:_1_fastqc:g'`
-  local fname_out_2=`echo ${fname_out} | sed -e 's:_fastqc:_2_fastqc:g'`
+  local fq1_fname=$(basename ${fpath} | sed -e 's:\.sra$:_1.fastq:')
+  local qc1_fname=$(echo ${fq1_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
+  local html1_fname=$(echo ${fq1_fname} | sed -e 's:\.fastq$:_fastqc.html:')
 
-  mkdir -p "${wd_read1}"
-  mkdir -p "${wd_read2}"
+  local fq2_fname=$(basename ${fpath} | sed -e 's:\.sra$:_2.fastq:')
+  local qc2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
+  local html2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.html:')
 
-  ${FASTQ_DUMP} --split-3 --stdout ${fpath} |\
-  tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}" ) |\
-  awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}"
+  ${PFASTQ_DUMP} --split-3 --outdir "${workdir}" "${fpath}"
 
-  rename_stdin_fastqc_files "${wd_read1}" "${fname_out_1}"
-  rename_stdin_fastqc_files "${wd_read2}" "${fname_out_2}"
+  ${FASTQC} --outdir "${workdir}" "${workdir}/${fq1_fname}" >>"${logfile}" 2>&1
+  ${FASTQC} --outdir "${workdir}" "${workdir}/${fq2_fname}" >>"${logfile}" 2>&1
 
-  rm -fr "${wd_read1}"
-  rm -fr "${wd_read2}"
+  rm -f "${workdir}/${fq1_fname}"
+  rm -f "${workdir}/${fq2_fname}"
 
-  echo "${fname_out_1} ${fname_out_2}"
+  rm -f "${workdir}/${html1_fname}"
+  rm -f "${workdir}/${html2_fname}"
+
+  echo "${workdir}/${qc1_fname} ${workdir}/${qc2_fname}"
 }
 
 get_result_fname(){

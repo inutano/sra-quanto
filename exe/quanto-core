@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -S /bin/bash -l mem_req=4G,s_vmem=4G -pe def_slot 4
+#$ -S /bin/bash -l mem_req=4G,s_vmem=4G -pe def_slot 16
 #
 # usage:
 #   quanto-core --accession-id <SRA Accession ID> --experiment-id <SRA Experiment ID> --read-layout <SINGLE or PAIRED> --fastqc-dir <FastQC result directory> --ftp-connection-pool <FTP connection management directory> --fastq-checksum-table <FastQ checksum table> --log-file <Job log file>
