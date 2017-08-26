@@ -278,13 +278,7 @@ exec_qc_paired(){
   local qc2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
   local html2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.html:')
 
-<<<<<<< HEAD
   ${PFASTQ_DUMP} --split-3 --outdir "${workdir}" "${fpath}"
-=======
-  ${FASTQ_DUMP} --split-spot --stdout --readids ${fpath} |\
-  tee >( awk 'NR%8 ~ /^(1|2|3|4)$/' | ${FASTQC} --outdir "${wd_read1}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}" ) |\
-  awk 'NR%8 ~ /^(5|6|7|0)$/' | ${FASTQC} --outdir "${wd_read2}" /dev/stdin 2>>"${logfile}" 1>>"${logfile}"
->>>>>>> 40e45e8ece1939efd48631807a9d3d6db0443b1c
 
   ${FASTQC} --outdir "${workdir}" "${workdir}/${fq1_fname}" >>"${logfile}" 2>&1
   ${FASTQC} --outdir "${workdir}" "${workdir}/${fq2_fname}" >>"${logfile}" 2>&1
