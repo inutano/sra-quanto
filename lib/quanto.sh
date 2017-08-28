@@ -254,7 +254,7 @@ exec_qc_single(){
 
   ${PFASTQ_DUMP} --outdir "${workdir}" "${fpath}"
 
-  local file_id=$(basename ${fname} | sed -e 's:\.sra$::')
+  local file_id=$(basename "${fpath}" | sed -e 's:\.sra$::')
   local outd="${FASTQC_RESULT_DIR}/${file_id:0:3}/${file_id:0:4}/$(echo ${file_id} | sed -e 's:...$::g')/${file_id}"
   mkdir -p "${outd}"
 
@@ -273,7 +273,7 @@ exec_qc_paired(){
 
   ${PFASTQ_DUMP} --split-3 --outdir "${workdir}" "${fpath}"
 
-  local file_id=$(basename ${fname} | sed -e 's:\.sra$::')
+  local file_id=$(basename "${fpath}" | sed -e 's:\.sra$::')
 
   local outd="${FASTQC_RESULT_DIR}/${file_id:0:3}/${file_id:0:4}/$(echo ${file_id} | sed -e 's:...$::g')/${file_id}"
   mkdir -p "${outd}"
