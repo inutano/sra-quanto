@@ -252,44 +252,39 @@ exec_qc_single(){
   local workdir="${2}"
   local logfile="${3}"
 
-  local fq_fname=$(basename ${fpath} | sed -e 's:sra$:fastq:')
-  local qc_fname=$(echo ${fq_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
-  local html_fname=$(echo ${fq_fname} | sed -e 's:\.fastq$:_fastqc.html:')
-
   ${PFASTQ_DUMP} --outdir "${workdir}" "${fpath}"
-  ${FASTQC} --outdir "${workdir}" "${workdir}/${fq_fname}" >>"${logfile}" 2>&1
 
-  rm -f "${workdir}/${fq_fname}"
-  rm -f "${workdir}/${html_fname}"
+  local file_id=$(basename ${fname} | sed -e 's:\.sra$::')
+  local outd="${FASTQC_RESULT_DIR}/${file_id:0:3}/${file_id:0:4}/$(echo ${file_id} | sed -e 's:...$::g')/${file_id}"
+  mkdir -p "${outd}"
 
-  echo "${workdir}/${qc_fname}"
+  ${FASTQC} --outdir "${workdir}" "${workdir}/${file_id}.fastq" >>"${logfile}" 2>&1
+
+  find "${workdir}" -name '*html' | xargs rm -f
+  find "${workdir}" -name '*zip' | xargs -I{} mv {} ${outd}
+
+  echo "${outd}/${file_id}_fastqc.zip"
 }
 
 exec_qc_paired(){
-  local fpath="${1}"
+  local fpath="${1}" # path to input sra file
   local workdir="${2}"
   local logfile="${3}"
 
-  local fq1_fname=$(basename ${fpath} | sed -e 's:\.sra$:_1.fastq:')
-  local qc1_fname=$(echo ${fq1_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
-  local html1_fname=$(echo ${fq1_fname} | sed -e 's:\.fastq$:_fastqc.html:')
-
-  local fq2_fname=$(basename ${fpath} | sed -e 's:\.sra$:_2.fastq:')
-  local qc2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.zip:')
-  local html2_fname=$(echo ${fq2_fname} | sed -e 's:\.fastq$:_fastqc.html:')
-
   ${PFASTQ_DUMP} --split-3 --outdir "${workdir}" "${fpath}"
 
-  ${FASTQC} --outdir "${workdir}" "${workdir}/${fq1_fname}" >>"${logfile}" 2>&1
-  ${FASTQC} --outdir "${workdir}" "${workdir}/${fq2_fname}" >>"${logfile}" 2>&1
+  local file_id=$(basename ${fname} | sed -e 's:\.sra$::')
 
-  rm -f "${workdir}/${fq1_fname}"
-  rm -f "${workdir}/${fq2_fname}"
+  local outd="${FASTQC_RESULT_DIR}/${file_id:0:3}/${file_id:0:4}/$(echo ${file_id} | sed -e 's:...$::g')/${file_id}"
+  mkdir -p "${outd}"
 
-  rm -f "${workdir}/${html1_fname}"
-  rm -f "${workdir}/${html2_fname}"
+  ${FASTQC} --outdir "${workdir}" "${workdir}/${file_id}_1.fastq" >>"${logfile}" 2>&1
+  ${FASTQC} --outdir "${workdir}" "${workdir}/${file_id}_2.fastq" >>"${logfile}" 2>&1
 
-  echo "${workdir}/${qc1_fname} ${workdir}/${qc2_fname}"
+  find "${workdir}" -name '*html' | xargs rm -f
+  find "${workdir}" -name '*zip' | xargs -I{} mv {} ${outd}
+
+  echo "${outd}/${file_id}_1_fastqc.zip ${outd}/${file_id}_2_fastqc.zip"
 }
 
 get_result_fname(){
