@@ -46,7 +46,7 @@ namespace :quanto do
 
     list_records.each do |record|
       # avoid continuous connetion
-      sleep 15
+      sleep 5
 
       exp_id = record[0]
       acc_id = record[1]
@@ -63,7 +63,7 @@ namespace :quanto do
       qstat_cmd = QSUB.gsub(/qsub$/,"qstat")
       jobs = "#{qstat_cmd} | grep Quanto | wc -l"
       while `#{jobs}`.to_i > 16
-        sleep 300
+        sleep 30
       end
 
       # qsub
@@ -96,7 +96,7 @@ namespace :quanto do
     grouped_records = list_records.each_slice(50000).to_a
     grouped_records.each_with_index do |records, i|
       while !`#{QSUB.gsub(/qsub$/,"qstat")} | grep Quanto`.empty? do
-        sleep 300
+        sleep 30
       end
       logwrite(logfile, "#{Time.now}: Start FastQC execution #{i}/#{grouped_records.size}")
 
