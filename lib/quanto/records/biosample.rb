@@ -62,27 +62,35 @@ module Quanto
       end
 
       def reduce_xml
-        RakeFileUtils.sh "cat #{@xml_path} | grep -e '<BioSample' -e '<Organism ' -e '</Organism>' -e '</BioSample' -e '<Id ' -e '</Id>' > #{@xml_reduced}"
+        RakeFileUtils.sh "cat #{@xml_path} | grep -e '<BioSample' -e '<Organism' -e '</Organism>' -e '</BioSample' -e '<Id ' -e '</Id>' > #{@xml_reduced}"
       end
 
       def extract_metadata
+        out = @tsv_temp
         XML::Parser.new(Nokogiri::XML::Reader(open(@xml_reduced))) do
           for_element 'BioSample' do
+            bs_acc  = "NA"
+            sra_acc = "NA"
+            taxid   = "NA"
+            taxname = "NA"
+
             inside_element do
               for_element 'Id' do
                 case attribute("db")
                 when 'BioSample'
-                  bs = inner_xml
+                  bs_acc = inner_xml
                 when 'SRA'
-                  sra = inner_xml
+                  sra_acc = inner_xml
                 end
               end
+
               for_element 'Organism' do
-                taxid = attribute('taxonomy_id')
-                name  = attribute('taxonomy_name')
+                taxid    = attribute('taxonomy_id')
+                taxname  = attribute('taxonomy_name')
               end
-              open(@tsv_temp, 'a') do |file|
-                file.puts([bs || 'NA', sra || 'NA', taxid || 'NA', name || 'NA'].join("\t"))
+
+              open(out, 'a') do |file|
+                file.puts([bs_acc, sra_acc, taxid, taxname].join("\t"))
               end
             end
           end
