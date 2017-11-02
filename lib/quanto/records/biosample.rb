@@ -66,43 +66,42 @@ module Quanto
       end
 
       def extract_metadata
-        open(@tsv_temp, 'w') do |file|
-          XML::Parser.new(Nokogiri::XML::Reader(open(@xml_reduced))) do
-            for_element 'BioSample' do
-              file.print attribute("accession")
-              file.print "\t"
-              inside_element do
-                for_element 'Id' do
-                  file.print inner_xml + "\t" if attribute("db") == "SRA"
-                end
-                for_element 'Organism' do
-                  file.print attribute("taxonomy_id")
-                  file.print "\t"
-                  file.print attribute("taxonomy_name")
+        XML::Parser.new(Nokogiri::XML::Reader(open(@xml_reduced))) do
+          for_element 'BioSample' do
+            inside_element do
+              for_element 'Id' do
+                case attribute("db")
+                when 'BioSample'
+                  bs = inner_xml
+                when 'SRA'
+                  sra = inner_xml
                 end
               end
-              file.print "\n"
+              for_element 'Organism' do
+                taxid = attribute('taxonomy_id')
+                name  = attribute('taxonomy_name')
+              end
+              open(@tsv_temp, 'a') do |file|
+                file.puts([bs || 'NA', sra || 'NA', taxid || 'NA', name || 'NA'].join("\t"))
+              end
             end
           end
         end
       end
 
       def collect_sra_biosample(out)
-        liveset = sample_liveset
         sra_samples = Parallel.map(open(@tsv_temp).readlines, :in_threads => @nop) do |line|
-          if liveset.include?(line.split("\t")[1])
-            cols = line.chomp.split("\t")
-            gsize = @gsize_hash[cols[3]] || "NA" # genome size can be unavailable for some species
-            cols.push(gsize).join("\t")
-          end
+          cols = line.chomp.split("\t")
+          gsize = @gsize_hash[cols[3]] || "NA" # genome size can be unavailable for some species
+          cols.push(gsize).join("\t")
         end
         open(out, 'w'){|f| f.puts(sra_samples.compact)}
       end
 
-      def sample_liveset
-        run_members = File.join(@sra_dir, "SRA_Run_Members")
-        `cat #{run_members} | awk -F '\t' '$8 == "live" { print $4 }' | sort -u`.split("\n").to_set
-      end
+      # def sample_liveset
+      #   run_members = File.join(@sra_dir, "SRA_Run_Members")
+      #   `cat #{run_members} | awk -F '\t' '$8 == "live" { print $4 }' | sort -u`.split("\n").to_set
+      # end
     end
   end
 end
