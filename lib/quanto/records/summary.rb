@@ -32,16 +32,13 @@ module Quanto
 
       def create_summary_files
         bf = Bio::FastQC
-        path_list = create_fastqc_zip_path_list_to_summarize
-        objects = create_fastqc_data_objects(path_list)
         if @format == "turtle" # turtle conversion cannot be parallelized
-          objects.each do |obj|
+          fastqc_data_objects(fastqc_zip_path_list_to_summarize).each do |obj|
             create_summary(bf, obj)
           end
         else
-          Parallel.map(objects, :in_threads => @@nop) do |obj|
+          Parallel.each(fastqc_data_objects(fastqc_zip_path_list_to_summarize), :in_threads => @@nop) do |obj|
             create_summary(bf, obj)
-            nil
           end
         end
       end
@@ -53,7 +50,8 @@ module Quanto
               bf::Parser.new(
                 bf::Data.read(obj[:zip_path])
               ).summary, # summary method of FastQC parser class
-              id: obj[:fileid] # file id argument for FastQC converter
+              id: obj[:runid], # entry id argument for FastQC converter e.g. SRR000001_1
+              runid: obj[:runid] # run id argument for FastQC converter e.g. SRR000001_1
             ).send("to_#{@format}".intern) # call to_XXX method of Converter class
           )
         end
@@ -66,24 +64,26 @@ module Quanto
       #
 
       def create_summary_files_list
-        objects = create_fastqc_data_objects(@list_fastqc_zip_path)
-        list = Parallel.map(objects, :in_threads => @@nop) do |obj|
-          obj[:summary_path].sub(/^.+summary\//,"")
-        end
         path = File.join(@outdir, "summary_list_#{@format}")
         if File.exist?(path)
           backup_dir = File.join(@outdir, "backup", Time.now.strftime("%Y%m%d"))
           FileUtils.mkdir_p(backup_dir)
           FileUtils.mv(path, backup_dir)
         end
-        open(path, 'w'){|f| f.puts(list) }
+        open(path, 'w'){|f| f.puts(summary_path_list) }
+      end
+
+      def summary_path_list
+        Parallel.map(fastqc_data_objects(@list_fastqc_zip_path), :in_threads => @@nop) do |obj|
+          obj[:summary_path].sub(/^.+summary\//,"")
+        end
       end
 
       #
       # Create data object
       #
 
-      def create_fastqc_data_objects(path_list)
+      def fastqc_data_objects(path_list)
         # returns list of object including paths to summary file
         # [["/path/to/DRR000001_fastqc.zip", "DRR000001_fastqc", "/path/to/DRR000001_fastqc.tsv"], ..]
         Parallel.map(path_list, :in_threads => @@nop) do |path|
@@ -92,13 +92,12 @@ module Quanto
       end
 
       def fastqc_path_to_data_object(path)
-        fileid = path_to_fileid(path)
-        dir    = summary_file_dir(fileid)
-        FileUtils.mkdir_p(dir)
+        FileUtils.mkdir_p(summary_file_dir(path))
         {
           zip_path: path,
-          fileid: fileid,
-          summary_path: summary_file_path(fileid)
+          fileid: path_to_fileid(path),
+          runid: path_to_runid(path),
+          summary_path: summary_file_path(path)
         }
       end
 
@@ -106,11 +105,10 @@ module Quanto
       # Create list to summarize
       #
 
-      def create_fastqc_zip_path_list_to_summarize
-        list = Parallel.map(@list_fastqc_zip_path, :in_threads => @@nop) do |zip_path|
+      def fastqc_zip_path_list_to_summarize
+        Parallel.map(@list_fastqc_zip_path, :in_threads => @@nop) {|zip_path|
           zip_path if !summary_exist?(zip_path)
-        end
-        list.compact
+        }.compact
       end
 
       def summary_exist?(fastqc_zip_path)
@@ -123,14 +121,21 @@ module Quanto
         path.split("/").last.split(".")[0]
       end
 
-      def summary_file_path(fileid)
+      def path_to_runid(path)
+        # returns "DRR000001_1" from "/path/to/DRR000001_1_fastqc.zip"
+        path.split("/").last.split(".")[0].sub(/_fastqc/,"")
+      end
+
+      def summary_file_path(path)
         # returns path to summary file
         # e.g. "/path/to/out_dir/DRR/DRR0/DRR000/DRR000001/DRR000001_fastqc.tsv"
+        fileid = path_to_fileid(path)
         File.join(summary_file_dir(fileid), fileid + "." + @format)
       end
 
-      def summary_file_dir(fileid)
-        # returns "/path/to/out_dir/DRR/DRR0/DRR000/DRR000001" from "DRR000001_1_fastqc"
+      def summary_file_dir(path)
+        # returns "/path/to/out_dir/DRR/DRR0/DRR000/DRR000001" from "/path/to/DRR000001_1_fastqc.zip"
+        fileid = path_to_fileid(path)
         id = fileid.sub(/_.+$/,"")
         File.join(
           @outdir,
