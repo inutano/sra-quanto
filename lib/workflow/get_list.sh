@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Get current directory of the script
-WORKDIR=$(basename "${0}")
+WORKDIR=$(cd $(basename "${0}") && pwd -P)
 
 # Path to directory of _fastqc.zip files
 TARGET_DIR="${1}"
