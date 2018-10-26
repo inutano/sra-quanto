@@ -3,7 +3,7 @@ set -eu
 
 # Path to directory of _fastqc.zip files: Exit if not passed
 TARGET_DIR_PATH="${1}"
-TARGET_DIR="$(cd $(dirname "${TARGET_DIR_PATH}") && pwd -P)/$(basename "${TARGET_DIR_PATH}")"
+TARGET_DIR="$(cd ${TARGET_DIR_PATH} && pwd -P)"
 
 # Get directory path
 WORKDIR=$(cd $(dirname "${0}") && pwd -P)
