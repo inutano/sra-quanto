@@ -1,4 +1,5 @@
 #!/bin/sh
+set -eu
 
 # Get directory path
 WORKDIR=$(cd $(dirname "${0}") && pwd -P)
