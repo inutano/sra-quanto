@@ -2,9 +2,20 @@
 # usage:
 #  Rscript --vanilla figures.R data.tsv
 
-# Load library
+# Load libraries
+if (!require("ggplot2")) {
+  install.packages("ggplot2", repos="https://cran.ism.ac.jp/")
+}
 library(ggplot2)
+
+if (!require("gridExtra")) {
+  install.packages("gridExtra", repos="https://cran.ism.ac.jp/")
+}
 library(gridExtra)
+
+if (!require("stringr")) {
+  install.packages("stringr", repos="https://cran.ism.ac.jp/")
+}
 library(stringr)
 
 # Load data
