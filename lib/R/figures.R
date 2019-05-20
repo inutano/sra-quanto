@@ -1,6 +1,10 @@
-# R script to draw figures of Quanto manuscript
-# usage:
+# R script to draw figures of Quanto manuscript https://doi.org/10.1093/gigascience/gix029
+# Usage:
 #  Rscript --vanilla figures.R data.tsv
+# Demo Data:
+#  download data used in the publication from https://doi.org/10.6084/m9.figshare.4498907.v2
+#  then run:
+#    Rscript --vanilla figures.R quanto.data.20161021.tsv
 
 # Load libraries
 if (!require("ggplot2")) {
